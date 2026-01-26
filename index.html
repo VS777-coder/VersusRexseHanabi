@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.0</title>
+    <title>みおちゃん専用 v1.0.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
-        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); transition: all 0.2s; border: 2px solid #ec4899; display: block; text-align: center; cursor: pointer; }
+        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; }
         .main-btn:active { transform: scale(0.98); }
         .result-card { background-color: #131722; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; flex-shrink: 0; }
         .bar-bg { background-color: #1f2937; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
         .bar-fill { height: 100%; transition: width 0.8s ease-out; }
         .console-box { background-color: #000000; border: 1px solid #ec4899; border-radius: 8px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; }
-        .api-input-dots { background-color: #1e293b; color: white; border: none; border-radius: 99px; padding: 6px 12px; font-size: 14px; text-align: center; width: 100%; outline: none; }
+        .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 12px; font-size: 14px; width: 100%; outline: none; border: none; }
     </style>
 </head>
 <body>
@@ -23,7 +23,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.0</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.2</p>
         </div>
     </div>
 
@@ -40,7 +40,7 @@
     </div>
 
     <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-2">
-        <div id="log" class="console-box">準備完了。画像をアップロードしてください。</div>
+        <div id="log" class="console-box">解析準備完了　ユニメモのデータ待ち。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
@@ -49,7 +49,8 @@
     </div>
 
     <script>
-        const PRIOR_DIST = { 1: 13/20, 2: 4/20, 5: 2/20, 6: 1/20 };
+        // 事前確率は均等25%
+        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
 
         const MACHINE_CONFIG = {
             "VERSUS": {
@@ -62,9 +63,6 @@
                 cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
                 vc:  { key: "VSチャンス中はずれ", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
                 vg:  { key: "VSGAME中はずれ", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
-                bbs: { key: "チェリー＋ベル揃い", label: "チェリー＋ベル揃い", type: "prob", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, w: 1.0 },
-                bbh: { key: "チェリー＋ベルはずれ", label: "チェリー＋ベルはずれ", type: "prob", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 1.0 },
-                bbb: { key: "ビッグボーナス　ハズレ", label: "ビッグボーナス　ハズレ", type: "special", vals: {1: 16384, 2: 16384, 5: 16384, 6: 897.8} },
                 rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
             },
             "HANABI": {
@@ -78,8 +76,6 @@
                 cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
                 vc:  { key: "花火チャレンジ中はずれ", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
                 vg:  { key: "花火GAME中はずれ", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                bbs: { key: "風鈴斜め揃い", label: "風鈴斜め揃い", type: "prob", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0 },
-                bbb: { key: "バラケ目", label: "バラケ目", type: "special", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4} },
                 rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
             }
         };
@@ -104,7 +100,8 @@
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,30}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
+                // 合算値を回避する正規表現ガード
+                const regex = new RegExp(`(?:^|[^合算])(?:${item.key})[\\s\\S]{0,40}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
                 const match = text.match(regex);
                 if (match && match[1]) {
                     let valStr = match[1].replace(/[\s,]/g, '');
@@ -117,8 +114,8 @@
 
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
-            if (data.totalG === null || data.bb === null || data.rb === null || data.ba === null) {
-                log("\nERROR: データ不足。"); return;
+            if (data.totalG === null || data.ba === null) {
+                log("\nERROR: 必須データが見当たりません。"); return;
             }
 
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
@@ -129,13 +126,11 @@
                 if(id === "name") continue;
                 const item = config[id]; const obs = data[id];
                 if (obs === null || !item.vals) continue;
-
                 if (item.type === 'denial' && obs > 0) {
                     [1, 2].forEach(s => logL[s] = -Infinity);
                     log(`! ${item.label}検出: 設定1･2除外`); continue;
                 }
                 if (obs <= 0) continue;
-
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     if(item.type === 'bayesian') {
@@ -143,8 +138,6 @@
                         logL[s] += (k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs))) * (['ba','bb2','sa','ca2','cb'].includes(id) ? weightG : 1.0);
                     } else if (item.type === 'prob') {
                         logL[s] += Math.log(pExp / (1/obs)) * (item.w || 1.0) * weightBB;
-                    } else if (item.type === 'special') {
-                        logL[s] += Math.log(pExp / (1/obs)) + Math.log(100);
                     }
                 });
             }
