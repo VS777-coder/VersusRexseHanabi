@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.2</title>
+    <title>みおちゃん専用 v1.0.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -23,7 +23,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.2</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.3</p>
         </div>
     </div>
 
@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        // 事前確率は均等25%
+        // 設定配分を均等25%にセット
         const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
 
         const MACHINE_CONFIG = {
@@ -93,19 +93,20 @@
             const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
             if (totalG !== null) log(`総プレイ数: ${totalG}G`);
 
-            const bbMatch = text.match(/(?:総|#)?\s*B\s*B[\s\S]{0,100}?([\d,]+)回/);
+            const bbMatch = text.match(/総BB[\s\S]{0,100}?([\d,]+)回/);
             const bbCount = bbMatch ? parseInt(bbMatch[1].replace(/,/g, '')) : 0;
 
             let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // 合算値を回避する正規表現ガード
-                const regex = new RegExp(`(?:^|[^合算])(?:${item.key})[\\s\\S]{0,40}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
+                // 検索強化：合算を含まない行のみを抽出し、数値を正確に紐付ける
+                const regex = new RegExp(`^((?!合算).)*${item.key}.*?[1I!ｌ][\\/／]\\s*([\\d,.]+|--?)`, "m");
                 const match = text.match(regex);
-                if (match && match[1]) {
-                    let valStr = match[1].replace(/[\s,]/g, '');
-                    extracted[id] = (valStr === '-' || valStr === '--') ? 0 : parseFloat(valStr);
+                
+                if (match && match[2]) {
+                    let valStr = match[2].replace(/[\s,]/g, '');
+                    extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
                     log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
                 } else { extracted[id] = null; }
             }
@@ -115,7 +116,7 @@
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
             if (data.totalG === null || data.ba === null) {
-                log("\nERROR: 必須データが見当たりません。"); return;
+                log("\nERROR: ラベル取得失敗。"); return;
             }
 
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
