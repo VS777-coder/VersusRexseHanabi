@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.32</title>
+    <title>みおちゃん専用 v1.1.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -24,7 +24,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.32 (Final Extraction)</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.33 (Clean Logic)</p>
         </div>
     </div>
 
@@ -40,8 +40,8 @@
         <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500" style="width:0%"></div></div></div>
     </div>
 
-    <div id="log-container" class="w-full max-w-md mx-auto flex flex-grow min-h-0 mb-2">
-        <div id="log" class="console-box">内部バッファ待機中。</div>
+    <div class="w-full max-w-md mx-auto flex flex-grow min-h-0 mb-2">
+        <div id="log" class="console-box">画像を解析するとここにデータが表示されます。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
@@ -50,8 +50,8 @@
     </div>
 
     <script>
-        // 設定カラーの定義
-        const SETTING_COLORS = {
+        // 設定カラー定義（外出し）
+        const COLORS = {
             1: { text: "text-cyan-400", bg: "bg-cyan-400" },
             2: { text: "text-yellow-400", bg: "bg-yellow-400" },
             5: { text: "text-green-400", bg: "bg-green-400" },
@@ -104,20 +104,16 @@
                 if (id === "name") continue;
                 const item = config[id];
                 const val = sessionBuffer.extracted[id] || { prob: null, count: null };
-                
-                let probDisplay = '---';
-                if (val.prob === 0) probDisplay = '1/-';
-                else if (val.prob !== null) probDisplay = '1/' + val.prob;
-
-                let countDisplay = (val.count !== null && val.count !== undefined) ? val.count + '回' : '---';
+                const probText = val.prob === 0 ? '1/-' : (val.prob ? '1/' + val.prob : '---');
+                const countText = (val.count !== null && val.count !== undefined) ? val.count + '回' : '---';
                 
                 if (item.type === "total") {
                     html += `<tr><td>${item.label}</td><td colspan="2" style="color:#f472b6;font-weight:bold">${val.prob || '---'} G</td></tr>`;
                 } else {
-                    html += `<tr><td>${item.label}</td><td>${countDisplay}</td><td style="color:#f472b6;font-weight:bold">${probDisplay}</td></tr>`;
+                    html += `<tr><td>${item.label}</td><td>${countText}</td><td style="color:#f472b6;font-weight:bold">${probText}</td></tr>`;
                 }
             }
-            html += `</table>\n<p style="color:#f472b6;margin-top:8px">※バグ修正済み。ハナビ36回も検知可能。</p>`;
+            html += `</table>\n<p style="color:#f472b6;margin-top:8px">※HC 36回修正済み。設定カラー適用済み。</p>`;
             logArea.innerHTML = html;
         }
 
@@ -134,7 +130,6 @@
                 if (item.anchor) {
                     const pos = rawText.indexOf(item.anchor);
                     if (pos !== -1) searchText = rawText.substring(pos);
-                    else { sessionBuffer.extracted[id] = { prob: null, count: null }; continue; }
                 }
 
                 if (item.type === "total") {
@@ -143,12 +138,12 @@
                     continue;
                 }
 
-                // スラッシュの前後60文字をスキャンして全数値を抽出
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,60}?[/／][\\s\\S]{0,60}?回`);
-                const match = searchText.match(regex);
+                // スラッシュの前後100文字をスキャン（HC 36回対応）
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`);
+                const lineMatch = searchText.match(regex);
 
-                if (match) {
-                    const seg = match[0];
+                if (lineMatch) {
+                    const seg = lineMatch[0];
                     if (seg.includes('-')) {
                         sessionBuffer.extracted[id] = { prob: 0, count: 0 };
                     } else {
@@ -156,15 +151,14 @@
                         if (nums) {
                             const decimal = nums.find(n => n.includes('.'));
                             const integers = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
-                            // 1以外の最大の整数を回数として採用
-                            const counts = integers.filter(n => n > 1);
+                            const validCounts = integers.filter(n => n > 1);
                             sessionBuffer.extracted[id] = { 
                                 prob: decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, '')),
-                                count: counts.length > 0 ? Math.max(...counts) : (integers.length > 0 ? integers[0] : 0)
+                                count: validCounts.length > 0 ? Math.max(...validCounts) : (integers[0] || 0)
                             };
-                        } else { sessionBuffer.extracted[id] = { prob: null, count: null }; }
+                        }
                     }
-                } else { sessionBuffer.extracted[id] = { prob: null, count: null }; }
+                }
             }
             renderBufferTable();
         }
