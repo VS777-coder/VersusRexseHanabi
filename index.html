@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.0.4</title>
+    <title>みおの解析 1.0.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Share+Tech+Mono&display=swap');
@@ -14,14 +14,16 @@
         .result-card { background-color: #161b22; border-radius: 16px; padding: 12px; border: 1px solid #30363d; height: 33%; display: flex; flex-direction: column; justify-content: space-between; }
         .bar-bg { background-color: #0d1117; height: 14px; border-radius: 7px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #00ffcc; height: 62%; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; box-shadow: inset 0 0 15px rgba(0,255,204,0.05); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 62%; overflow-y: auto; white-space: pre-wrap; line-height: 1.3; box-shadow: inset 0 0 15px rgba(0,255,204,0.05); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 11px; width: 100%; border: 1px solid #30363d; outline: none; }
+        .log-accent { color: #ff7eb3; }
+        .log-val { color: #facc15; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-3">
         <div class="text-3xl font-black kawaii-title tracking-tighter leading-tight">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold">みおちゃん専用 Rev 1.0.4</p>
+        <p class="text-xs text-pink-300 font-bold">みおちゃん専用 Rev 1.0.5</p>
     </div>
 
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
@@ -38,10 +40,8 @@
         <div><div class="flex justify-between items-end"><span class="text-xl font-black text-red-500">設定6</span><span id="p6" class="text-lg font-bold text-red-500">0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-3">システム待機中...
-画像を読み込んでください。
----------------------------------------
-> 設定配分：各25%（20台店想定）</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto mb-3">SYSTEM: STANDBY...
+画像を選択してください。</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY">
@@ -74,16 +74,18 @@
 
         let session = { mode: null, n: 0, extracted: {} };
 
-        function addLog(msg) {
+        function addLog(msg, isAccent = false) {
             const log = document.getElementById('log');
-            log.innerText += `\n>> ${msg}`;
+            const span = document.createElement('span');
+            if(isAccent) span.className = 'log-accent';
+            span.innerText = `\n>> ${msg}`;
+            log.appendChild(span);
             log.scrollTop = log.scrollHeight;
         }
 
         function runBayesian() {
-            addLog("尤度計算シークエンス開始...");
+            addLog("--- 尤度計算シークエンス開始 ---", true);
             const config = MASTER_CONFIG[session.mode];
-            // 事前確率 (各設定 25.0%)
             let logL = { 1: Math.log(0.25), 2: Math.log(0.25), 5: Math.log(0.25), 6: Math.log(0.25) };
             
             let dw = 1.0;
@@ -94,35 +96,36 @@
             else if (session.n < 6000) dw = 1.3;
             else if (session.n < 8000) dw = 1.6;
             else dw = 2.0;
-            addLog(`小役補正ウェイト：x${dw.toFixed(1)}`);
+            addLog(`試行数補正(w): x${dw.toFixed(1)}`);
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = config[id];
                 if (!item || data.prob === null) continue;
 
+                addLog(`計算中: ${item.label} (1/${data.prob})`);
                 [1, 2, 5, 6].forEach(s => {
                     if (logL[s] === -Infinity) return;
-                    // 否定論理
                     if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) {
                         logL[s] = -Infinity;
-                        addLog(`!! ${item.label}否定により設定${s}を除外 !!`);
+                        addLog(`!! ${item.label}矛盾検知 -> 設定${s}排除 !!`);
                         return;
                     }
                     const pExp = 1 / item.vals[s];
                     if (data.prob > 0 && pExp > 0) {
                         let w = item.w || 1.0;
                         if (item.type === "small") w *= dw;
-                        // RT母数復元：回数 × 分母
                         const n = (item.type === "rt") ? (data.count * data.prob) : session.n;
                         const k = (item.type === "rt") ? data.count : (session.n / data.prob);
-                        // 対数尤度加算 (サイコロ病対策)
-                        logL[s] += w * (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
+                        const score = w * (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
+                        logL[s] += score;
                     }
                 });
             }
 
-            // 確率への正規化 (Log-Sum-Expトリック)
+            addLog("--- 最終推論スコア (LogL) ---", true);
+            [1, 2, 5, 6].forEach(s => addLog(`設定${s}: ${logL[s].toFixed(2)}`));
+
             const activeLogLs = Object.values(logL).filter(v => v !== -Infinity);
             const maxLog = activeLogLs.length > 0 ? Math.max(...activeLogLs) : 0;
             let total = 0, probs = {};
@@ -131,12 +134,12 @@
                 total += probs[s];
             });
 
-            addLog("解析終了。グラフを更新します。");
             [1, 2, 5, 6].forEach(s => {
                 const p = (probs[s] / total * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
+            addLog(">>> HUDアップデート完了", true);
         }
 
         async function analyze(file) {
@@ -150,11 +153,11 @@
                 });
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
-                if (!ann) return addLog("エラー：画像から文字を抽出できません。");
+                if (!ann) return addLog("エラー: OCR失敗");
                 
                 const raw = ann[0].description;
                 session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-                addLog(`ターゲット認識：${session.mode === "HANABI" ? "新ハナビ" : "バーサス"}`);
+                addLog(`ターゲット: ${session.mode === "HANABI" ? "新ハナビ" : "バーサス"}`, true);
                 
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
@@ -169,7 +172,7 @@
                     if (item.type === "total") {
                         const m = raw.match(new RegExp(`${item.key}[\\s\\S]{0,30}?([\\d,]+)G`));
                         session.n = m ? parseInt(m[1].replace(/,/g, '')) : 0;
-                        addLog(`総稼働：${session.n} G`);
+                        addLog(`総試行: ${session.n} G`, true);
                         continue;
                     }
                     const line = searchText.match(new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`));
@@ -182,7 +185,7 @@
                                 prob: decimal ? parseFloat(decimal) : parseFloat(nums[nums.length-1].replace(/,/g, '')),
                                 count: validCounts.length > 0 ? Math.max(...validCounts.map(n=>parseInt(n.replace(/,/g, '')))) : (parseInt(nums[0].replace(/,/g, '')) || 0)
                             };
-                            addLog(`データ抽出：${item.label || id} -> 1/${session.extracted[id].prob} (${session.extracted[id].count}回)`);
+                            addLog(`抽出: ${item.label} -> 1/${session.extracted[id].prob} (${session.extracted[id].count}回)`);
                         }
                     }
                 }
@@ -191,7 +194,7 @@
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証キーを保存しました。'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了'); };
         document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
