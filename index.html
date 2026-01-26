@@ -3,129 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.17 DEBUGGER</title>
+    <title>みおちゃん専用 v1.1.18 SMART</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+JP:wght@900&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 10px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        
-        .mio-header {
-            text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #334155;
-            margin-bottom: 10px;
-        }
-
-        .cool-title {
-            font-size: 24px;
-            font-weight: 900;
-            background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 10px rgba(244, 114, 182, 0.6));
-            line-height: 1.2;
-        }
-
-        .mio-label { color: #f472b6; font-weight: bold; font-size: 14px; letter-spacing: 0.1em; }
-        .main-btn { background: linear-gradient(to bottom, #be185d, #9d174d); border: 2px solid #ec4899; border-radius: 99px; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
-        .console-box { background-color: #000000; border: 1px solid #4ade80; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 0 10px rgba(74, 222, 128, 0.2); }
-        .input-bar { background-color: #1e293b; color: white; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: 1px solid #475569; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap');
+        body { background-color: #0f1219; color: #ffffff; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; }
+        .cool-title { font-family: 'Noto Sans JP'; font-size: 24px; background: linear-gradient(to right, #60a5fa, #f472b6, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; font-weight: 900; }
+        .result-card { background: #1e293b; border-left: 4px solid #ec4899; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; }
+        .console-box { background: #000; color: #4ade80; font-family: monospace; font-size: 10px; padding: 8px; border-radius: 4px; flex-grow: 1; overflow-y: auto; border: 1px solid #334155; }
     </style>
 </head>
 <body>
-    <header class="mio-header">
-        <div class="cool-title">バーサスリヴァイズ ＆ 新ハナビ</div>
-        <div class="mio-label">みおちゃん専用 Revision 1.1.17</div>
-    </header>
-
-    <div class="w-full max-w-md mx-auto flex flex-col gap-2 mb-3 shrink-0">
-        <label for="file-input" class="main-btn py-3 text-center text-white font-black italic tracking-widest text-sm">SELECT IMAGE</label>
-        <input type="file" id="file-input" class="hidden" accept="image/*">
-        
-        <div class="flex gap-2 items-center">
-            <span class="text-[10px] font-bold text-gray-400 uppercase">Threshold:</span>
-            <input type="number" id="th-input" class="input-bar w-20 text-center font-bold" value="30">
-            <button id="re-process" class="bg-blue-600 rounded-lg flex-grow font-bold text-sm py-2 hover:bg-blue-500 active:scale-95 transition-all">RE-PARSE RAW DATA</button>
-        </div>
+    <div class="mb-4">
+        <div class="cool-title">バーサス ＆ 新ハナビ</div>
+        <p class="text-center text-pink-500 text-xs font-bold">Revision 1.1.18 (Context Logic)</p>
     </div>
 
-    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-3">
-        <div class="text-[10px] text-yellow-500 font-bold mb-1">▼ RAW ROW DATA OUTPUT</div>
-        <div id="log" class="console-box">画像をアップロードしてください。</div>
-    </div>
+    <input type="file" id="file-input" class="hidden" accept="image/*">
+    <label for="file-input" class="bg-pink-700 text-white text-center py-3 rounded-full font-bold mb-4 cursor-pointer shadow-lg active:scale-95 transition-all">画像を解析する</label>
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="input-bar flex-grow text-xs" placeholder="ENTER VISION API KEY">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-[10px]">SAVE</button>
+    <div id="results" class="mb-4 space-y-2 overflow-y-auto max-h-60"></div>
+    <div id="log" class="console-box">解析結果がここに表示されます。</div>
+
+    <div class="mt-auto pt-2 flex gap-2">
+        <input type="password" id="api-key" class="bg-gray-800 text-white text-xs p-2 rounded flex-grow" placeholder="API KEY">
+        <button id="save-key" class="bg-gray-600 px-4 rounded text-xs">SET</button>
     </div>
 
     <script>
-        let lastAnnotations = null;
+        const resultsArea = document.getElementById('results');
         const logArea = document.getElementById('log');
-        const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
+        const keyInput = document.getElementById('api-key');
 
-        function parseRawRows(threshold) {
-            if (!lastAnnotations) return;
-            logArea.innerText = `--- PARSING START (TH: ${threshold}) --- \n`;
-            
-            const items = lastAnnotations.slice(1).map(ann => ({
-                text: ann.description,
-                x: (ann.boundingPoly.vertices[0].x + ann.boundingPoly.vertices[2].x) / 2,
-                y: (ann.boundingPoly.vertices[0].y + ann.boundingPoly.vertices[2].y) / 2
-            }));
-            
-            items.sort((a, b) => a.y - b.y);
-            const rowArrays = []; 
-            if (items.length > 0) {
-                let cur = [items[0]];
-                for (let i = 1; i < items.length; i++) {
-                    if (Math.abs(items[i].y - cur[0].y) < threshold) {
-                        cur.push(items[i]);
-                    } else {
-                        rowArrays.push(cur);
-                        cur = [items[i]];
-                    }
-                }
-                rowArrays.push(cur);
-            }
-            
-            rowArrays.forEach((row, index) => {
-                const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
-                log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
-            });
-            log("\n--- END OF DATA ---");
+        if(localStorage.getItem('v_key')) keyInput.value = localStorage.getItem('v_key');
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', keyInput.value); alert('SAVED'); };
+
+        function extractDenominator(text) {
+            // 「1 / [回数] [分母]」の並びから分母(最後)の数値を抜く
+            const m = text.match(/1\s*\/\s*[\d,.]+\s+([\d,.]+)/) || text.match(/1\s*\/\s*([\d,.]+)/);
+            return m ? m[1] : null;
         }
 
-        document.getElementById('re-process').onclick = () => {
-            const th = parseInt(document.getElementById('th-input').value) || 0;
-            parseRawRows(th);
-        };
-
-        const fileInput = document.getElementById('file-input');
-        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('API KEY SAVED'); };
-
-        fileInput.onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            const key = document.getElementById('api-key').value;
-            if(!key) { alert('SET API KEY FIRST'); return; }
+        async function analyze(file) {
+            resultsArea.innerHTML = "";
+            logArea.innerText = "解析中...\n";
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Processing...\n";
-                try {
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const json = await res.json();
-                    if (json.responses && json.responses[0].textAnnotations) {
-                        lastAnnotations = json.responses[0].textAnnotations;
-                        parseRawRows(parseInt(document.getElementById('th-input').value) || 30);
-                    } else { log("Error: Check API Key or Image."); }
-                } catch (err) { log("System Error: " + err.message); }
+                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${keyInput.value}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
+                });
+                const data = await res.json();
+                const ann = data.responses[0].textAnnotations;
+                if(!ann) return;
+
+                // 1. まず行にまとめる (安定のTH 30)
+                const items = ann.slice(1).map(a => ({ text: a.description, x: a.boundingPoly.vertices[0].x, y: a.boundingPoly.vertices[0].y }));
+                items.sort((a,b) => a.y - b.y);
+                let rows = []; let cur = [items[0]];
+                for(let i=1; i<items.length; i++) {
+                    if(Math.abs(items[i].y - cur[0].y) < 30) cur.push(items[i]);
+                    else { rows.push(cur.sort((a,b)=>a.x-b.x).map(it=>it.text).join(' ')); cur=[items[i]]; }
+                }
+                rows.push(cur.sort((a,b)=>a.x-b.x).map(it=>it.text).join(' '));
+
+                // 2. 構造的パース (名前が消えても順番で特定)
+                let context = "";
+                rows.forEach(line => {
+                    logArea.innerText += line + "\n";
+                    let label = ""; let val = extractDenominator(line);
+                    
+                    if(line.includes("風鈴") || line.includes("ベル")) context = "小役";
+                    
+                    // 苗字欠損救済ロジック
+                    if(line.match(/^A\s+/) || line.match(/^A1\s+/)) label = "A";
+                    else if(line.match(/^B\s+/)) label = "B";
+                    else if(line.includes("合算")) label = "合算";
+
+                    if(label && val) {
+                        const card = document.createElement('div');
+                        card.className = "result-card";
+                        card.innerHTML = `<span class="text-pink-400 font-bold">${context}${label}</span>: <span class="text-white text-lg">1 / ${val}</span>`;
+                        resultsArea.appendChild(card);
+                    }
+                });
             };
-        };
+        }
+
+        document.getElementById('file-input').onchange = (e) => analyze(e.target.files[0]);
     </script>
 </body>
 </html>
