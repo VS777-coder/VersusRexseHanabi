@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>みおちゃん専用 v1.0.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
+        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); transition: all 0.2s; border: 2px solid #ec4899; display: block; text-align: center; cursor: pointer; }
+        .main-btn:active { transform: scale(0.98); }
+        .result-card { background-color: #131722; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #1f2937; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
+        .bar-fill { height: 100%; transition: width 0.8s ease-out; }
+        .console-box { background-color: #000000; border: 1px solid #ec4899; border-radius: 8px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; }
+        .api-input-dots { background-color: #1e293b; color: white; border: none; border-radius: 99px; padding: 6px 12px; font-size: 14px; text-align: center; width: 100%; outline: none; }
+    </style>
+</head>
+<body>
+    <div class="text-center shrink-0 mb-3">
+        <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
+        <div class="flex flex-col items-center">
+            <p class="ver-text">みおちゃん専用</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.0</p>
+        </div>
+    </div>
+
+    <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest">ユニメモ画像　解析</label>
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+    </div>
+
+    <div class="w-full max-w-md mx-auto result-card">
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-white"><span>設定1</span><span id="p1">0.0%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-white" style="width:0%"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-blue-400"><span>設定2</span><span id="p2">0.0%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-blue-600" style="width:0%"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">0.0%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500" style="width:0%"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">0.0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600" style="width:0%"></div></div></div>
+    </div>
+
+    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-2">
+        <div id="log" class="console-box">準備完了。画像をアップロードしてください。</div>
+    </div>
+
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
+        <input type="password" id="api-key" class="api-input-dots flex-grow" placeholder="VISION API KEY">
+        <button id="save-key" class="bg-pink-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SET</button>
+    </div>
+
+    <script>
+        const PRIOR_DIST = { 1: 13/20, 2: 4/20, 5: 2/20, 6: 1/20 };
+
+        const MACHINE_CONFIG = {
+            "VERSUS": {
+                name: "バーサスリヴァイズ",
+                bb:  { key: "総BB", label: "ビックボーナス確率", type: "bayesian", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0} },
+                rb:  { key: "RB", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+                ba:  { key: "ベルA", label: "ベルＡ", type: "bayesian", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+                bb2: { key: "ベルB", label: "ベルＢ", type: "bayesian", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+                sa:  { key: "スイカA", label: "スイカＡ", type: "bayesian", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+                cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+                vc:  { key: "VSチャンス中はずれ", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
+                vg:  { key: "VSGAME中はずれ", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
+                bbs: { key: "チェリー＋ベル揃い", label: "チェリー＋ベル揃い", type: "prob", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, w: 1.0 },
+                bbh: { key: "チェリー＋ベルはずれ", label: "チェリー＋ベルはずれ", type: "prob", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 1.0 },
+                bbb: { key: "ビッグボーナス　ハズレ", label: "ビッグボーナス　ハズレ", type: "special", vals: {1: 16384, 2: 16384, 5: 16384, 6: 897.8} },
+                rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+            },
+            "HANABI": {
+                name: "新ハナビ",
+                bb:  { key: "総BB", label: "ビックボーナス確率", type: "bayesian", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+                rb:  { key: "RB", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+                ba:  { key: "風鈴A", label: "風鈴Ａ", type: "bayesian", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
+                bb2: { key: "風鈴B", label: "風鈴Ｂ", type: "bayesian", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
+                sa:  { key: "氷A", label: "氷Ａ", type: "bayesian", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
+                ca2: { key: "チェリーA2", label: "チェリーＡ２", type: "bayesian", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+                cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+                vc:  { key: "花火チャレンジ中はずれ", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
+                vg:  { key: "花火GAME中はずれ", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
+                bbs: { key: "風鈴斜め揃い", label: "風鈴斜め揃い", type: "prob", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0 },
+                bbb: { key: "バラケ目", label: "バラケ目", type: "special", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4} },
+                rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+            }
+        };
+
+        const logArea = document.getElementById('log');
+        const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
+
+        function extractData(text) {
+            logArea.innerText = "";
+            let mode = text.includes("新ハナビ") ? "HANABI" : "VERSUS";
+            const config = MACHINE_CONFIG[mode];
+            log(`▶ 判別機種: ${config.name}`);
+
+            const gMatch = text.match(/総プレイ数[\s\S]{0,50}?([\d,]+)G/);
+            const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
+            if (totalG !== null) log(`総プレイ数: ${totalG}G`);
+
+            const bbMatch = text.match(/(?:総|#)?\s*B\s*B[\s\S]{0,100}?([\d,]+)回/);
+            const bbCount = bbMatch ? parseInt(bbMatch[1].replace(/,/g, '')) : 0;
+
+            let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
+            for (let id in config) {
+                if(id === "name") continue;
+                const item = config[id];
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,30}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
+                const match = text.match(regex);
+                if (match && match[1]) {
+                    let valStr = match[1].replace(/[\s,]/g, '');
+                    extracted[id] = (valStr === '-' || valStr === '--') ? 0 : parseFloat(valStr);
+                    log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
+                } else { extracted[id] = null; }
+            }
+            return extracted;
+        }
+
+        function runBayesian(data) {
+            const config = MACHINE_CONFIG[data.mode];
+            if (data.totalG === null || data.bb === null || data.rb === null || data.ba === null) {
+                log("\nERROR: データ不足。"); return;
+            }
+
+            let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
+            const weightG = 1.0 + (data.totalG / 2000);
+            const weightBB = 1.0 + (data.bbCount / 10);
+
+            for (let id in config) {
+                if(id === "name") continue;
+                const item = config[id]; const obs = data[id];
+                if (obs === null || !item.vals) continue;
+
+                if (item.type === 'denial' && obs > 0) {
+                    [1, 2].forEach(s => logL[s] = -Infinity);
+                    log(`! ${item.label}検出: 設定1･2除外`); continue;
+                }
+                if (obs <= 0) continue;
+
+                [1, 2, 5, 6].forEach(s => {
+                    const pExp = 1 / item.vals[s];
+                    if(item.type === 'bayesian') {
+                        const k = data.totalG / obs;
+                        logL[s] += (k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs))) * (['ba','bb2','sa','ca2','cb'].includes(id) ? weightG : 1.0);
+                    } else if (item.type === 'prob') {
+                        logL[s] += Math.log(pExp / (1/obs)) * (item.w || 1.0) * weightBB;
+                    } else if (item.type === 'special') {
+                        logL[s] += Math.log(pExp / (1/obs)) + Math.log(100);
+                    }
+                });
+            }
+
+            const maxLog = Math.max(logL[1], logL[2], logL[5], logL[6]);
+            let total = 0; let probs = {};
+            [1, 2, 5, 6].forEach(s => {
+                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
+                total += probs[s];
+            });
+
+            [1, 2, 5, 6].forEach(s => {
+                const finalP = (probs[s] / total * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = finalP + "%";
+                document.getElementById(`b${s}`).style.width = finalP + "%";
+            });
+            log("\n解析完了。");
+        }
+
+        const fileInput = document.getElementById('file-input');
+        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('API KEY SAVED'); };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const key = document.getElementById('api-key').value;
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = async () => {
+                logArea.innerText = "Analyzing...";
+                try {
+                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const json = await res.json();
+                    const text = json.responses[0]?.fullTextAnnotation?.text;
+                    if (text) runBayesian(extractData(text));
+                    else log("OCR失敗。");
+                } catch (err) { log("ERROR: " + err.message); }
+            };
+        };
+    </script>
+</body>
+</html>
