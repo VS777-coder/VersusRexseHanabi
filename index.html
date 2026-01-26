@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.12 DEBUG</title>
+    <title>みおちゃん専用 v1.1.13 DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+JP:wght@900&display=swap');
         body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         
-        /* 磨きをかけたタイトルデザイン */
         .cool-title {
             font-size: 24px;
             font-weight: 900;
@@ -35,17 +34,17 @@
         <div class="cool-title">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold tracking-widest">REVISION 1.1.12 / THRESHOLD 40</p>
+            <p class="text-[10px] text-gray-400 font-bold tracking-widest">REVISION 1.1.13 / THRESHOLD 15</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値40で生データを確認</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値15で生データを確認</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
     <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-4">
-        <span class="debug-label">▼ Raw Row Data Output (TH: 40)</span>
+        <span class="debug-label">▼ Raw Row Data Output (TH: 15)</span>
         <div id="log" class="console-box">画像をアップロードしてください。</div>
     </div>
 
@@ -71,8 +70,8 @@
             if (items.length > 0) {
                 let cur = [items[0]];
                 for (let i = 1; i < items.length; i++) {
-                    // 指示通り：しきい値を40に設定
-                    if (Math.abs(items[i].y - cur[0].y) < 40) {
+                    // しきい値を15に設定
+                    if (Math.abs(items[i].y - cur[0].y) < 15) {
                         cur.push(items[i]);
                     } else {
                         rowArrays.push(cur);
@@ -84,7 +83,6 @@
             
             logArea.innerText = "";
             rowArrays.forEach((row, index) => {
-                // X座標でソートして「行」として出力
                 const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
                 log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
             });
