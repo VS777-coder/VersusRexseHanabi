@@ -3,54 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.4 (Perfect Restore)</title>
+    <title>みおのデバッグ 1.1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; box-shadow: 0 4px 10px rgba(255,0,128,0.3); border: 2px solid #ffffff; line-height: 1.2; }
-        .main-btn:active { transform: scale(0.97); }
-        /* グラフエリア 1/3 固定 */
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; border: 1px solid #30363d; height: 33vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
-        /* ログエリア 2/3 固定 */
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #fbcfe8; height: 50vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; box-shadow: inset 0 0 15px rgba(0,255,204,0.1); }
-        .bar-bg { background-color: #0d1117; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #21262d; margin-top: 2px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.19, 1, 0.22, 1); }
-        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 4px 16px; font-size: 11px; width: 100%; border: 1px solid #30363d; outline: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
-        th, td { border-bottom: 1px solid #333; padding: 4px 0; text-align: left; }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #ffffff; }
+        /* UI固定: 1/3 グラフ */
+        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; height: 33vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
+        /* UI固定: 2/3 ログ (デバッグ情報を表示) */
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 50vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; }
+        .bar-bg { background-color: #0d1117; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; color: #fff; }
+        th, td { border-bottom: 1px solid #333; padding: 2px 0; }
+        .debug-header { color: #ff0080; font-weight: bold; border-bottom: 1px solid #ff0080; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-2">
-        <div class="text-3xl font-black kawaii-title tracking-tighter leading-none">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.4</p>
-    </div>
-
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer tracking-widest leading-tight">
-            ユニメモ<br>解析実行
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
+            ユニメモ<br>デバッグ解析
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
     <div class="w-full max-w-md mx-auto graph-area">
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-cyan-400">設定1</span><span id="p1" class="text-xl font-bold text-cyan-400">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-yellow-400">設定2</span><span id="p2" class="text-xl font-bold text-yellow-400">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-green-400">設定5</span><span id="p5" class="text-xl font-bold text-green-400">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-red-500">設定6</span><span id="p6" class="text-xl font-bold text-red-500">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+        <div><div class="flex justify-between text-cyan-400 font-bold"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div><div class="flex justify-between text-yellow-400 font-bold"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div><div class="flex justify-between text-green-400 font-bold"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-red-500 font-bold"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">内部バッファ待機中。画像を選択してください。</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">デバッグ待機中... PCとスマホの差異を確認します。</div>
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2 px-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-1 px-4 rounded-full text-[10px]">SAVE</button>
-    </div>
+    <input type="password" id="api-key" class="hidden">
 
     <script>
-        // 【完全復旧】index - コピー (5).html の全定義
+        // バックアップ済みの定義をそのまま使用
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -88,67 +78,73 @@
 
         let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
 
-        // 内部バッファ表示
-        function renderBufferTable() {
+        function extractData(rawText) {
             const logArea = document.getElementById('log');
-            let html = `■ 内部バッファ状態 (${sessionBuffer.activeMode})\n`;
-            html += `<table><tr><th>項目</th><th>回数</th><th>確率分母</th></tr>`;
+            logArea.innerHTML = `<div class="debug-header">■ [DEBUG] 座標ソート済テキスト</div>\n${rawText.replace(/\n/g, '<br>')}\n`;
+
+            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
+            sessionBuffer.extracted = {};
+
+            let htmlTable = `<div class="debug-header">■ 抽出結果バッファ</div><table><tr><th>項目</th><th>回数</th><th>分母</th></tr>`;
             for (let id in config) {
                 if (id === "name") continue;
                 const item = config[id];
-                const val = sessionBuffer.extracted[id] || { prob: null, count: null };
-                const probText = val.prob === 0 ? '1/-' : (val.prob ? '1/' + val.prob : '---');
-                const countText = (val.count !== null && val.count !== undefined) ? val.count + '回' : '---';
-                
+                let searchText = rawText;
+
+                if (item.anchor) {
+                    const am = rawText.match(new RegExp(item.anchor));
+                    if (am) searchText = rawText.substring(am.index);
+                }
+
                 if (item.type === "total") {
-                    html += `<tr><td>${item.label}</td><td colspan="2" style="color:#f472b6;font-weight:bold">${val.prob || '---'} G</td></tr>`;
-                } else {
-                    html += `<tr><td>${item.label}</td><td>${countText}</td><td style="color:#f472b6;font-weight:bold">${probText}</td></tr>`;
+                    const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,30}?([\\d,]+)G`));
+                    sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
+                    sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
+                    htmlTable += `<tr><td>${item.label}</td><td colspan="2">${sessionBuffer.totalG} G</td></tr>`;
+                    continue;
+                }
+
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`);
+                const lineMatch = searchText.match(regex);
+                if (lineMatch) {
+                    const nums = lineMatch[0].match(/[\d,.]+/g);
+                    if (nums) {
+                        const decimal = nums.find(n => n.includes('.'));
+                        const integers = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
+                        const validCounts = integers.filter(n => n > 1);
+                        sessionBuffer.extracted[id] = { 
+                            prob: decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, '')),
+                            count: validCounts.length > 0 ? Math.max(...validCounts) : (integers[0] || 0)
+                        };
+                        htmlTable += `<tr><td>${item.label}</td><td>${sessionBuffer.extracted[id].count}</td><td>1/${sessionBuffer.extracted[id].prob}</td></tr>`;
+                    }
                 }
             }
-            html += `</table>`;
-            logArea.innerHTML = html;
+            logArea.innerHTML += htmlTable + `</table>`;
             runBayesian();
         }
 
-        // ベイズ計算：抽出データに基づいて実行
         function runBayesian() {
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
             let logL = { 1: Math.log(0.25), 2: Math.log(0.25), 5: Math.log(0.25), 6: Math.log(0.25) };
-            let dw = 1.0;
-            if (sessionBuffer.totalG < 500) dw = 0.2;
-            else if (sessionBuffer.totalG < 1000) dw = 0.4;
-            else if (sessionBuffer.totalG < 2000) dw = 0.7;
-            else if (sessionBuffer.totalG < 4000) dw = 1.0;
-            else dw = 1.5;
-
             for (let id in sessionBuffer.extracted) {
                 const data = sessionBuffer.extracted[id];
                 const item = config[id];
                 if (!item || !data.prob || item.type === "total") continue;
-
                 [1, 2, 5, 6].forEach(s => {
                     if (logL[s] === -Infinity) return;
-                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) {
-                        logL[s] = -Infinity; return;
-                    }
+                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
                     const pExp = 1 / item.vals[s];
-                    let w = item.w || 1.0;
-                    if (id === "ba" || id === "bb2") w *= dw;
                     const n = (id === "vc" || id === "vg") ? (data.count * data.prob) : sessionBuffer.totalG;
                     const k = (id === "vc" || id === "vg") ? data.count : (sessionBuffer.totalG / data.prob);
-                    logL[s] += w * (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
+                    logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
                 });
             }
-
             const activeScores = Object.values(logL).filter(v => v !== -Infinity);
             const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
             let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => {
-                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
-                total += probs[s];
-            });
+            [1, 2, 5, 6].forEach(s => { probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog); total += probs[s]; });
             [1, 2, 5, 6].forEach(s => {
                 const p = (probs[s] / total * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
@@ -156,61 +152,12 @@
             });
         }
 
-        // 【完全復元】座標ソート＆ヒューリスティック抽出
-        function extractData(rawText) {
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-
-            for (let id in config) {
-                if (id === "name") continue;
-                const item = config[id];
-                let searchText = rawText;
-
-                if (item.anchor) {
-                    const anchorMatch = rawText.match(new RegExp(item.anchor));
-                    if (anchorMatch) searchText = rawText.substring(anchorMatch.index);
-                    else { sessionBuffer.extracted[id] = { prob: null, count: null }; continue; }
-                }
-
-                if (item.type === "total") {
-                    const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,30}?([\\d,]+)G`));
-                    sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
-                    sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
-                    continue;
-                }
-
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`);
-                const lineMatch = searchText.match(regex);
-                if (lineMatch) {
-                    const seg = lineMatch[0];
-                    if (seg.includes('-')) {
-                        sessionBuffer.extracted[id] = { prob: 0, count: 0 };
-                    } else {
-                        const nums = seg.match(/[\d,.]+/g);
-                        if (nums) {
-                            const decimal = nums.find(n => n.includes('.'));
-                            const integers = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
-                            const validCounts = integers.filter(n => n > 1);
-                            sessionBuffer.extracted[id] = { 
-                                prob: decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, '')),
-                                count: validCounts.length > 0 ? Math.max(...validCounts) : (integers[0] || 0)
-                            };
-                        }
-                    }
-                }
-            }
-            renderBufferTable();
-        }
-
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証キー保存。'); };
-
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                document.getElementById('log').innerText = "Analyzing data...";
+                document.getElementById('log').innerText = "Analyzing...";
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
                     body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
@@ -219,11 +166,14 @@
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
                 if (ann) {
-                    // 【完全復旧】座標ソートロジック
                     const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
                     items.sort((a, b) => a.y - b.y);
                     let rows = [], cur = [items[0]];
-                    for (let i = 1; i < items.length; i++) { if (Math.abs(items[i].y - cur[0].y) < 30) cur.push(items[i]); else { rows.push(cur); cur = [items[i]]; } }
+                    for (let i = 1; i < items.length; i++) {
+                        // 【ここがデバッグの急所】しきい値30px
+                        if (Math.abs(items[i].y - cur[0].y) < 30) cur.push(items[i]);
+                        else { rows.push(cur); cur = [items[i]]; }
+                    }
                     rows.push(cur);
                     const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
                     extractData(rawText);
