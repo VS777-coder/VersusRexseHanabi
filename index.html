@@ -3,41 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.16 RAW DEBUG</title>
+    <title>みおちゃん専用 v1.1.17 DEBUGGER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+JP:wght@900&display=swap');
-        body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .cool-title { font-size: 24px; font-weight: 900; letter-spacing: -0.02em; background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.5)); line-height: 1.4; }
-        .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; }
-        .main-btn { background-color: #be185d; border-radius: 9999px; border: 2px solid #ec4899; text-align: center; cursor: pointer; transition: all 0.2s; }
-        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; }
-        .input-field { background-color: #1e293b; color: white; border-radius: 99px; padding: 8px 16px; font-size: 14px; outline: none; border: none; }
+        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 10px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        .mio-header {
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 10px;
+        }
+
+        .cool-title {
+            font-size: 24px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(244, 114, 182, 0.6));
+            line-height: 1.2;
+        }
+
+        .mio-label { color: #f472b6; font-weight: bold; font-size: 14px; letter-spacing: 0.1em; }
+        .main-btn { background: linear-gradient(to bottom, #be185d, #9d174d); border: 2px solid #ec4899; border-radius: 99px; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .console-box { background-color: #000000; border: 1px solid #4ade80; border-radius: 4px; padding: 10px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 0 10px rgba(74, 222, 128, 0.2); }
+        .input-bar { background-color: #1e293b; color: white; border-radius: 8px; padding: 8px 12px; font-size: 14px; border: 1px solid #475569; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-3">
+    <header class="mio-header">
         <div class="cool-title">バーサスリヴァイズ ＆ 新ハナビ</div>
-        <p class="ver-text">みおちゃん専用 Revision 1.1.16 (Raw Debug Mode)</p>
-    </div>
+        <div class="mio-label">みおちゃん専用 Revision 1.1.17</div>
+    </header>
 
-    <div class="w-full max-w-md mx-auto flex flex-col gap-3 mb-4 shrink-0">
-        <label for="file-input" class="main-btn py-3 text-white font-bold text-sm tracking-widest uppercase italic">① 解析画像を選択</label>
+    <div class="w-full max-w-md mx-auto flex flex-col gap-2 mb-3 shrink-0">
+        <label for="file-input" class="main-btn py-3 text-center text-white font-black italic tracking-widest text-sm">SELECT IMAGE</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
         
-        <div class="flex gap-2">
-            <input type="number" id="th-input" class="input-field w-1/3" value="30" placeholder="しきい値">
-            <button id="re-process" class="bg-blue-600 rounded-full flex-grow font-bold text-sm py-2">② この数値で再パース</button>
+        <div class="flex gap-2 items-center">
+            <span class="text-[10px] font-bold text-gray-400 uppercase">Threshold:</span>
+            <input type="number" id="th-input" class="input-bar w-20 text-center font-bold" value="30">
+            <button id="re-process" class="bg-blue-600 rounded-lg flex-grow font-bold text-sm py-2 hover:bg-blue-500 active:scale-95 transition-all">RE-PARSE RAW DATA</button>
         </div>
     </div>
 
-    <div class="w-full max-w-md mx-auto flex flex-grow min-h-0 mb-3">
-        <div id="log" class="console-box">画像をアップロードして。</div>
+    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-3">
+        <div class="text-[10px] text-yellow-500 font-bold mb-1">▼ RAW ROW DATA OUTPUT</div>
+        <div id="log" class="console-box">画像をアップロードしてください。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="input-field flex-grow text-xs" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-full text-[10px]">SET</button>
+        <input type="password" id="api-key" class="input-bar flex-grow text-xs" placeholder="ENTER VISION API KEY">
+        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-4 rounded-lg text-[10px]">SAVE</button>
     </div>
 
     <script>
@@ -45,9 +64,9 @@
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        function processRows(threshold) {
+        function parseRawRows(threshold) {
             if (!lastAnnotations) return;
-            logArea.innerText = `--- 生データパース (しきい値: ${threshold}) --- \n`;
+            logArea.innerText = `--- PARSING START (TH: ${threshold}) --- \n`;
             
             const items = lastAnnotations.slice(1).map(ann => ({
                 text: ann.description,
@@ -74,23 +93,25 @@
                 const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
                 log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
             });
+            log("\n--- END OF DATA ---");
         }
 
         document.getElementById('re-process').onclick = () => {
             const th = parseInt(document.getElementById('th-input').value) || 0;
-            processRows(th);
+            parseRawRows(th);
         };
 
         const fileInput = document.getElementById('file-input');
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('KEY SAVED'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('API KEY SAVED'); };
 
         fileInput.onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const key = document.getElementById('api-key').value;
+            if(!key) { alert('SET API KEY FIRST'); return; }
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Vision API通信中...\n";
+                logArea.innerText = "Processing...\n";
                 try {
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
@@ -100,11 +121,9 @@
                     const json = await res.json();
                     if (json.responses && json.responses[0].textAnnotations) {
                         lastAnnotations = json.responses[0].textAnnotations;
-                        processRows(parseInt(document.getElementById('th-input').value) || 30);
-                    } else {
-                        log("エラー: 解析データが取得できませんでした。");
-                    }
-                } catch (err) { log("通信エラー: " + err.message); }
+                        parseRawRows(parseInt(document.getElementById('th-input').value) || 30);
+                    } else { log("Error: Check API Key or Image."); }
+                } catch (err) { log("System Error: " + err.message); }
             };
         };
     </script>
