@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.7</title>
+    <title>みおちゃん専用 v1.1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,7 +22,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.7</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.1 (Y-Engine Fusion)</p>
         </div>
     </div>
 
@@ -49,6 +49,7 @@
 
     <script>
         const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
+
         const MACHINE_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -58,9 +59,9 @@
                 bb2: { key: "ベルB", label: "ベルＢ", type: "bayesian", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
                 sa:  { key: "スイカA", label: "スイカＡ", type: "bayesian", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
                 cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-                vc:  { key: "VSチャンス中はずれ", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
-                vg:  { key: "VSGAME中はずれ", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
-                rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+                vc:  { key: "VSチャンス中", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+                vg:  { key: "VSGAME中", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+                rbh: { key: "ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
             },
             "HANABI": {
                 name: "新ハナビ",
@@ -71,16 +72,16 @@
                 sa:  { key: "氷A", label: "氷Ａ", type: "bayesian", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
                 ca2: { key: "チェリーA2", label: "チェリーＡ２", type: "bayesian", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
                 cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-                vc:  { key: "花火チャレンジ中はずれ", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
-                vg:  { key: "花火GAME中はずれ", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                rbh: { key: "レギュラーボーナス　ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+                vc:  { key: "花火チャレンジ中", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
+                vg:  { key: "花火GAME中", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} },
+                rbh: { key: "ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
             }
         };
 
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        // ぷりんちゃん指定の「しきい値20」ロジック
+        // よっちゃんエンジン：しきい値20の座標復元
         function processOcrRows(annotations) {
             const items = annotations.slice(1).map(ann => ({
                 text: ann.description,
@@ -94,74 +95,59 @@
                 else { rowArrays.push(cur); cur = [items[i]]; }
             }
             rowArrays.push(cur);
-            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' '));
+            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
         }
 
-        function extractData(rows) {
+        function extractData(cleanText) {
             logArea.innerText = "";
-            const fullText = rows.join(' ');
-            let mode = fullText.includes("新ハナビ") ? "HANABI" : "VERSUS";
+            let mode = cleanText.includes("新ハナビ") ? "HANABI" : "VERSUS";
             const config = MACHINE_CONFIG[mode];
             log(`▶ 判別機種: ${config.name}`);
 
-            // 総プレイ数抽出
-            const totalGRow = rows.find(r => r.match(/プレイ\s*数/));
-            const totalG = totalGRow ? parseInt(totalGRow.match(/([\d,]+)G/)?.[1].replace(/,/g, '')) : null;
+            const gMatch = cleanText.match(/総\s*プ\s*レ\s*イ\s*数[\s\S]{0,50}?([\d,]+)G/);
+            const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
             if (totalG) log(`総プレイ数: ${totalG}G`);
 
-            // BB回数抽出
-            const bbRow = rows.find(r => r.match(/B\s*B/));
-            const bbCount = bbRow ? parseInt(bbRow.match(/([\d,]+)回/)?.[1].replace(/,/g, '')) : 0;
+            const bbCountMatch = cleanText.match(/(?:総|#)?\s*B\s*B[\s\S]{0,100}?([\d,]+)回/);
+            const bbCount = bbCountMatch ? parseInt(bbCountMatch[1].replace(/,/g, '')) : 0;
 
             let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // 修正：スペースを許容する柔軟なマッチング
+                // よっちゃん流：ラベルの後に[\s\S]{0,40}?で数値を抜く
                 const fuzzyKey = item.key.split('').join('\\s*');
-                const regex = new RegExp(fuzzyKey);
-                
-                // 「合算」を含まない行の中で、キーがマッチする行を探す
-                const targetRow = rows.find(r => regex.test(r) && !r.includes("合算"));
-                if (targetRow) {
-                    const match = targetRow.match(/[1I!ｌ]\s*[\/／]\s*([\d,.]+|--?)/);
-                    if (match) {
-                        let valStr = match[1].replace(/[\s,]/g, '');
-                        extracted[id] = (valStr === '-' || valStr === '--') ? 0 : parseFloat(valStr);
-                        log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
-                        continue;
-                    }
-                }
-                extracted[id] = null;
+                // 「合算」が含まれる行の誤爆を防ぐため、キーワードマッチを厳格化
+                const regex = new RegExp(`(?<!合算\\s*)${fuzzyKey}[\\s\\S]{0,40}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
+                const match = cleanText.match(regex);
+                if (match && match[1]) {
+                    let valStr = match[1].replace(/[\s,]/g, '');
+                    extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
+                    log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
+                } else { extracted[id] = null; }
             }
             return extracted;
         }
 
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
-            // 何が足りないか具体的にログを出す
-            if (!data.totalG) { log("ERROR: 総プレイ数が取得できません。"); return; }
-            if (data.ba === null) { log("ERROR: ベルA/風鈴Aが取得できません。"); return; }
-
+            if (!data.totalG || data.ba === null) { log("\nERROR: データ抽出失敗。"); return; }
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
-            const weightG = 1.0 + (data.totalG / 2000);
-            const weightBB = 1.0 + (data.bbCount / 10);
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id]; const obs = data[id];
-                if (obs === null || !item.vals) continue;
+                if (obs === null || obs <= 0) continue;
                 if (item.type === 'denial' && obs > 0) {
                     [1, 2].forEach(s => logL[s] = -Infinity);
-                    log(`! ${item.label}検出: 設定1･2除外`); continue;
+                    log(`! ${item.label}検出: 設定1･2否定`); continue;
                 }
-                if (obs <= 0) continue;
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     if(item.type === 'bayesian') {
                         const k = data.totalG / obs;
-                        logL[s] += (k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs))) * (['ba','bb2','sa','cb'].includes(id) ? weightG : 1.0);
+                        logL[s] += k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs));
                     } else if (item.type === 'prob') {
-                        logL[s] += Math.log(pExp / (1/obs)) * (item.w || 1.0) * weightBB;
+                        logL[s] += Math.log(pExp / (1/obs));
                     }
                 });
             }
@@ -198,8 +184,8 @@
                     const json = await res.json();
                     const annotations = json.responses[0]?.textAnnotations;
                     if (annotations && annotations.length > 1) {
-                        const rows = processOcrRows(annotations);
-                        runBayesian(extractData(rows));
+                        const cleanText = processOcrRows(annotations);
+                        runBayesian(extractData(cleanText));
                     } else log("OCR失敗。");
                 } catch (err) { log("ERROR: " + err.message); }
             };
