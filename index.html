@@ -3,51 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.0.0</title>
+    <title>みおの解析 1.0.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.4; }
-        .main-btn:active { transform: scale(0.95); }
-        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
-        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 8px rgba(255,126,179,0.4)); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; box-shadow: 0 4px 12px rgba(255,0,128,0.25); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+        .main-btn:active { transform: scale(0.98); }
+        .result-card { background-color: #161b22; border-radius: 16px; padding: 16px; border: 1px solid #30363d; flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: space-around; }
+        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 3px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,255,204,0.1); }
-        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 4px; }
-        th, td { border-bottom: 1px solid #21262d; padding: 2px 0; text-align: left; }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #00ffcc; flex: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; box-shadow: inset 0 0 15px rgba(0,255,204,0.03); line-height: 1.5; }
+        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 6px 16px; font-size: 11px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-4">
-        <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.0.0</p>
+    <div class="text-center shrink-0 mb-3">
+        <div class="text-4xl font-black kawaii-title tracking-tighter leading-tight">✨ バーサス ＆ ハナビ ✨</div>
+        <div class="flex items-center justify-center gap-2 mt-1">
+            <span class="h-[1px] w-6 bg-pink-500 opacity-50"></span>
+            <p class="text-xs text-pink-300 font-bold tracking-widest">みおちゃん専用 Rev 1.0.2</p>
+            <span class="h-[1px] w-6 bg-pink-500 opacity-50"></span>
+        </div>
     </div>
 
-    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
-            ユニメモ<br>解析実行
+    <div class="w-full shrink-0 mb-3 max-w-md mx-auto px-1">
+        <label for="file-input" class="main-btn w-full py-2.5 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer leading-tight tracking-widest">
+            ユニメモ 解析実行
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">0%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">0%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">0%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+    <div class="w-full max-w-md mx-auto result-card mb-3">
+        <div><div class="flex justify-between text-[11px] font-bold text-cyan-400"><span>設定1</span><span id="p1">0%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold text-yellow-400"><span>設定2</span><span id="p2">0%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">0%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">SYSTEM READY. WAITING FOR UNIMEMO...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto mb-3">SYSTEM ONLINE...
+WAITING FOR DATA...
+---------------------------------------
+> 設定配分: 各設定 5/20台 (25.0%)
+> 準備完了。画像を読み込んでください。</div>
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
+    <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2 px-1">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
+        <button id="save-key" class="bg-slate-700 text-white font-bold py-1.5 px-6 rounded-full text-[10px]">SAVE</button>
     </div>
 
     <script>
+        // ロジック
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -80,8 +87,7 @@
         }
 
         function runBayesian() {
-            addLog("INITIALIZING BAYESIAN ENGINE...");
-            addLog("PRIOR PROBABILITY: [1:25% 2:25% 5:25% 6:25%]");
+            addLog("尤度計算シークエンス開始...");
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             
@@ -93,7 +99,7 @@
             else if (session.n < 6000) dw = 1.3;
             else if (session.n < 8000) dw = 1.6;
             else dw = 2.0;
-            addLog(`DYNAMIC WEIGHT FOR SMALL_ROLE: x${dw.toFixed(1)}`);
+            addLog(`小役補正ウェイト: x${dw.toFixed(1)}`);
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
@@ -104,7 +110,7 @@
                     if (logL[s] === -Infinity) return;
                     if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) {
                         logL[s] = -Infinity;
-                        addLog(`!! DENIAL TRIGGERED: SETTING ${s} EXCLUDED !!`);
+                        addLog(`!! 否定論理発動: 設定${s}を除外 !!`);
                         return;
                     }
                     const pExp = 1 / item.vals[s];
@@ -126,7 +132,7 @@
                 total += probs[s];
             });
 
-            addLog("CALCULATION COMPLETE. UPDATING HUD...");
+            addLog("解析終了。HUDを更新します。");
             [1, 2, 5, 6].forEach(s => {
                 const p = (probs[s] / total * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
@@ -135,7 +141,7 @@
         }
 
         async function analyze(file) {
-            document.getElementById('log').innerText = ">> BOOTING ANALYZER...";
+            document.getElementById('log').innerText = ">> 解析ブート開始...";
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
@@ -145,11 +151,11 @@
                 });
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
-                if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
+                if (!ann) return addLog("ERROR: 画像認識に失敗。");
                 
                 const raw = ann[0].description;
                 session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-                addLog(`TARGET DETECTED: ${session.mode}`);
+                addLog(`TARGET: ${session.mode === "HANABI" ? "新ハナビ" : "バーサス"} 認識成功`);
                 
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
@@ -164,7 +170,7 @@
                     if (item.type === "total") {
                         const m = raw.match(new RegExp(`${item.key}[\\s\\S]{0,30}?([\\d,]+)G`));
                         session.n = m ? parseInt(m[1].replace(/,/g, '')) : 0;
-                        addLog(`TOTAL GAMES: ${session.n}G`);
+                        addLog(`総試行ゲーム数: ${session.n}G`);
                         continue;
                     }
                     const line = searchText.match(new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`));
@@ -177,7 +183,6 @@
                                 prob: decimal ? parseFloat(decimal) : parseFloat(nums[nums.length-1]),
                                 count: validCounts.length > 0 ? Math.max(...validCounts.map(n=>parseInt(n))) : (parseInt(nums[0]) || 0)
                             };
-                            addLog(`EXTRACTED: ${id} -> 1/${session.extracted[id].prob}`);
                         }
                     }
                 }
@@ -186,7 +191,7 @@
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('ACCESS GRANTED.'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了'); };
         document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
