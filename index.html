@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.3</title>
+    <title>みおちゃん専用 v1.0.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
         .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; }
-        .main-btn:active { transform: scale(0.98); }
         .result-card { background-color: #131722; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; flex-shrink: 0; }
         .bar-bg { background-color: #1f2937; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
         .bar-fill { height: 100%; transition: width 0.8s ease-out; }
@@ -23,7 +22,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.3</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.4</p>
         </div>
     </div>
 
@@ -49,7 +48,6 @@
     </div>
 
     <script>
-        // 設定配分を均等25%にセット
         const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
 
         const MACHINE_CONFIG = {
@@ -83,6 +81,23 @@
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
+        // ぷりんちゃん指定の「しきい値20」による行再構築ロジック
+        function processOcrRows(annotations) {
+            const items = annotations.slice(1).map(ann => ({
+                text: ann.description,
+                x: (ann.boundingPoly.vertices[0].x + ann.boundingPoly.vertices[2].x) / 2,
+                y: (ann.boundingPoly.vertices[0].y + ann.boundingPoly.vertices[2].y) / 2
+            }));
+            items.sort((a, b) => a.y - b.y);
+            const rows = []; let cur = [items[0]];
+            for (let i = 1; i < items.length; i++) {
+                if (Math.abs(items[i].y - cur[0].y) < 20) cur.push(items[i]);
+                else { rows.push(cur); cur = [items[i]]; }
+            }
+            rows.push(cur);
+            return rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
+        }
+
         function extractData(text) {
             logArea.innerText = "";
             let mode = text.includes("新ハナビ") ? "HANABI" : "VERSUS";
@@ -100,10 +115,9 @@
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // 検索強化：合算を含まない行のみを抽出し、数値を正確に紐付ける
+                // 行単位になったので、合算をスルーして正確にその行の1/XXを拾う
                 const regex = new RegExp(`^((?!合算).)*${item.key}.*?[1I!ｌ][\\/／]\\s*([\\d,.]+|--?)`, "m");
                 const match = text.match(regex);
-                
                 if (match && match[2]) {
                     let valStr = match[2].replace(/[\s,]/g, '');
                     extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
@@ -116,13 +130,11 @@
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
             if (data.totalG === null || data.ba === null) {
-                log("\nERROR: ラベル取得失敗。"); return;
+                log("\nERROR: 必須ラベル(総G/ベルA)取得失敗。"); return;
             }
-
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
             const weightG = 1.0 + (data.totalG / 2000);
             const weightBB = 1.0 + (data.bbCount / 10);
-
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id]; const obs = data[id];
@@ -136,20 +148,18 @@
                     const pExp = 1 / item.vals[s];
                     if(item.type === 'bayesian') {
                         const k = data.totalG / obs;
-                        logL[s] += (k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs))) * (['ba','bb2','sa','ca2','cb'].includes(id) ? weightG : 1.0);
+                        logL[s] += (k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs))) * (['ba','bb2','sa','cb'].includes(id) ? weightG : 1.0);
                     } else if (item.type === 'prob') {
                         logL[s] += Math.log(pExp / (1/obs)) * (item.w || 1.0) * weightBB;
                     }
                 });
             }
-
             const maxLog = Math.max(logL[1], logL[2], logL[5], logL[6]);
             let total = 0; let probs = {};
             [1, 2, 5, 6].forEach(s => {
                 probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
                 total += probs[s];
             });
-
             [1, 2, 5, 6].forEach(s => {
                 const finalP = (probs[s] / total * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = finalP + "%";
@@ -175,9 +185,11 @@
                         headers: { 'Content-Type': 'application/json' }
                     });
                     const json = await res.json();
-                    const text = json.responses[0]?.fullTextAnnotation?.text;
-                    if (text) runBayesian(extractData(text));
-                    else log("OCR失敗。");
+                    const annotations = json.responses[0]?.textAnnotations;
+                    if (annotations && annotations.length > 1) {
+                        const cleanText = processOcrRows(annotations);
+                        runBayesian(extractData(cleanText));
+                    } else log("OCR失敗。");
                 } catch (err) { log("ERROR: " + err.message); }
             };
         };
