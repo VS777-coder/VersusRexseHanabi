@@ -3,125 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.7 (Threshold Fix)</title>
+    <title>みおのデバッグ 1.1.8-DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        body { background-color: #0d0f14; color: #ffffff; font-family: 'Share Tech Mono', monospace; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; height: 33vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
-        .future-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; color: #fbcfe8; height: 50vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; }
-        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 2px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.6s ease-out; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
-        td { border-bottom: 1px solid #333; padding: 4px 0; }
+        .future-log { background-color: #000; border: 1px solid #00ffcc; border-radius: 12px; padding: 12px; font-size: 10px; color: #00ffcc; height: 75vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; box-shadow: inset 0 0 15px rgba(0,255,204,0.2); }
+        .debug-tag { background: #333; color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 9px; margin-right: 4px; }
+        .error-tag { background: #800; color: #fff; padding: 2px 4px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer">
-            ユニメモ<br>原因特定実行
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
+            ユニメモ<br>全ログ出力デバッグ
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto graph-area">
-        <div><div class="flex justify-between font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">
+        【デバッグ待機中】
+        画像をアップロードすると、スマホ内部での処理過程がすべてここに表示されます。
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">待機中... 画像を選択してください。</div>
     <input type="password" id="api-key" class="hidden">
 
     <script>
         const MASTER_CONFIG = {
-            "VERSUS": {
-                name: "バーサスリヴァイズ",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb:   { key: "BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6 },
-                ba:   { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
-                bb2:  { key: "ベル\\s*B", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
-                sa:   { key: "スイカ\\s*A", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
-                vc:   { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
-                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            },
-            "HANABI": {
-                name: "新ハナビ",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb:   { key: "BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
-                ba:   { key: "\\nA\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
-                bb2:  { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
-                sa:   { key: "氷\\s*A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
-                ca2:  { key: "チェリー\\s*A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
-                vc:   { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                nb:   { key: "風鈴\\s*斜め\\s*揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
-                bk:   { key: "(バラケ目|レア\\s*役)", label: "バラケ目", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4}, w: 1.5 },
-                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            }
+            "VERSUS": { bb: { key: "BB" }, rb: { key: "RB" }, ba: { key: "ベル\\s*A" }, sa: { key: "スイカ\\s*A" }, total: { key: "総\\s*プレイ\\s*数" } },
+            "HANABI": { bb: { key: "BB" }, rb: { key: "RB" }, ba: { key: "\\nA\\s+1" }, sa: { key: "氷\\s*A" }, total: { key: "総\\s*プレイ\\s*数" } }
         };
 
-        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
+        function debugExtract(rawText, threshold) {
+            const logArea = document.getElementById('log');
+            let debugOut = `[SYSTEM] Dynamic Threshold: ${threshold.toFixed(2)}px\n\n`;
+            debugOut += `[RAW SORTED TEXT]\n------------------\n${rawText}\n------------------\n\n`;
 
-        function extractData(rawText) {
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-            let logHtml = `■ 内部バッファ (${sessionBuffer.activeMode})\n<table>`;
+            const mode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            debugOut += `[MODE] Detected: ${mode}\n\n`;
+
+            const config = MASTER_CONFIG[mode];
+            debugOut += `[REGEX MATCHING LOG]\n`;
 
             for (let id in config) {
-                if (id === "name") continue;
                 const item = config[id];
-                let searchText = rawText;
-                if (item.anchor) {
-                    const am = rawText.match(new RegExp(item.anchor));
-                    if (am) searchText = rawText.substring(am.index);
-                }
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,80}?`);
-                const m = searchText.match(regex);
-                if (m) {
-                    const nums = m[0].match(/[\d,.]+/g);
-                    if (nums) {
-                        const prob = nums.find(n => n.includes('.')) || nums[nums.length-1];
-                        const count = nums.filter(n => !n.includes('.')).sort((a,b)=>b.length-a.length)[0] || 0;
-                        sessionBuffer.extracted[id] = { prob: parseFloat(prob.replace(/,/g,'')), count: parseInt(count.replace(/,/g,'')) };
-                        if (item.type === "total") sessionBuffer.totalG = sessionBuffer.extracted[id].prob;
-                        logHtml += `<tr><td>${item.label}</td><td>${sessionBuffer.extracted[id].count}回</td><td>1/${sessionBuffer.extracted[id].prob}</td></tr>`;
-                    }
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?`);
+                const match = rawText.match(regex);
+                if (match) {
+                    debugOut += `✅ [${id}] Match: "${match[0].replace(/\n/g, ' [NL] ')}"\n`;
+                    const nums = match[0].match(/[\d,.]+/g);
+                    debugOut += `   -> Extracted Numbers: ${nums ? nums.join(', ') : 'NONE'}\n`;
+                } else {
+                    debugOut += `❌ [${id}] No match found for key: "${item.key}"\n`;
                 }
             }
-            document.getElementById('log').innerHTML = logHtml + `</table>`;
-            runBayesian();
-        }
-
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            for (let id in sessionBuffer.extracted) {
-                const data = sessionBuffer.extracted[id];
-                const item = config[id];
-                if (!item || !data.prob || item.type === "total") continue;
-                [1, 2, 5, 6].forEach(s => {
-                    const pExp = 1 / item.vals[s];
-                    const n = (id === "vc" || id === "vg") ? (data.count * data.prob) : sessionBuffer.totalG;
-                    const k = data.count || (n / data.prob);
-                    logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
-                });
-            }
-            const maxLog = Math.max(...Object.values(logL));
-            let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => { probs[s] = Math.exp(logL[s] - maxLog); total += probs[s]; });
-            [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
-            });
+            logArea.innerText = debugOut;
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
@@ -138,23 +74,19 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (ann) {
                     const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-                    
-                    // 【原因特定のための核心】動的しきい値計算
                     const maxY = Math.max(...items.map(it => it.y));
                     const minY = Math.min(...items.map(it => it.y));
-                    const dynamicThreshold = (maxY - minY) * 0.015; // 全高の1.5%を1行とする
-                    console.log("Calculated Dynamic Threshold:", dynamicThreshold);
+                    const dynamicThreshold = (maxY - minY) * 0.015;
 
                     items.sort((a, b) => a.y - b.y);
                     let rows = [], cur = [items[0]];
                     for (let i = 1; i < items.length; i++) {
-                        // 固定の 30px ではなく dynamicThreshold を使用
                         if (Math.abs(items[i].y - cur[0].y) < dynamicThreshold) cur.push(items[i]);
                         else { rows.push(cur); cur = [items[i]]; }
                     }
                     rows.push(cur);
                     const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    extractData(rawText);
+                    debugExtract(rawText, dynamicThreshold);
                 }
             };
         };
