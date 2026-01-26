@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.4</title>
+    <title>みおちゃん専用 v1.0.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,12 +22,12 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.4</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.6</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest">ユニメモ画像　解析</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase">ユニメモ画像　解析</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -49,7 +49,6 @@
 
     <script>
         const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
-
         const MACHINE_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -81,7 +80,7 @@
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        // ぷりんちゃん指定の「しきい値20」による行再構築ロジック
+        // ぷりんちゃん指定の「しきい値20」ロジック
         function processOcrRows(annotations) {
             const items = annotations.slice(1).map(ann => ({
                 text: ann.description,
@@ -89,48 +88,54 @@
                 y: (ann.boundingPoly.vertices[0].y + ann.boundingPoly.vertices[2].y) / 2
             }));
             items.sort((a, b) => a.y - b.y);
-            const rows = []; let cur = [items[0]];
+            const rowArrays = []; let cur = [items[0]];
             for (let i = 1; i < items.length; i++) {
                 if (Math.abs(items[i].y - cur[0].y) < 20) cur.push(items[i]);
-                else { rows.push(cur); cur = [items[i]]; }
+                else { rowArrays.push(cur); cur = [items[i]]; }
             }
-            rows.push(cur);
-            return rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
+            rowArrays.push(cur);
+            // 行ごとにX座標でソートして結合
+            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' '));
         }
 
-        function extractData(text) {
+        function extractData(rows) {
             logArea.innerText = "";
-            let mode = text.includes("新ハナビ") ? "HANABI" : "VERSUS";
+            const fullText = rows.join('\n');
+            let mode = fullText.includes("新ハナビ") ? "HANABI" : "VERSUS";
             const config = MACHINE_CONFIG[mode];
             log(`▶ 判別機種: ${config.name}`);
 
-            const gMatch = text.match(/総プレイ数[\s\S]{0,50}?([\d,]+)G/);
-            const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
-            if (totalG !== null) log(`総プレイ数: ${totalG}G`);
+            const totalGRow = rows.find(r => r.includes("プレイ数"));
+            const totalG = totalGRow ? parseInt(totalGRow.match(/([\d,]+)G/)?.[1].replace(/,/g, '')) : null;
+            if (totalG) log(`総プレイ数: ${totalG}G`);
 
-            const bbMatch = text.match(/総BB[\s\S]{0,100}?([\d,]+)回/);
-            const bbCount = bbMatch ? parseInt(bbMatch[1].replace(/,/g, '')) : 0;
+            const bbRow = rows.find(r => r.match(/(?:総|#)?\s*B\s*B/));
+            const bbCount = bbRow ? parseInt(bbRow.match(/([\d,]+)回/)?.[1].replace(/,/g, '')) : 0;
 
             let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // 行単位になったので、合算をスルーして正確にその行の1/XXを拾う
-                const regex = new RegExp(`^((?!合算).)*${item.key}.*?[1I!ｌ][\\/／]\\s*([\\d,.]+|--?)`, "m");
-                const match = text.match(regex);
-                if (match && match[2]) {
-                    let valStr = match[2].replace(/[\s,]/g, '');
-                    extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
-                    log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
-                } else { extracted[id] = null; }
+                // 合算を含まず、かつ項目名を含む「行」を特定
+                const targetRow = rows.find(r => r.includes(item.key) && !r.includes("合算"));
+                if (targetRow) {
+                    const match = targetRow.match(/[1I!ｌ]\s*[\/／]\s*([\d,.]+|--?)/);
+                    if (match) {
+                        let valStr = match[1].replace(/[\s,]/g, '');
+                        extracted[id] = (valStr === '-' || valStr === '--') ? 0 : parseFloat(valStr);
+                        log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
+                        continue;
+                    }
+                }
+                extracted[id] = null;
             }
             return extracted;
         }
 
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
-            if (data.totalG === null || data.ba === null) {
-                log("\nERROR: 必須ラベル(総G/ベルA)取得失敗。"); return;
+            if (!data.totalG || data.ba === null) {
+                log("\nERROR: 解析に必要なデータが不足しています。"); return;
             }
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
             const weightG = 1.0 + (data.totalG / 2000);
@@ -187,8 +192,8 @@
                     const json = await res.json();
                     const annotations = json.responses[0]?.textAnnotations;
                     if (annotations && annotations.length > 1) {
-                        const cleanText = processOcrRows(annotations);
-                        runBayesian(extractData(cleanText));
+                        const rows = processOcrRows(annotations);
+                        runBayesian(extractData(rows));
                     } else log("OCR失敗。");
                 } catch (err) { log("ERROR: " + err.message); }
             };
