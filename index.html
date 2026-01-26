@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.27</title>
+    <title>みおちゃん専用 v1.1.29</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -13,8 +13,11 @@
         .result-card { background-color: #131722; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; flex-shrink: 0; }
         .bar-bg { background-color: #1f2937; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
         .bar-fill { height: 100%; transition: width 0.8s ease-out; }
-        .console-box { background-color: #000000; border: 1px solid #ec4899; border-radius: 8px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; }
+        .console-box { background-color: #000000; border: 1px solid #ec4899; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #fbcfe8; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; }
         .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 12px; font-size: 14px; width: 100%; outline: none; border: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        th, td { border-bottom: 1px solid #333; padding: 4px 0; text-align: left; }
+        .val-text { color: #f472b6; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -22,7 +25,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.27 (Logic Integrated)</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.29 (Extraction Debug)</p>
         </div>
     </div>
 
@@ -32,14 +35,14 @@
     </div>
 
     <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-white"><span>設定1</span><span id="p1">0.0%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-white" style="width:0%"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-blue-400"><span>設定2</span><span id="p2">0.0%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-blue-600" style="width:0%"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">0.0%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500" style="width:0%"></div></div></div>
-        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">0.0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600" style="width:0%"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-white"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-white" style="width:0%"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-blue-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-blue-600" style="width:0%"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500" style="width:0%"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600" style="width:0%"></div></div></div>
     </div>
 
     <div class="w-full max-w-md mx-auto flex flex-grow min-h-0 mb-2">
-        <div id="log" class="console-box">解析準備完了。画像を待機中。</div>
+        <div id="log" class="console-box">内部バッファ待機中。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
@@ -48,135 +51,112 @@
     </div>
 
     <script>
-        // ロックされたマスター定義
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
-                bb:   { key: "#BB", label: "ビックボーナス", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, type: "bayesian" },
-                rb:   { key: "RB", label: "レギュラー", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, type: "bayesian" },
-                ba:   { key: "ベル A", label: "ベルＡ", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, type: "bayesian" },
-                bb2:  { key: "ベル B", label: "ベルＢ", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, type: "bayesian" },
-                sa:   { key: "スイカ A", label: "スイカＡ", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, type: "bayesian" },
-                cb:   { key: "チェリー B", label: "チェリーＢ", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, type: "bayesian" },
-                vc:   { key: "VS チャンス 中 はずれ", label: "バーサスチャンスはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, type: "prob", w: 2.0 },
-                vg:   { key: "VSGAME 中 はずれ", label: "バーサスゲームはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, type: "prob", w: 2.0 },
-                bc_s: { key: "チェリー \\+ ベル 揃い", label: "チェリー＋ベル揃い", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, type: "bayesian" },
-                bc_h: { key: "チェリー \\+ ベル はずれ", label: "チェリー＋ベルはずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, type: "bayesian" },
-                mc:   { key: "中段チェリー", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8}, type: "bayesian" },
-                rbh:  { key: "レギュラー中はずれ", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
+                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数" },
+                bb:   { key: "#BB", label: "BB" },
+                rb:   { key: "RB", label: "RB" },
+                ba:   { key: "ベル\\s*A", label: "ベルA" },
+                bb2:  { key: "ベル\\s*B", label: "ベルB" },
+                sa:   { key: "スイカ\\s*A", label: "スイカA" },
+                cb:   { key: "チェリー\\s*B", label: "チェリーB" },
+                vc:   { key: "チャンス\\s*中\\s*はずれ", label: "VCハズレ" },
+                vg:   { key: "GAME\\s*中\\s*はずれ", label: "VGハズレ" },
+                bc_s: { key: "チェリー\\s*\\+\\s*ベル\\s*揃い", label: "中チェ+ベル揃い" },
+                bc_h: { key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", label: "中チェ+ベルはずれ" },
+                mc:   { key: "中段\\s*チェリー", label: "中段チェリー" },
+                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB中詳細" }
             },
             "HANABI": {
                 name: "新ハナビ",
-                bb:   { key: "#BB", label: "ビックボーナス", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, type: "bayesian" },
-                rb:   { key: "RB", label: "レギュラー", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, type: "bayesian" },
-                ba:   { key: "A 1 /", label: "風鈴Ａ", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, type: "bayesian" },
-                bb2:  { key: "風鈴 B", label: "風鈴Ｂ", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, type: "bayesian" },
-                sa:   { key: "氷 A", label: "氷Ａ", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, type: "bayesian" },
-                ca2:  { key: "チェリー A2", label: "チェリーＡ２", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, type: "bayesian" },
-                cb:   { key: "チェリー B", label: "チェリーＢ", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, type: "bayesian" },
-                vc:   { key: "花火 チャレンジ 中 はずれ", label: "ハナビチャレンジはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, type: "prob", w: 2.0 },
-                vg:   { key: "花火 GAME 中 はずれ", label: "ハナビゲームはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, type: "prob", w: 2.0 },
-                nb:   { key: "風鈴 斜め 揃い", label: "斜めベル", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, type: "bayesian" },
-                bk:   { key: "バラケ目", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 655.4}, type: "bayesian" },
-                rbh:  { key: "1 枚 役", label: "レギュラー中はずれ", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
+                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数" },
+                bb:   { key: "#BB", label: "BB" },
+                rb:   { key: "RB", label: "RB" },
+                ba:   { key: "\\nA\\s+1", label: "風鈴A" },
+                bb2:  { key: "風鈴\\s*B", label: "風鈴B" },
+                sa:   { key: "氷\\s*A", label: "氷A" },
+                ca2:  { key: "チェリー\\s*A2", label: "チェリーA2" },
+                cb:   { key: "チェリー\\s*B", label: "チェリーB" },
+                vc:   { key: "チャレンジ\\s*中\\s*はずれ", label: "HCハズレ" },
+                vg:   { key: "GAME\\s*中\\s*はずれ", label: "HGハズレ" },
+                nb:   { key: "風鈴\\s*斜め\\s*揃い", label: "斜め風鈴" },
+                bk:   { key: "(バラケ目|レア\\s*役)", label: "バラケ目" },
+                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB中詳細" }
             }
         };
 
-        let sessionBuffer = { activeMode: null, totalGames: 0, extracted: {} };
+        let sessionBuffer = { activeMode: null, extracted: {} };
         const logArea = document.getElementById('log');
-        const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
+
+        function renderBufferTable() {
+            let html = `■ 内部バッファ状態 (${sessionBuffer.activeMode})\n`;
+            html += `<table><tr><th>項目</th><th>抽出値</th></tr>`;
+            for (let id in sessionBuffer.extracted) {
+                const val = sessionBuffer.extracted[id];
+                html += `<tr><td>${id}</td><td class="val-text">${val === null ? '---' : val === 0 ? '1/- (0)' : '1/' + val}</td></tr>`;
+            }
+            html += `</table>\n<p style="color:#f472b6;margin-top:8px">※計算はまだ実行されていません。</p>`;
+            logArea.innerHTML = html;
+        }
 
         function extractData(rawText) {
-            logArea.innerText = "--- 解析結果 ---\n";
-            sessionBuffer.activeMode = (rawText.includes("新 ハナビ")) ? "HANABI" : "VERSUS";
+            sessionBuffer.activeMode = (rawText.includes("新 ハナビ") || rawText.includes("新 ハナ ビ")) ? "HANABI" : "VERSUS";
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            log(`▶ 機種判別: ${config.name}`);
-
-            const gMatch = rawText.match(/総\s*プレイ\s*数\s*([\d,]+)G/);
-            sessionBuffer.totalGames = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
-            log(`総回転数: ${sessionBuffer.totalGames}G`);
+            sessionBuffer.extracted = {};
 
             for (let id in config) {
+                if (id === "name") continue;
                 const item = config[id];
-                if (!item.key) continue;
-                
-                // 【重要】スラッシュの後にある「最後の数値」を抜き出す正規表現
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,50}?1\\s*[/／]\\s*([^回\n]+)`);
-                const match = rawText.match(regex);
+                let searchText = rawText;
+
+                // RBハズレ等のアンカー処理
+                if (item.anchor) {
+                    const anchorPos = rawText.indexOf(item.anchor);
+                    if (anchorPos !== -1) searchText = rawText.substring(anchorPos);
+                    else { sessionBuffer.extracted[id] = null; continue; }
+                }
+
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,60}?[/／]\\s*([^回\n]+)`);
+                const match = searchText.match(regex);
 
                 if (match) {
-                    const parts = match[1].trim().split(/\s+/);
-                    const lastPart = parts[parts.length - 1]; // 最後の塊を取得
-                    
-                    if (lastPart.includes('-')) {
-                        sessionBuffer.extracted[id] = 0;
-                        log(`${item.label}: 1/- (0回)`);
+                    const segment = match[1].trim();
+                    if (segment.includes('-')) {
+                        sessionBuffer.extracted[id] = 0; // 1/- 判定
                     } else {
-                        const num = parseFloat(lastPart.replace(/,/g, ''));
-                        sessionBuffer.extracted[id] = isNaN(num) ? null : num;
-                        log(`${item.label}: 1/${num.toFixed(1)}`);
+                        const nums = segment.match(/[\d,.]+/g);
+                        if (nums) {
+                            // 小数点が含まれる数値を最優先で採用するロジック
+                            const bestNum = nums.find(n => n.includes('.')) || nums[nums.length - 1];
+                            sessionBuffer.extracted[id] = parseFloat(bestNum.replace(/,/g, ''));
+                        } else { sessionBuffer.extracted[id] = null; }
                     }
-                } else {
-                    sessionBuffer.extracted[id] = null;
-                    log(`${item.label}: 未検出`);
-                }
+                } else { sessionBuffer.extracted[id] = null; }
             }
+            renderBufferTable();
         }
 
-        // ベイズ計算部分は Rev 1.1.8 の安定ロジックを継承
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            const PRIOR = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
-            let logL = { 1: Math.log(PRIOR[1]), 2: Math.log(PRIOR[2]), 5: Math.log(PRIOR[5]), 6: Math.log(PRIOR[6]) };
-
-            for (let id in sessionBuffer.extracted) {
-                const obs = sessionBuffer.extracted[id];
-                const item = config[id];
-                if (obs === null || obs <= 0) continue;
-                
-                [1, 2, 5, 6].forEach(s => {
-                    const pExp = 1 / item.vals[s];
-                    if (item.type === "denial" && obs > 0) {
-                        if (item.vals[s] === 0) logL[s] = -Infinity;
-                    } else {
-                        const k = sessionBuffer.totalGames / obs;
-                        logL[s] += k * Math.log(pExp / (1/obs)) + (sessionBuffer.totalGames - k) * Math.log((1 - pExp) / (1 - 1/obs));
-                    }
-                });
-            }
-
-            const maxLog = Math.max(logL[1], logL[2], logL[5], logL[6]);
-            let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => {
-                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
-                total += probs[s];
-            });
-
-            [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
-            });
-            log("\n--- 解析完了 ---");
-        }
+        // --- 以下の計算ロジックはぷりんちゃんの指示まで封印 ---
+        function runBayesian() { /* TODO: 将来の実装 */ }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('SAVED'); };
 
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
-            const key = document.getElementById('api-key').value;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Analyzing...";
-                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                logArea.innerText = "Analyzing OCR Text...";
+                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
                     body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
-                if (ann && ann.length > 1) {
+                if (ann) {
+                    // しきい値30の行整形ロジック
                     const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
                     items.sort((a, b) => a.y - b.y);
                     let rows = [], cur = [items[0]];
@@ -184,7 +164,6 @@
                     rows.push(cur);
                     const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
                     extractData(rawText);
-                    runBayesian();
                 }
             };
         };
