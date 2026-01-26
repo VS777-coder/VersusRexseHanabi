@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.3</title>
+    <title>みおちゃん専用 v1.1.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,12 +22,12 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.3 (Hanabi Rescue)</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.4 (Final Rescue)</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase">ユニメモ画像　解析</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">ユニメモ画像　解析</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -48,7 +48,7 @@
     </div>
 
     <script>
-        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 }; // 均等配分
+        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
 
         const MACHINE_CONFIG = {
             "VERSUS": {
@@ -101,27 +101,21 @@
         function extractData(cleanText) {
             logArea.innerText = "";
             const textForMode = cleanText.replace(/\s+/g, '');
-            // 機種判定の強化
             let mode = (textForMode.includes("新ハナビ") || textForMode.includes("風鈴")) ? "HANABI" : "VERSUS";
             const config = MACHINE_CONFIG[mode];
             log(`▶ 判別機種: ${config.name}`);
 
-            // よっちゃん直伝正規表現
             const gMatch = cleanText.match(/総\s*プ\s*レ\s*イ\s*数[\s\S]{0,50}?([\d,]+)G/);
             const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
             if (totalG) log(`総プレイ数: ${totalG}G`);
 
-            const bbMatch = cleanText.match(/(?:総|#)?\s*B\s*B[\s\S]{0,100}?([\d,]+)回/);
-            const bbCount = bbMatch ? parseInt(bbMatch[1].replace(/,/g, '')) : 0;
-
-            let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
+            let extracted = { mode: mode, totalG: totalG };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // よっちゃん流：40文字以内の柔軟スキップ
+                // 修正：^を消し、距離を60に延長。さらに合算を回避する完全版よっちゃん正規表現
                 const fuzzyKey = item.key.split('').join('\\s*');
-                // 合算を弾きつつ、ラベルの後の1/XXを抜く
-                const regex = new RegExp(`^(?!.*合算).*${fuzzyKey}[\\s\\S]{0,40}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`, "m");
+                const regex = new RegExp(`^(?!.*合算).*${fuzzyKey}[\\s\\S]{0,60}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`, "m");
                 const match = cleanText.match(regex);
 
                 if (match && match[1]) {
@@ -135,7 +129,10 @@
 
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
-            if (!data.totalG || data.ba === null) { log("\nERROR: データ抽出失敗。"); return; }
+            if (!data.totalG) { log("\nERROR: 総プレイ数が取得できません。"); return; }
+            // 必須ラベル不足でもエラーで止めず、取れた範囲で計算
+            if (data.ba === null) log("WARN: 風鈴A/ベルAが未検出です。");
+
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
             for (let id in config) {
                 if(id === "name") continue;
