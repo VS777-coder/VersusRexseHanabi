@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.5</title>
+    <title>みおちゃん専用 v1.1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,7 +22,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.5 (Threshold 18)</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.7 (Engine Overhaul)</p>
         </div>
     </div>
 
@@ -49,31 +49,30 @@
 
     <script>
         const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
+
         const MACHINE_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
-                bb:  { key: "総BB", label: "ビックボーナス確率", type: "bayesian", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0} },
-                rb:  { key: "RB", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-                ba:  { key: "ベルA", label: "ベルＡ", type: "bayesian", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-                bb2: { key: "ベルB", label: "ベルＢ", type: "bayesian", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-                sa:  { key: "スイカA", label: "スイカＡ", type: "bayesian", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-                cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-                vc:  { key: "VSチャンス中", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-                vg:  { key: "VSGAME中", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-                rbh: { key: "ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+                bb:  { key: "総\\s*B\\s*B", label: "ビックボーナス確率", type: "bayesian", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0} },
+                rb:  { key: "R\\s*B", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+                ba:  { key: "ベル\\s*[AＡ]", label: "ベルＡ", type: "bayesian", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+                bb2: { key: "ベル\\s*[BＢ]", label: "ベルＢ", type: "bayesian", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+                sa:  { key: "スイカ\\s*[AＡ]", label: "スイカＡ", type: "bayesian", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+                cb:  { key: "チェリー\\s*[BＢ]", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+                vc:  { key: "V\\s*S\\s*チャンス\\s*中", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+                vg:  { key: "V\\s*S\\s*G\\s*A\\s*M\\s*E\\s*中", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} }
             },
             "HANABI": {
                 name: "新ハナビ",
-                bb:  { key: "総BB", label: "ビックボーナス確率", type: "bayesian", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-                rb:  { key: "RB", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-                ba:  { key: "風鈴A", label: "風鈴Ａ", type: "bayesian", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
-                bb2: { key: "風鈴B", label: "風鈴Ｂ", type: "bayesian", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
-                sa:  { key: "氷A", label: "氷Ａ", type: "bayesian", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
-                ca2: { key: "チェリーA2", label: "チェリーＡ２", type: "bayesian", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-                cb:  { key: "チェリーB", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+                bb:  { key: "総\\s*B\\s*B", label: "ビックボーナス確率", type: "bayesian", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+                rb:  { key: "R\\s*B", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+                ba:  { key: "風鈴\\s*[AＡ]", label: "風鈴Ａ", type: "bayesian", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
+                bb2: { key: "風鈴\\s*[BＢ]", label: "風鈴Ｂ", type: "bayesian", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
+                sa:  { key: "氷\\s*[AＡ]", label: "氷Ａ", type: "bayesian", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
+                ca2: { key: "チェリー\\s*[AＡ]\\s*2", label: "チェリーＡ２", type: "bayesian", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+                cb:  { key: "チェリー\\s*[BＢ]", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
                 vc:  { key: "花火チャレンジ中", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
-                vg:  { key: "花火GAME中", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} },
-                rbh: { key: "ハズレ", label: "レギュラーボーナス　ハズレ", type: "denial", vals: {1:0, 2:0, 5:376.6, 6:376.6} }
+                vg:  { key: "花火G\\s*A\\s*M\\s*E\\s*中", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} }
             }
         };
 
@@ -112,16 +111,18 @@
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                const fuzzyKey = item.key.split('').join('\\s*');
-                // 修正：合算行を避けつつ、行の先頭制約を外して抽出
-                const regex = new RegExp(`^(?!.*合算).*${fuzzyKey}[\\s\\S]{0,60}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`, "m");
+                // よっちゃんエンジン完全回帰：アンカー削除、全角半角対応、検索距離100
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
                 const match = cleanText.match(regex);
 
                 if (match && match[1]) {
                     let valStr = match[1].replace(/[\s,]/g, '');
                     extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
                     log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
-                } else { extracted[id] = null; }
+                } else {
+                    extracted[id] = null;
+                    log(`${item.label}: 未検出`);
+                }
             }
             return extracted;
         }
@@ -129,23 +130,21 @@
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
             if (!data.totalG) { log("\nERROR: 総プレイ数が取得できません。"); return; }
+            
+            // 重要項目（BB, RB, メイン小役）のいずれも取れなかったら落とす
+            if (data.bb === null && data.rb === null && data.ba === null) {
+                log("\nERROR: ボーナス・小役データが全て未検出です。"); return;
+            }
+
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id]; const obs = data[id];
                 if (obs === null || obs <= 0) continue;
-                if (item.type === 'denial' && obs > 0) {
-                    [1, 2].forEach(s => logL[s] = -Infinity);
-                    log(`! ${item.label}検出: 設定1･2否定`); continue;
-                }
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
-                    if(item.type === 'bayesian') {
-                        const k = data.totalG / obs;
-                        logL[s] += k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs));
-                    } else if (item.type === 'prob') {
-                        logL[s] += Math.log(pExp / (1/obs));
-                    }
+                    const k = data.totalG / obs;
+                    logL[s] += k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs));
                 });
             }
             const maxLog = Math.max(logL[1], logL[2], logL[5], logL[6]);
