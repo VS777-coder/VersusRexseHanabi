@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.9 DEBUG</title>
+    <title>みおちゃん専用 v1.1.10 DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -20,18 +20,18 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.9 (Row Debug Tool)</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.10 (Row Debug: TH30)</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">デバッグ用に画像を解析</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値30で解析</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
     <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-4">
-        <span class="debug-label">▼ 復元された行データ (しきい値: 18)</span>
-        <div id="log" class="console-box">画像をアップロードすると、ここに「行」が出力されます。</div>
+        <span class="debug-label">▼ 復元された行データ (しきい値: 30)</span>
+        <div id="log" class="console-box">画像をアップロードしてください。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
@@ -43,7 +43,6 @@
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        // ぷりんちゃん指定：しきい値18の座標復元エンジン
         function processOcrRows(annotations) {
             const items = annotations.slice(1).map(ann => ({
                 text: ann.description,
@@ -57,8 +56,8 @@
             if (items.length > 0) {
                 let cur = [items[0]];
                 for (let i = 1; i < items.length; i++) {
-                    // しきい値 18
-                    if (Math.abs(items[i].y - cur[0].y) < 18) {
+                    // 指示通り：しきい値を30に設定
+                    if (Math.abs(items[i].y - cur[0].y) < 30) {
                         cur.push(items[i]);
                     } else {
                         rowArrays.push(cur);
@@ -68,8 +67,7 @@
                 rowArrays.push(cur);
             }
             
-            // 各行をX座標順に並べ替えて1つの「行」として出力
-            logArea.innerText = ""; // 以前のログをクリア
+            logArea.innerText = "";
             rowArrays.forEach((row, index) => {
                 const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
                 log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
@@ -85,7 +83,7 @@
             const key = document.getElementById('api-key').value;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Analyzing image structure...\n";
+                logArea.innerText = "Analyzing...\n";
                 try {
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
@@ -96,8 +94,6 @@
                     const annotations = json.responses[0]?.textAnnotations;
                     if (annotations && annotations.length > 1) {
                         processOcrRows(annotations);
-                    } else {
-                        log("OCR Error: 文字が検出できませんでした。");
                     }
                 } catch (err) { log("ERROR: " + err.message); }
             };
