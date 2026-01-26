@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.2</title>
+    <title>みおちゃん専用 v1.1.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,7 +22,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.2</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.3 (Hanabi Rescue)</p>
         </div>
     </div>
 
@@ -48,7 +48,8 @@
     </div>
 
     <script>
-        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
+        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 }; // 均等配分
+
         const MACHINE_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -80,6 +81,7 @@
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
+        // よっちゃんエンジン：しきい値20の座標復元
         function processOcrRows(annotations) {
             const items = annotations.slice(1).map(ann => ({
                 text: ann.description,
@@ -93,43 +95,40 @@
                 else { rowArrays.push(cur); cur = [items[i]]; }
             }
             rowArrays.push(cur);
-            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' '));
+            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
         }
 
-        function extractData(rows) {
+        function extractData(cleanText) {
             logArea.innerText = "";
-            const fullTextClean = rows.join('').replace(/\s+/g, '');
-            // 機種判定の強化：スペースを消した状態で判定
-            let mode = "VERSUS";
-            if (fullTextClean.includes("新ハナビ") || fullTextClean.includes("風鈴")) mode = "HANABI";
-            else if (fullTextClean.includes("バーサス") || fullTextClean.includes("ベル")) mode = "VERSUS";
-            
+            const textForMode = cleanText.replace(/\s+/g, '');
+            // 機種判定の強化
+            let mode = (textForMode.includes("新ハナビ") || textForMode.includes("風鈴")) ? "HANABI" : "VERSUS";
             const config = MACHINE_CONFIG[mode];
             log(`▶ 判別機種: ${config.name}`);
 
-            const totalGRow = rows.find(r => r.replace(/\s+/g, '').includes("プレイ数"));
-            const totalG = totalGRow ? parseInt(totalGRow.match(/([\d,]+)G/)?.[1].replace(/,/g, '')) : null;
+            // よっちゃん直伝正規表現
+            const gMatch = cleanText.match(/総\s*プ\s*レ\s*イ\s*数[\s\S]{0,50}?([\d,]+)G/);
+            const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
             if (totalG) log(`総プレイ数: ${totalG}G`);
 
-            // BB回数：よっちゃん流の柔軟マッチ
-            const bbRow = rows.find(r => r.replace(/\s+/g, '').includes("総BB"));
-            const bbCount = bbRow ? parseInt(bbRow.match(/([\d,]+)回/)?.[1].replace(/,/g, '')) : 0;
+            const bbMatch = cleanText.match(/(?:総|#)?\s*B\s*B[\s\S]{0,100}?([\d,]+)回/);
+            const bbCount = bbMatch ? parseInt(bbMatch[1].replace(/,/g, '')) : 0;
 
             let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                const targetRow = rows.find(r => r.replace(/\s+/g, '').includes(item.key) && !r.includes("合算"));
-                if (targetRow) {
-                    const match = targetRow.match(/[1I!ｌ]\s*[\\/／]\s*([\d,.]+|--?)/);
-                    if (match) {
-                        let valStr = match[1].replace(/[\s,]/g, '');
-                        extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
-                        log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
-                        continue;
-                    }
-                }
-                extracted[id] = null;
+                // よっちゃん流：40文字以内の柔軟スキップ
+                const fuzzyKey = item.key.split('').join('\\s*');
+                // 合算を弾きつつ、ラベルの後の1/XXを抜く
+                const regex = new RegExp(`^(?!.*合算).*${fuzzyKey}[\\s\\S]{0,40}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`, "m");
+                const match = cleanText.match(regex);
+
+                if (match && match[1]) {
+                    let valStr = match[1].replace(/[\s,]/g, '');
+                    extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
+                    log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
+                } else { extracted[id] = null; }
             }
             return extracted;
         }
@@ -189,8 +188,8 @@
                     const json = await res.json();
                     const annotations = json.responses[0]?.textAnnotations;
                     if (annotations && annotations.length > 1) {
-                        const rows = processOcrRows(annotations);
-                        runBayesian(extractData(rows));
+                        const cleanText = processOcrRows(annotations);
+                        runBayesian(extractData(cleanText));
                     } else log("OCR失敗。");
                 } catch (err) { log("ERROR: " + err.message); }
             };
