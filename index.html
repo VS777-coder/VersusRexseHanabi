@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.8</title>
+    <title>みおちゃん専用 v1.1.9 DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
         .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; }
-        .result-card { background-color: #131722; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; flex-shrink: 0; }
-        .bar-bg { background-color: #1f2937; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; }
-        .bar-fill { height: 100%; transition: width 0.8s ease-out; }
-        .console-box { background-color: #000000; border: 1px solid #ec4899; border-radius: 8px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; }
+        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
         .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 12px; font-size: 14px; width: 100%; outline: none; border: none; }
+        .debug-label { color: #fbbf24; font-weight: bold; font-size: 10px; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body>
@@ -22,24 +20,18 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.8</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.9 (Row Debug Tool)</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">ユニメモ画像　解析</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">デバッグ用に画像を解析</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-white"><span>設定1</span><span id="p1">0.0%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-white" style="width:0%"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-blue-400"><span>設定2</span><span id="p2">0.0%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-blue-600" style="width:0%"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">0.0%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500" style="width:0%"></div></div></div>
-        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">0.0%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600" style="width:0%"></div></div></div>
-    </div>
-
-    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-2">
-        <div id="log" class="console-box">解析準備完了　ユニメモのデータ待ち。</div>
+    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-4">
+        <span class="debug-label">▼ 復元された行データ (しきい値: 18)</span>
+        <div id="log" class="console-box">画像をアップロードすると、ここに「行」が出力されます。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
@@ -48,124 +40,40 @@
     </div>
 
     <script>
-        const PRIOR_DIST = { 1: 0.25, 2: 0.25, 5: 0.25, 6: 0.25 };
-
-        const MACHINE_CONFIG = {
-            "VERSUS": {
-                name: "バーサスリヴァイズ",
-                bb:  { key: "総\\s*B\\s*B", label: "ビックボーナス確率", type: "bayesian", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0} },
-                rb:  { key: "R\\s*B", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-                ba:  { key: "ベル\\s*[AＡ]", label: "ベルＡ", type: "bayesian", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-                bb2: { key: "ベル\\s*[BＢ]", label: "ベルＢ", type: "bayesian", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-                sa:  { key: "スイカ\\s*[AＡ]", label: "スイカＡ", type: "bayesian", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-                cb:  { key: "チェリー\\s*[BＢ]", label: "チェリーＢ", type: "bayesian", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-                vc:  { key: "V\\s*S\\s*チャンス\\s*中", label: "バーサスチャンス中　はずれ", type: "prob", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-                vg:  { key: "V\\s*S\\s*G\\s*A\\s*M\\s*E\\s*中", label: "バーサスゲーム中　はずれ", type: "prob", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} }
-            },
-            "HANABI": {
-                name: "新ハナビ",
-                bb:  { key: "総\\s*B\\s*B", label: "ビックボーナス確率", type: "bayesian", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-                rb:  { key: "R\\s*B", label: "レギュラーボーナス確率", type: "bayesian", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-                ba:  { key: "風鈴\\s*[AＡ]", label: "風鈴Ａ", type: "bayesian", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
-                bb2: { key: "風鈴\\s*[BＢ]", label: "風鈴Ｂ", type: "bayesian", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
-                sa:  { key: "氷\\s*[AＡ]", label: "氷Ａ", type: "bayesian", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
-                ca2: { key: "チェリー\\s*[AＡ]\\s*2", label: "チェリーＡ２", type: "bayesian", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-                cb:  { key: "チェリー\\s*[BＢ]", label: "チェリーＢ", type: "bayesian", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-                vc:  { key: "花火チャレンジ中", label: "花火チャレンジ中　はずれ", type: "prob", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
-                vg:  { key: "花火G\\s*A\\s*M\\s*E\\s*中", label: "花火ゲーム中　はずれ", type: "prob", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} }
-            }
-        };
-
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        // 画面の数値をリセットする関数
-        function clearUI() {
-            [1, 2, 5, 6].forEach(s => {
-                document.getElementById(`p${s}`).innerText = "0.0%";
-                document.getElementById(`b${s}`).style.width = "0%";
-            });
-        }
-
+        // ぷりんちゃん指定：しきい値18の座標復元エンジン
         function processOcrRows(annotations) {
             const items = annotations.slice(1).map(ann => ({
                 text: ann.description,
                 x: (ann.boundingPoly.vertices[0].x + ann.boundingPoly.vertices[2].x) / 2,
                 y: (ann.boundingPoly.vertices[0].y + ann.boundingPoly.vertices[2].y) / 2
             }));
+            
             items.sort((a, b) => a.y - b.y);
-            const rowArrays = []; let cur = [items[0]];
-            for (let i = 1; i < items.length; i++) {
-                if (Math.abs(items[i].y - cur[0].y) < 18) cur.push(items[i]);
-                else { rowArrays.push(cur); cur = [items[i]]; }
-            }
-            rowArrays.push(cur);
-            return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-        }
-
-        function extractData(cleanText) {
-            logArea.innerText = "";
-            const textForMode = cleanText.replace(/\s+/g, '');
-            let mode = (textForMode.includes("新ハナビ") || textForMode.includes("風鈴")) ? "HANABI" : "VERSUS";
-            const config = MACHINE_CONFIG[mode];
-            log(`▶ 判別機種: ${config.name}`);
-
-            const gMatch = cleanText.match(/総\s*プ\s*レ\s*イ\s*数[\s\S]{0,50}?([\d,]+)G/);
-            const totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : null;
-            if (totalG) log(`総プレイ数: ${totalG}G`);
-
-            let extracted = { mode: mode, totalG: totalG };
-            for (let id in config) {
-                if(id === "name") continue;
-                const item = config[id];
-                // よっちゃんエンジン準拠：検索距離を広げ、全角半角も柔軟に
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?[1I!ｌ]\\s*[\\/／]\\s*([\\d,.]+|--?)`);
-                const match = cleanText.match(regex);
-
-                if (match && match[1]) {
-                    let valStr = match[1].replace(/[\s,]/g, '');
-                    extracted[id] = (valStr === '-' || valStr === '--' || valStr === '1/-') ? 0 : parseFloat(valStr);
-                    log(`${item.label}: 1/${(extracted[id] === 0 ? "-" : extracted[id].toFixed(1))}`);
-                } else {
-                    extracted[id] = null;
-                    log(`${item.label}: 未検出`);
+            
+            const rowArrays = []; 
+            if (items.length > 0) {
+                let cur = [items[0]];
+                for (let i = 1; i < items.length; i++) {
+                    // しきい値 18
+                    if (Math.abs(items[i].y - cur[0].y) < 18) {
+                        cur.push(items[i]);
+                    } else {
+                        rowArrays.push(cur);
+                        cur = [items[i]];
+                    }
                 }
+                rowArrays.push(cur);
             }
-            return extracted;
-        }
-
-        function runBayesian(data) {
-            const config = MACHINE_CONFIG[data.mode];
-            // 必須項目チェック：失敗したらUIをリセットして終了
-            if (!data.totalG || data.bb === null || data.rb === null || data.ba === null) {
-                clearUI();
-                log("\nERROR: 必須データ抽出失敗。設定画面をリセットしました。");
-                return;
-            }
-
-            let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
-            for (let id in config) {
-                if(id === "name") continue;
-                const item = config[id]; const obs = data[id];
-                if (obs === null || obs <= 0) continue;
-                [1, 2, 5, 6].forEach(s => {
-                    const pExp = 1 / item.vals[s];
-                    const k = data.totalG / obs;
-                    logL[s] += k * Math.log(pExp / (1/obs)) + (data.totalG - k) * Math.log((1 - pExp) / (1 - 1/obs));
-                });
-            }
-            const maxLog = Math.max(logL[1], logL[2], logL[5], logL[6]);
-            let total = 0; let probs = {};
-            [1, 2, 5, 6].forEach(s => {
-                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
-                total += probs[s];
+            
+            // 各行をX座標順に並べ替えて1つの「行」として出力
+            logArea.innerText = ""; // 以前のログをクリア
+            rowArrays.forEach((row, index) => {
+                const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
+                log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
             });
-            [1, 2, 5, 6].forEach(s => {
-                const finalP = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = finalP + "%";
-                document.getElementById(`b${s}`).style.width = finalP + "%";
-            });
-            log("\n解析完了。");
         }
 
         const fileInput = document.getElementById('file-input');
@@ -177,7 +85,7 @@
             const key = document.getElementById('api-key').value;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Analyzing...";
+                logArea.innerText = "Analyzing image structure...\n";
                 try {
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
@@ -187,11 +95,9 @@
                     const json = await res.json();
                     const annotations = json.responses[0]?.textAnnotations;
                     if (annotations && annotations.length > 1) {
-                        const cleanText = processOcrRows(annotations);
-                        runBayesian(extractData(cleanText));
+                        processOcrRows(annotations);
                     } else {
-                        clearUI();
-                        log("OCR失敗。画面をリセットしました。");
+                        log("OCR Error: 文字が検出できませんでした。");
                     }
                 } catch (err) { log("ERROR: " + err.message); }
             };
