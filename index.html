@@ -3,101 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.13 DEBUG</title>
+    <title>みおちゃん専用 v1.1.14 LAB</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+JP:wght@900&display=swap');
         body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        
-        .cool-title {
-            font-size: 24px;
-            font-weight: 900;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.5));
-            line-height: 1.4;
-            padding-bottom: 4px;
-        }
-
-        .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
-        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 12px rgba(190,24,93,0.6); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; transition: all 0.2s; }
-        .main-btn:active { transform: scale(0.95); opacity: 0.9; }
-        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; }
-        .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 16px; font-size: 14px; width: 100%; outline: none; border: none; }
-        .debug-label { color: #fbbf24; font-weight: bold; font-size: 11px; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.1em; }
+        .cool-title { font-size: 24px; font-weight: 900; letter-spacing: -0.02em; background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.5)); line-height: 1.4; }
+        .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; }
+        .main-btn { background-color: #be185d; border-radius: 9999px; border: 2px solid #ec4899; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; }
+        .input-field { background-color: #1e293b; color: white; border-radius: 99px; padding: 8px 16px; font-size: 14px; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-3">
         <div class="cool-title">バーサスリヴァイズ ＆ 新ハナビ</div>
-        <div class="flex flex-col items-center">
-            <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold tracking-widest">REVISION 1.1.13 / THRESHOLD 15</p>
+        <p class="ver-text">みおちゃん専用 Revision 1.1.14</p>
+    </div>
+
+    <div class="w-full max-w-md mx-auto flex flex-col gap-3 mb-4 shrink-0">
+        <label for="file-input" class="main-btn py-3 text-white font-bold text-sm tracking-widest uppercase italic">① 画像を選択</label>
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+        
+        <div class="flex gap-2">
+            <input type="number" id="th-input" class="input-field w-1/3" value="15" placeholder="しきい値">
+            <button id="re-process" class="bg-blue-600 rounded-full flex-grow font-bold text-sm py-2">② この数値で再構築</button>
         </div>
     </div>
 
-    <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値15で生データを確認</label>
-        <input type="file" id="file-input" class="hidden" accept="image/*">
-    </div>
-
-    <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-4">
-        <span class="debug-label">▼ Raw Row Data Output (TH: 15)</span>
-        <div id="log" class="console-box">画像をアップロードしてください。</div>
+    <div class="w-full max-w-md mx-auto flex flex-grow min-h-0 mb-3">
+        <div id="log" class="console-box">画像をアップロードして、「しきい値調整」を開始して。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="api-input-dots flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-full text-[10px]">SET</button>
+        <input type="password" id="api-key" class="input-field flex-grow text-xs" placeholder="VISION API KEY">
+        <button id="save-key" class="bg-gray-700 text-white font-bold py-2 px-4 rounded-full text-[10px]">SET</button>
     </div>
 
     <script>
+        let lastAnnotations = null;
         const logArea = document.getElementById('log');
         const log = (msg) => { logArea.innerText += msg + "\n"; logArea.scrollTop = logArea.scrollHeight; };
 
-        function processOcrRows(annotations) {
-            const items = annotations.slice(1).map(ann => ({
+        function processRows(threshold) {
+            if (!lastAnnotations) return;
+            logArea.innerText = `--- しきい値: ${threshold} で再構築 --- \n`;
+            
+            const items = lastAnnotations.slice(1).map(ann => ({
                 text: ann.description,
                 x: (ann.boundingPoly.vertices[0].x + ann.boundingPoly.vertices[2].x) / 2,
                 y: (ann.boundingPoly.vertices[0].y + ann.boundingPoly.vertices[2].y) / 2
             }));
             
             items.sort((a, b) => a.y - b.y);
-            
             const rowArrays = []; 
             if (items.length > 0) {
                 let cur = [items[0]];
                 for (let i = 1; i < items.length; i++) {
-                    // しきい値を15に設定
-                    if (Math.abs(items[i].y - cur[0].y) < 15) {
-                        cur.push(items[i]);
-                    } else {
-                        rowArrays.push(cur);
-                        cur = [items[i]];
-                    }
+                    if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
+                    else { rowArrays.push(cur); cur = [items[i]]; }
                 }
                 rowArrays.push(cur);
             }
             
-            logArea.innerText = "";
             rowArrays.forEach((row, index) => {
                 const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
                 log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
             });
         }
 
+        document.getElementById('re-process').onclick = () => {
+            const th = parseInt(document.getElementById('th-input').value);
+            processRows(th);
+        };
+
         const fileInput = document.getElementById('file-input');
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('API KEY SAVED'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('KEY SAVED'); };
 
         fileInput.onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const key = document.getElementById('api-key').value;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Analyzing image structure...\n";
+                logArea.innerText = "API通信中...\n";
                 try {
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
@@ -105,10 +94,8 @@
                         headers: { 'Content-Type': 'application/json' }
                     });
                     const json = await res.json();
-                    const annotations = json.responses[0]?.textAnnotations;
-                    if (annotations && annotations.length > 1) {
-                        processOcrRows(annotations);
-                    }
+                    lastAnnotations = json.responses[0]?.textAnnotations;
+                    if (lastAnnotations) processRows(parseInt(document.getElementById('th-input').value));
                 } catch (err) { log("ERROR: " + err.message); }
             };
         };
