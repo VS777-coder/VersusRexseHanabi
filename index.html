@@ -3,40 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.1.10 DEBUG</title>
+    <title>みおちゃん専用 v1.1.12 DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@900&family=Noto+Sans+JP:wght@900&display=swap');
+        body { background-color: #0f1219; color: #ffffff; font-family: 'Inter', 'Noto Sans JP', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        /* 磨きをかけたタイトルデザイン */
+        .cool-title {
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #60a5fa 0%, #f472b6 50%, #fb923c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 12px rgba(244, 114, 182, 0.5));
+            line-height: 1.4;
+            padding-bottom: 4px;
+        }
+
         .ver-text { color: #f472b6; font-weight: bold; font-size: 12px; margin-top: 2px; }
-        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 10px rgba(190,24,93,0.5); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; }
-        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; line-height: 1.5; }
-        .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 12px; font-size: 14px; width: 100%; outline: none; border: none; }
-        .debug-label { color: #fbbf24; font-weight: bold; font-size: 10px; margin-bottom: 4px; display: block; }
+        .main-btn { background-color: #be185d; border-radius: 9999px; box-shadow: 0 4px 12px rgba(190,24,93,0.6); border: 2px solid #ec4899; text-align: center; cursor: pointer; display: block; transition: all 0.2s; }
+        .main-btn:active { transform: scale(0.95); opacity: 0.9; }
+        .console-box { background-color: #000000; border: 1px solid #22c55e; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 11px; color: #4ade80; flex-grow: 1; min-height: 0; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; }
+        .api-input-dots { background-color: #1e293b; color: white; border-radius: 99px; padding: 6px 16px; font-size: 14px; width: 100%; outline: none; border: none; }
+        .debug-label { color: #fbbf24; font-weight: bold; font-size: 11px; margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.1em; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-3">
-        <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
+        <div class="cool-title">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.1.10 (Row Debug: TH30)</p>
+            <p class="text-[10px] text-gray-400 font-bold tracking-widest">REVISION 1.1.12 / THRESHOLD 40</p>
         </div>
     </div>
 
     <div class="w-full shrink-0 mb-4 relative max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値30で解析</label>
+        <label for="file-input" class="main-btn w-full py-3 text-white font-bold text-sm tracking-widest uppercase italic">しきい値40で生データを確認</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
     <div class="w-full max-w-md mx-auto flex flex-col flex-grow min-h-0 mb-4">
-        <span class="debug-label">▼ 復元された行データ (しきい値: 30)</span>
+        <span class="debug-label">▼ Raw Row Data Output (TH: 40)</span>
         <div id="log" class="console-box">画像をアップロードしてください。</div>
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input-dots flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-pink-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SET</button>
+        <button id="save-key" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-full text-[10px]">SET</button>
     </div>
 
     <script>
@@ -56,8 +71,8 @@
             if (items.length > 0) {
                 let cur = [items[0]];
                 for (let i = 1; i < items.length; i++) {
-                    // 指示通り：しきい値を30に設定
-                    if (Math.abs(items[i].y - cur[0].y) < 30) {
+                    // 指示通り：しきい値を40に設定
+                    if (Math.abs(items[i].y - cur[0].y) < 40) {
                         cur.push(items[i]);
                     } else {
                         rowArrays.push(cur);
@@ -69,6 +84,7 @@
             
             logArea.innerText = "";
             rowArrays.forEach((row, index) => {
+                // X座標でソートして「行」として出力
                 const rowText = row.sort((a, b) => a.x - b.x).map(it => it.text).join(' ');
                 log(`[Line ${String(index + 1).padStart(2, '0')}] ${rowText}`);
             });
@@ -83,7 +99,7 @@
             const key = document.getElementById('api-key').value;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                logArea.innerText = "Analyzing...\n";
+                logArea.innerText = "Analyzing image structure...\n";
                 try {
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
