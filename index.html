@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおちゃん専用 v1.0.6</title>
+    <title>みおちゃん専用 v1.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -22,7 +22,7 @@
         <div class="text-xl font-black tracking-tighter text-white leading-tight">バーサスリヴァイズ ＆ 新ハナビ</div>
         <div class="flex flex-col items-center">
             <p class="ver-text">みおちゃん専用</p>
-            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.6</p>
+            <p class="text-[10px] text-gray-400 font-bold">Revision 1.0.7</p>
         </div>
     </div>
 
@@ -94,30 +94,35 @@
                 else { rowArrays.push(cur); cur = [items[i]]; }
             }
             rowArrays.push(cur);
-            // 行ごとにX座標でソートして結合
             return rowArrays.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' '));
         }
 
         function extractData(rows) {
             logArea.innerText = "";
-            const fullText = rows.join('\n');
+            const fullText = rows.join(' ');
             let mode = fullText.includes("新ハナビ") ? "HANABI" : "VERSUS";
             const config = MACHINE_CONFIG[mode];
             log(`▶ 判別機種: ${config.name}`);
 
-            const totalGRow = rows.find(r => r.includes("プレイ数"));
+            // 総プレイ数抽出
+            const totalGRow = rows.find(r => r.match(/プレイ\s*数/));
             const totalG = totalGRow ? parseInt(totalGRow.match(/([\d,]+)G/)?.[1].replace(/,/g, '')) : null;
             if (totalG) log(`総プレイ数: ${totalG}G`);
 
-            const bbRow = rows.find(r => r.match(/(?:総|#)?\s*B\s*B/));
+            // BB回数抽出
+            const bbRow = rows.find(r => r.match(/B\s*B/));
             const bbCount = bbRow ? parseInt(bbRow.match(/([\d,]+)回/)?.[1].replace(/,/g, '')) : 0;
 
             let extracted = { mode: mode, totalG: totalG, bbCount: bbCount };
             for (let id in config) {
                 if(id === "name") continue;
                 const item = config[id];
-                // 合算を含まず、かつ項目名を含む「行」を特定
-                const targetRow = rows.find(r => r.includes(item.key) && !r.includes("合算"));
+                // 修正：スペースを許容する柔軟なマッチング
+                const fuzzyKey = item.key.split('').join('\\s*');
+                const regex = new RegExp(fuzzyKey);
+                
+                // 「合算」を含まない行の中で、キーがマッチする行を探す
+                const targetRow = rows.find(r => regex.test(r) && !r.includes("合算"));
                 if (targetRow) {
                     const match = targetRow.match(/[1I!ｌ]\s*[\/／]\s*([\d,.]+|--?)/);
                     if (match) {
@@ -134,9 +139,10 @@
 
         function runBayesian(data) {
             const config = MACHINE_CONFIG[data.mode];
-            if (!data.totalG || data.ba === null) {
-                log("\nERROR: 解析に必要なデータが不足しています。"); return;
-            }
+            // 何が足りないか具体的にログを出す
+            if (!data.totalG) { log("ERROR: 総プレイ数が取得できません。"); return; }
+            if (data.ba === null) { log("ERROR: ベルA/風鈴Aが取得できません。"); return; }
+
             let logL = { 1: Math.log(PRIOR_DIST[1]), 2: Math.log(PRIOR_DIST[2]), 5: Math.log(PRIOR_DIST[5]), 6: Math.log(PRIOR_DIST[6]) };
             const weightG = 1.0 + (data.totalG / 2000);
             const weightBB = 1.0 + (data.bbCount / 10);
