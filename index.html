@@ -100,10 +100,9 @@
                     const pExp = 1 / item.vals[s];
                     let w = item.w || 1.0;
                     if (item.type === "small") w *= dw;
-                    // n（試行数）の決定。RT中は回数*確率、通常は総プレイ数
-                    const n = (item.type === "rt") ? (data.count * data.prob) : session.n;
+                    const n = (item.type === "rt") ? (Math.max(1, data.count) * data.prob) : session.n;
                     const k = data.count;
-                    // ベイズ公式（対数尤度）
+                    // ベイズ公式：0回でもk=0として正しく計算に反映
                     logL[s] += w * (k * Math.log(pExp / (k/n || 0.0001)) + (n - k) * Math.log((1 - pExp) / (1 - (k/n || 0.0001))));
                 });
             }
@@ -145,8 +144,9 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                // しきい値を 2.6倍に設定（行の混線を防ぐ）
-                const threshold = avgHeight * 2.6;
+                
+                // 行の混線を防ぐため、しきい値を 2.5倍前後に引き締め
+                const threshold = Math.max(avgHeight * 2.5, 25);
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -175,15 +175,13 @@
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                // 1. 総ゲーム数の抽出（最優先・厳密に）
-                const totalRegex = new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`);
-                const totalMatch = rawContent.match(totalRegex);
-                if (totalMatch) {
-                    session.n = parseInt(totalMatch[1].replace(/,/g, ''));
+                // 総ゲーム数を先に特定
+                const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,50}?([\\d,]+)G`));
+                if (totalM) {
+                    session.n = parseInt(totalM[1].replace(/,/g, ''));
                     addLog(`[OK] TOTAL: ${session.n}G`);
                 }
 
-                // 2. 各項目の抽出
                 for (let key in config) {
                     const item = config[key];
                     if (item.type === "total") continue;
@@ -194,30 +192,22 @@
                         if (am) area = rawContent.substring(am.index);
                     }
 
-                    // 項目名から改行までを探す
-                    const lineRegex = new RegExp(`${item.key}[\\s\\S]{0,80}?(?=\\n|$)`, 'i');
-                    const match = area.match(lineRegex);
+                    const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
+                    const match = area.match(regex);
                     if (match) {
                         const text = match[0];
-                        const nums = text.match(/[\d,.]+/g);
-                        if (nums) {
-                            // 回数(X回)または(0回)を最優先で探す
-                            const countMatch = text.match(/(\d+)\s*回/);
-                            let count = countMatch ? parseInt(countMatch[1]) : null;
-                            
-                            // 確率(1/X)を探す
-                            const probMatch = text.match(/1\s*\/\s*([\d.]+)/);
-                            let prob = probMatch ? parseFloat(probMatch[1]) : null;
+                        // 【ロジック刷新】「回」の直前の数字を回数、「1/」の直後を確率として抽出
+                        const countM = text.match(/([\d,]+)\s*回/);
+                        const probM = text.match(/1\s*\/\s*([\d,.]+)/);
 
-                            // 回数がnullで確率だけある場合の補完
-                            if (count === null && prob) {
-                                count = Math.round(session.n / prob);
-                            }
+                        let count = countM ? parseInt(countM[1].replace(/,/g, '')) : null;
+                        let prob = probM ? parseFloat(probM[1].replace(/,/g, '')) : null;
 
-                            if (count !== null) {
-                                session.extracted[item.id] = { count, prob: prob || 1.0 };
-                                addLog(`[OK] ${item.name}: ${count}回${prob ? " (1/" + prob + ")" : ""}`);
-                            }
+                        // 補完ロジック
+                        if (count === null && prob) count = Math.round(session.n / prob);
+                        if (count !== null) {
+                            session.extracted[item.id] = { count, prob: prob || (session.n / count) || 1.0 };
+                            addLog(`[OK] ${item.name}: ${count}回${prob ? " (1/" + prob + ")" : ""}`);
                         }
                     }
                 }
