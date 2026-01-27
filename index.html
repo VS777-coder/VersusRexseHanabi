@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6 (Perfect Stable)</title>
+    <title>みおの解析 1.1.8 (Final Stable)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-2">
         <div class="text-3xl font-black kawaii-title tracking-tighter leading-none">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.6</p>
+        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.8</p>
     </div>
 
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // 【定義は維持】ただし検索キーをOCRのバラつきに強く修正
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -72,14 +71,14 @@
                 total: { key: "総プレイ数", label: "総プレイ数", type: "total" },
                 bb:   { key: "#BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
                 rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
-                ba:   { key: "風鈴A", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
-                bb2:  { key: "風鈴B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
+                ba:   { key: "A", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
+                bb2:  { key: "風B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
                 sa:   { key: "氷A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
-                ca2:  { key: "チェリーA2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
+                ca2:  { key: "A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
                 cb:   { key: "チェリーB", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
                 vc:   { key: "チャレンジ中はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
                 vg:   { key: "GAME中はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                nb:   { key: "風鈴斜め揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
+                nb:   { key: "斜め揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
                 bk:   { key: "バラケ目", label: "バラケ目", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4}, w: 1.5 },
                 rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB中詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
             }
@@ -145,51 +144,77 @@
             });
         }
 
-        // 【スマホ対応の抽出ロジック】
         function extractData(rawText) {
-            // スペースをすべて除去して検索用の平滑化テキストを作成
-            const cleanText = rawText.replace(/[ 　\n]/g, "");
-            sessionBuffer.activeMode = (cleanText.includes("ハナビ")) ? "HANABI" : "VERSUS";
+            const lines = rawText.split('\n').map(l => l.replace(/[ 　]/g, ""));
+            const cleanFullText = lines.join("");
+            sessionBuffer.activeMode = (cleanFullText.includes("ハナビ")) ? "HANABI" : "VERSUS";
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
             sessionBuffer.extracted = {};
+
+            let lastFoundIdx = 0; // 順序を守って検索するためのインデックス
 
             for (let id in config) {
                 if (id === "name") continue;
                 const item = config[id];
-                let searchRange = cleanText;
+                let foundIdx = -1;
 
-                // アンカーがある場合はそこから後ろを見る
-                if (item.anchor) {
-                    const anchorIdx = cleanText.indexOf(item.anchor);
-                    if (anchorIdx !== -1) searchRange = cleanText.substring(anchorIdx);
-                    else { sessionBuffer.extracted[id] = { prob: null, count: null }; continue; }
+                // キーワードの検索（ハナビのA問題対策としてlastFoundIdxから開始）
+                for (let i = lastFoundIdx; i < lines.length; i++) {
+                    if (lines[i].includes(item.key)) {
+                        // ハナビの"A"が"氷A"や"チェリーA"に誤爆するのを防ぐ
+                        if (sessionBuffer.activeMode === "HANABI" && id === "ba") {
+                            if (lines[i].includes("氷") || lines[i].includes("チェリー")) continue;
+                        }
+                        foundIdx = i;
+                        lastFoundIdx = i;
+                        break;
+                    }
                 }
 
-                const keyIdx = searchRange.indexOf(item.key);
-                if (keyIdx !== -1) {
-                    // 項目の前後45文字を切り出して数値を探す（ウィンドウサーチ）
-                    const context = searchRange.substring(Math.max(0, keyIdx - 35), keyIdx + 55);
-                    
+                if (foundIdx !== -1) {
+                    // 周辺3行をコンテキストとして取得
+                    let windowLines = [];
+                    if (foundIdx > 0) windowLines.push(lines[foundIdx - 1]);
+                    windowLines.push(lines[foundIdx]);
+                    if (foundIdx < lines.length - 1) windowLines.push(lines[foundIdx + 1]);
+                    const contextStr = windowLines.join(" ");
+
                     if (item.type === "total") {
-                        const m = context.match(/([\d,]{3,})G/); // 3桁以上の数字+G
+                        const m = contextStr.match(/([\d,]{3,})G/);
                         sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
                         sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
                         continue;
                     }
 
-                    if (context.includes("/-")) {
-                        sessionBuffer.extracted[id] = { prob: 0, count: 0 };
-                        continue;
+                    // 確率の抽出 (1/XX または XX.X)
+                    let prob = null;
+                    const probMatch = contextStr.match(/1\/([\d\.]+)|(\d+\.\d+)/);
+                    if (probMatch) prob = parseFloat(probMatch[1] || probMatch[2]);
+
+                    // 回数の抽出
+                    let count = 0;
+                    const countWithUnit = contextStr.match(/(\d+)回/);
+                    if (countWithUnit) {
+                        count = parseInt(countWithUnit[1]);
+                    } else {
+                        // 単位がない場合、数字の羅列からもっともらしいものを探す
+                        const allNums = contextStr.match(/\d+/g);
+                        if (allNums) {
+                            const filtered = allNums.map(n => parseInt(n)).filter(n => n > 1 && n !== Math.floor(prob || -1));
+                            if (filtered.length > 0) {
+                                count = filtered[0];
+                                // OCRの結合ミス（246回 -> 2460）の補正
+                                if (sessionBuffer.totalG > 0 && count > sessionBuffer.totalG) {
+                                    count = parseInt(count.toString().slice(0, -1));
+                                }
+                            }
+                        }
                     }
 
-                    const nums = context.match(/[\d\.]+/g);
-                    if (nums) {
-                        const filtered = nums.map(n => n.replace(/,/g, '')).filter(n => n !== "1");
-                        const probStr = filtered.find(n => n.includes('.')) || filtered[filtered.length - 1];
-                        const prob = parseFloat(probStr);
-                        const countCandidate = filtered.filter(n => !n.includes('.') && parseInt(n) > 1 && parseInt(n) !== Math.floor(prob));
-                        sessionBuffer.extracted[id] = { prob: prob, count: countCandidate.length > 0 ? parseInt(countCandidate[0]) : 0 };
-                    }
+                    if (contextStr.includes("/-")) { prob = 0; count = 0; }
+                    sessionBuffer.extracted[id] = { prob, count };
+                } else {
+                    sessionBuffer.extracted[id] = { prob: null, count: null };
                 }
             }
             renderBufferTable(rawText);
