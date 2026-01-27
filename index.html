@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.2.1</title>
+    <title>みおの解析 1.2.2 (Final Mobile)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.2.1</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.2.2</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -46,19 +46,19 @@
     </div>
 
     <script>
-        // 【Rev 1.2.1】 MASTER_CONFIG: スペース混入対策済みのキー定義
+        // 【Rev 1.2.2】 モバイルOCR特有の「文字揺れ」と「分断」をすべてカバーする正規表現
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
                 total: { key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "#\\s*BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
                 rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
-                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "バーサスチャンスはずれ", key: "チャンス中[\\s\\S]{0,5}はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                vg:   { id: "vg", name: "バーサスゲームはずれ", key: "GAME中[\\s\\S]{0,5}はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
+                ba:   { id: "ba", name: "ベルA", key: "(?:ベル|ベル\\s*)A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "ベルB", key: "(?:ベル|ベル\\s*)B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
+                sa:   { id: "sa", name: "スイカA", key: "(?:スイカ|スイカ\\s*)A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", key: "(?:チェリー|チェリー\\s*)B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "バーサスチャンスはずれ", key: "(?:VS|VS\\s*)?チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
+                vg:   { id: "vg", name: "バーサスゲームはずれ", key: "(?:VSGAME|GAME)\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
                 cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "small", anchor: "BB\\s*中\\s*詳細" },
                 cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "small", anchor: "BB\\s*中\\s*詳細" }
             },
@@ -67,14 +67,14 @@
                 total: { key: "総\\s*プレイ\\s*数", type: "total" },
                 bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
                 rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "風鈴A", key: "風鈴\\s*A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small" },
-                bb_b: { id: "bb_b", name: "風鈴B", key: "風鈴\\s*B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small" },
-                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small" },
-                ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "チャレンジ中[\\s\\S]{0,5}はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                vg:   { id: "vg", name: "ハナビゲームはずれ", key: "GAME中[\\s\\S]{0,5}はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                nf:   { id: "nf", name: "斜め風鈴", key: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB\\s*中\\s*詳細" }
+                ba:   { id: "ba", name: "風鈴A", key: "(?:風鈴|風|A)\\s*A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風|B)\\s*B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small" },
+                ice:  { id: "ice", name: "氷A", key: "(?:氷|氷\\s*)A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small" },
+                ca2:  { id: "ca2", name: "チェリーA2", key: "(?:チェリー|チェリー\\s*)A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", key: "(?:チェリー|チェリー\\s*)B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "(?:花火|ハナビ)?\\s*チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
+                vg:   { id: "vg", name: "ハナビゲームはずれ", key: "(?:花火|ハナビ)?\\s*GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
+                nf:   { id: "nf", name: "斜め風鈴", key: "(?:斜め風鈴|風鈴\\s*斜め)", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB\\s*中\\s*詳細" }
             }
         };
 
@@ -90,12 +90,12 @@
             addLog("INITIALIZING BAYESIAN ENGINE...");
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            let dw = session.n < 500 ? 0.2 : session.n < 1000 ? 0.4 : session.n < 2000 ? 0.7 : session.n < 4000 ? 1.0 : session.n < 6000 ? 1.3 : session.n < 8000 ? 1.6 : 2.0;
+            let dw = session.n < 1000 ? 0.4 : session.n < 3000 ? 0.8 : session.n < 6000 ? 1.2 : 1.6;
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = Object.values(config).find(v => v.id === id);
-                if (!item || data.prob === null || data.prob === 0) continue;
+                if (!item || !data.prob || data.prob < 2.0) continue; // 異常値(1/1等)は除外
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
@@ -145,9 +145,9 @@
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
                 
-                // --- 【修正】しきい値を1.5倍に引き上げ ---
-                const threshold = avgHeight * 1.5;
-                addLog(`[DEBUG] DYNAMIC THRESHOLD: ${threshold.toFixed(1)}px (AVG_H: ${avgHeight.toFixed(1)})`);
+                // --- 【究極調整】しきい値を3.0倍へ。段ズレを完全に許容する ---
+                const threshold = avgHeight * 3.0;
+                addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px (AVG_H: ${avgHeight.toFixed(1)})`);
 
                 let lines = [];
                 words.forEach(word => {
@@ -166,11 +166,11 @@
                     .map(l => l.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "))
                     .join("\n");
 
-                addLog("--- [RECONSTRUCTED RAW DATA] ---");
-                addLog(rawContent);
+                addLog("--- [RAW DATA] ---");
+                addLog(rawContent.substring(0, 1000) + "..."); // ログ圧迫防止
                 
-                session.mode = (rawContent.includes("ハナビ") || rawContent.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-                addLog(`DETECTED MODE: ${session.mode}`);
+                session.mode = (rawContent.includes("ハナビ") || rawContent.includes("ハナ ビ") || rawContent.includes("新 ハナビ")) ? "HANABI" : "VERSUS";
+                addLog(`DETECTED: ${session.mode}`);
                 
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
@@ -185,27 +185,29 @@
                         if (am) searchArea = rawContent.substring(am.index);
                     }
 
-                    // 数値抽出を改行またぎも含めて少し柔軟に（sフラグは使わず調整）
                     if (item.type === "total") {
                         const m = rawContent.match(new RegExp(`${item.key}[\\s\\S]{0,50}?([\\d,]+)G`));
                         if (m) {
                             session.n = parseInt(m[1].replace(/,/g, ''));
-                            addLog(`[EXTRACTED] TOTAL: ${session.n}G`);
+                            addLog(`[OK] TOTAL: ${session.n}G`);
                         }
                         continue;
                     }
 
-                    const lineMatch = searchArea.match(new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`));
+                    // 改行やゴミを跨いで数値を拾うための正規表現
+                    const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
+                    const lineMatch = searchArea.match(regex);
                     if (lineMatch) {
                         const nums = lineMatch[0].match(/[\d,.]+/g);
-                        if (nums) {
-                            addLog(`[MATCHED] ${item.name}: "${lineMatch[0].trim()}"`);
-                            const decimal = nums.find(n => n.includes('.'));
-                            const validCounts = nums.filter(n => !n.includes('.') && parseInt(n.replace(/,/g,'')) > 1);
+                        if (nums && nums.length >= 1) {
+                            const decimal = nums.find(n => n.includes('.') && parseFloat(n) > 1.0);
+                            const lastNum = nums[nums.length - 1].replace(/,/g,'');
+                            
                             session.extracted[item.id] = { 
-                                prob: decimal ? parseFloat(decimal) : parseFloat(nums[nums.length-1]),
-                                count: validCounts.length > 0 ? Math.max(...validCounts.map(n=>parseInt(n.replace(/,/g,'')))) : (parseInt(nums[0]) || 0)
+                                prob: decimal ? parseFloat(decimal) : parseFloat(lastNum),
+                                count: nums.length > 1 ? parseInt(nums[0].replace(/,/g,'')) : 0
                             };
+                            addLog(`[OK] ${item.name}: 1/${session.extracted[item.id].prob}`);
                         }
                     }
                 }
