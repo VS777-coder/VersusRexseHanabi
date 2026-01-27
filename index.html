@@ -89,9 +89,8 @@
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             
-            // BB回数の逆算（定義に基づく）
-            const bbProb = session.extracted['bb'] ? session.extracted['bb'].prob : 0;
-            const k_bb = bbProb > 0 ? Math.round(session.n / bbProb) : 0;
+            const bbData = session.extracted['bb'];
+            const k_bb = (bbData && bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
             addLog(`ESTIMATED BB COUNT: ${k_bb}`);
 
             for (let id in session.extracted) {
@@ -99,20 +98,16 @@
                 const item = config[id];
                 if (!item || item.type === "total") continue;
 
-                // 試行数(n)の決定定義
-                let n_trial = session.n; // 通常時デフォルト
+                let n_trial = session.n; 
                 if (item.type === "rt_vc") n_trial = k_bb * 15;
                 if (item.type === "rt_vg") n_trial = k_bb * 20;
                 if (item.type === "bb_detail") n_trial = k_bb * 25;
 
-                // 出現数(k)の決定定義（確率分母から逆算）
-                // data.prob が 0 (1/-) の場合は k=0 とする
                 const k_event = data.prob > 0 ? n_trial / data.prob : 0;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     const w = item.w || 1.0;
-                    // ベイズ推論計算
                     logL[s] += w * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
                 });
             }
@@ -175,11 +170,12 @@
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                // 総ゲーム数抽出
                 const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`));
                 if (totalM) {
                     session.n = parseInt(totalM[1].replace(/,/g, ''));
                     addLog(`[OK] 総プレイ数: ${session.n}G`);
+                } else {
+                    addLog(`[ERROR] 総プレイ数: 抽出失敗`);
                 }
 
                 for (let key in config) {
@@ -192,22 +188,31 @@
                         if (am) area = rawContent.substring(am.index);
                     }
 
+                    // 改良：エラー検知用ロジックを追加
                     const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
                     const match = area.match(regex);
                     if (match) {
                         const text = match[0];
-                        // 確率（1/X）のみを抽出ロジックに特化
                         if (text.includes('-')) {
                             session.extracted[item.id] = { prob: 0 };
                             addLog(`[OK] ${item.name}: 1/- (0回)`);
                         } else {
-                            const probM = text.match(/1\s*\/\s*([\d,.]+)/);
-                            if (probM) {
-                                const prob = parseFloat(probM[1].replace(/,/g, ''));
+                            const nums = text.match(/[\d,.]+/g);
+                            if (nums) {
+                                const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                const lastNum = nums[nums.length - 1].replace(/,/g, '');
+                                const prob = decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(lastNum);
+                                
                                 session.extracted[item.id] = { prob };
                                 addLog(`[OK] ${item.name}: 1/${prob}`);
+                            } else {
+                                // 項目は見つかったが数値がない場合
+                                addLog(`[ERROR] ${item.name}: 確率データ未検出`);
                             }
                         }
+                    } else {
+                        // 項目自体がOCRデータに見当たらない場合
+                        addLog(`[ERROR] ${item.name}: 項目が見つかりません`);
                     }
                 }
                 runBayesian();
