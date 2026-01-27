@@ -3,195 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.13-Debug</title>
+    <title>みおの生データ確認 1.1.13-Raw</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; height: 30vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
-        .future-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 55vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; }
-        .bar-bg { background-color: #0d1117; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
-        .log-tag { color: #ff0080; font-weight: bold; }
-        .log-success { color: #00ffcc; }
-        .log-warn { color: #facc15; }
-        .log-fail { color: #f87171; }
+        body { background-color: #0d0f14; color: #ffffff; font-family: monospace; padding: 12px; }
+        .main-btn { background: #334155; border: 2px solid #fff; border-radius: 8px; width: 100%; py: 16px; font-weight: bold; }
+        .raw-log { background-color: #000; border: 1px solid #00ffcc; border-radius: 8px; padding: 12px; font-size: 12px; color: #00ffcc; white-space: pre-wrap; height: 80vh; overflow-y: auto; margin-top: 12px; }
     </style>
 </head>
 <body>
-    <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
-            ユニメモ解析<br><span class="text-sm">Rev 1.1.13 DEBUG MODE</span>
-        </label>
-        <input type="file" id="file-input" class="hidden" accept="image/*">
-    </div>
+    <label for="file-input" class="main-btn flex items-center justify-center p-4 cursor-pointer">
+        画像をアップロードして生テキストを確認
+    </label>
+    <input type="file" id="file-input" class="hidden" accept="image/*">
+    <input type="password" id="api-key" class="mt-2 w-full p-2 bg-gray-800 text-white text-xs" placeholder="API KEY">
 
-    <div class="w-full max-w-md mx-auto graph-area">
-        <div><div class="flex justify-between font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
-    </div>
-
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">デバッグログ待機中...</div>
-    <input type="password" id="api-key" class="hidden">
+    <div id="log" class="raw-log">ここにOCRの生データが表示されます。</div>
 
     <script>
-        const MASTER_CONFIG = {
-            "VERSUS": {
-                name: "VERSUS",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb:   { key: "BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6 },
-                ba:   { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
-                bb2:  { key: "ベル\\s*B", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
-                sa:   { key: "スイカ\\s*A", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
-                vc:   { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", limit: 15 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", limit: 20 },
-                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            },
-            "HANABI": {
-                name: "HANABI",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb:   { key: "BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
-                ba:   { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
-                bb2:  { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
-                sa:   { key: "氷\\s*A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
-                ca2:  { key: "チェリー\\s*A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
-                vc:   { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", limit: 15 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", limit: 20 },
-                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            }
-        };
-
-        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
-
-        function addLog(msg, type = "") {
-            const logDiv = document.getElementById('log');
-            const span = document.createElement('span');
-            span.className = type === "success" ? "log-success" : type === "warn" ? "log-warn" : type === "fail" ? "log-fail" : "";
-            span.innerHTML = msg + "\n";
-            logDiv.appendChild(span);
-            logDiv.scrollTop = logDiv.scrollHeight;
-        }
-
-        function extractData(rawText) {
-            document.getElementById('log').innerHTML = "";
-            addLog(`■ [STEP: 分析] OCRデータの構造解析`, "log-tag");
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            addLog(`[MODE] Detected: ${sessionBuffer.activeMode}`, "success");
-
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-
-            // 総プレイ数抽出
-            const totalMatch = rawText.match(/(?:総|プレイ|数)[\s\S]{0,100}?([\d,]+)\s*G/i);
-            sessionBuffer.totalG = totalMatch ? parseInt(totalMatch[1].replace(/,/g, '')) : 0;
-            if (sessionBuffer.totalG > 0) addLog(`[SUCCESS] 総プレイ数確定: ${sessionBuffer.totalG} G`, "success");
-            else addLog(`[WARN] 総プレイ数が未検出です。`, "warn");
-
-            for (let id in config) {
-                if (id === "name" || id === "total") continue;
-                const item = config[id];
-                addLog(`--------------------`);
-                addLog(`CHECK: [${item.label}]`);
-
-                let searchText = rawText;
-                if (item.anchor) {
-                    const am = rawText.match(new RegExp(item.anchor));
-                    if (am) searchText = rawText.substring(am.index);
-                }
-
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}`);
-                const m = searchText.match(regex);
-                if (!m) { addLog(`  -> [FAIL] キーワードが見つかりません。`, "fail"); continue; }
-
-                const segment = m[0].split('\n')[0]; // 1行に限定
-                addLog(`  RAW: "${segment}"`);
-
-                const allNums = (segment.match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
-                if (allNums.length < 1) { addLog(`  -> [FAIL] 数値が見つかりません。`, "fail"); continue; }
-
-                // 順不同仕分けロジック
-                let probVal = allNums.find(n => n.includes('.')) || allNums.sort((a,b) => b.length - a.length)[0];
-                let countVal = allNums.find(n => !n.includes('.') && n !== probVal && n !== "1") || allNums[0];
-
-                let p = parseFloat(probVal);
-                let c = parseInt(countVal);
-
-                // スロットの構造的整合性チェック
-                const bbCount = sessionBuffer.extracted['bb']?.count || 0;
-                let isSafe = false;
-
-                if (item.type === "rt" && bbCount > 0) {
-                    // RT項目の検証：ぷりんちゃん定義 (15G/20G)
-                    const expectedMax = bbCount * item.limit;
-                    const actualRT = c * p;
-                    if (actualRT <= expectedMax * 1.3) isSafe = true; 
-                    addLog(`  -> 検証: 消化${Math.round(actualRT)}G / 期待上限${expectedMax}G`);
-                } else if (sessionBuffer.totalG > 0) {
-                    // 通常項目の検証：総プレイ数との乖離
-                    const check = c * p;
-                    const diff = Math.abs(check - sessionBuffer.totalG) / sessionBuffer.totalG;
-                    if (diff < 0.15) isSafe = true;
-                    else {
-                        // スワップ試行
-                        if (Math.abs((p*c) - sessionBuffer.totalG) / sessionBuffer.totalG < 0.15) {
-                            [p, c] = [c, p]; isSafe = true; addLog(`  -> [INFO] 数値スワップ適用`);
-                        }
-                    }
-                }
-
-                if (isSafe || sessionBuffer.totalG === 0) {
-                    sessionBuffer.extracted[id] = { prob: p, count: Math.round(c) };
-                    addLog(`  -> [SAFE] 抽出成功: ${Math.round(c)}回 (1/${p})`, "success");
-                } else {
-                    addLog(`  -> [WARN] 整合性不一致により棄却。`, "warn");
-                }
-            }
-            addLog(`\n■ 分析終了。ぷりんちゃんの判断を待ちます。`, "log-tag");
-            runBayesian();
-        }
-
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            if (!sessionBuffer.totalG) return;
-
-            for (let id in sessionBuffer.extracted) {
-                const data = sessionBuffer.extracted[id];
-                const item = config[id];
-                if (!item || !data.prob) continue;
-                [1, 2, 5, 6].forEach(s => {
-                    if (logL[s] === -Infinity) return;
-                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
-                    const pExp = 1 / item.vals[s];
-                    const n = (item.type === "rt") ? (data.count * data.prob) : sessionBuffer.totalG;
-                    const k = data.count;
-                    if (n > 0) logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
-                });
-            }
-            const activeScores = Object.values(logL).filter(v => v !== -Infinity);
-            const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
-            let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => { probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog); total += probs[s]; });
-            [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
-            });
-        }
-
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
+            localStorage.setItem('v_key', document.getElementById('api-key').value);
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                addLog("API Requesting...", "warn");
+                document.getElementById('log').innerText = "OCR解析中...";
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
                     body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
@@ -199,10 +36,20 @@
                 });
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
+                
                 if (ann) {
-                    const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-                    const maxY = Math.max(...items.map(it => it.y)), minY = Math.min(...items.map(it => it.y));
-                    const threshold = (maxY - minY) * 0.012; // 1.2%
+                    const items = ann.slice(1).map(a => ({
+                        text: a.description,
+                        x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2,
+                        y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2
+                    }));
+
+                    // 動的しきい値の計算
+                    const maxY = Math.max(...items.map(it => it.y));
+                    const minY = Math.min(...items.map(it => it.y));
+                    const threshold = (maxY - minY) * 0.015;
+
+                    // 座標ソート
                     items.sort((a, b) => a.y - b.y);
                     let rows = [], cur = [items[0]];
                     for (let i = 1; i < items.length; i++) {
@@ -210,8 +57,17 @@
                         else { rows.push(cur); cur = [items[i]]; }
                     }
                     rows.push(cur);
+
+                    // 1行ずつ結合して出力
                     const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    extractData(rawText);
+                    
+                    document.getElementById('log').innerHTML = 
+                        `【画像サイズ（Y軸範囲）】: ${maxY - minY}px\n` +
+                        `【計算された行判定閾値】: ${threshold.toFixed(2)}px\n` +
+                        `------------------------------------------\n` +
+                        rawText;
+                } else {
+                    document.getElementById('log').innerText = "文字が検出できませんでした。";
                 }
             };
         };
