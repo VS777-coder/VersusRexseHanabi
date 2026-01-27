@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.0.0</title>
+    <title>みおの解析 1.0.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.4; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,255,204,0.1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.0.0</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.0.1</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer">
             ユニメモ<br>解析実行
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
@@ -38,7 +38,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">SYSTEM READY.</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY.</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
@@ -88,7 +88,7 @@
         function runBayesian() {
             addLog("INITIALIZING DECIMAL ENGINE...");
             const config = MASTER_CONFIG[session.mode];
-            if (!session.n) return addLog("[ERROR] TOTAL PLAYS MISSING.");
+            if (!session.n || session.n === 0) return addLog("[ERROR] TOTAL G IS 0.");
 
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             const bbData = session.extracted['bb'];
@@ -133,8 +133,7 @@
         async function analyze(file) {
             const logElement = document.getElementById('log');
             logElement.innerText = ">> BOOTING ANALYZER...";
-            const reader = new FileReader(); 
-            reader.readAsDataURL(file);
+            const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
@@ -164,7 +163,7 @@
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent.substring(0, 500) + "...");
+                addLog(rawContent);
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ") || rawContent.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
@@ -176,8 +175,6 @@
                 if (totalM) {
                     session.n = parseInt(totalM[1].replace(/[,.]/g, ''));
                     addLog(`[OK] 総プレイ数: ${session.n.toFixed(1)}G`);
-                } else {
-                    addLog(`[ERROR] 総プレイ数: 抽出失敗`);
                 }
 
                 for (let key in config) {
@@ -198,20 +195,27 @@
                             session.extracted[item.id] = { prob: 0.0 };
                             addLog(`[OK] ${item.name}: 1/- (0.0回)`);
                         } else {
-                            // 末尾優先ロジック：行の中の最後の数値を確率分母として採用
+                            // 【キチガイ防止ロジック】 1 / の後ろを最優先、次に小数点ありを確率とする
+                            const probExplicit = text.match(/1\s*\/\s*([\d,.]+)/);
                             const nums = text.match(/[\d,.]+/g);
-                            if (nums) {
-                                // 最後の数値を取得し、フォーマットを整える
-                                const lastNum = nums[nums.length - 1].replace(/,/g, '');
-                                const prob = parseFloat(lastNum);
+                            
+                            let prob = 0.0;
+                            if (probExplicit) {
+                                prob = parseFloat(probExplicit[1].replace(/,/g, ''));
+                            } else if (nums) {
+                                const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                prob = decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, ''));
+                            }
+                            
+                            if (prob > 0) {
                                 session.extracted[item.id] = { prob: prob };
                                 addLog(`[OK] ${item.name}: 1/${prob.toFixed(1)}`);
                             } else {
-                                addLog(`[ERROR] ${item.name}: データ未検出`);
+                                addLog(`[ERROR] ${item.name}: 不正なデータ`);
                             }
                         }
                     } else {
-                        addLog(`[ERROR] ${item.name}: 項目不明`);
+                        addLog(`[ERROR] ${item.name}: 未検出`);
                     }
                 }
                 runBayesian();
@@ -219,7 +223,7 @@
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了。'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('保存しました。'); };
         document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
