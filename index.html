@@ -50,29 +50,29 @@
             "VERSUS": {
                 name: "バーサスリヴァイズ",
                 total: { key: "総プレイ数", type: "total" },
-                bb:   { id: "bb", name: "#BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
-                rb:   { id: "rb", name: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
                 ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
                 bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
                 sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
                 cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "VSチャンスはずれ", key: "チャンス中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                vg:   { id: "vg", name: "VSGAMEはずれ", key: "GAME中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
                 cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "small", anchor: "BB中詳細" },
                 cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "small", anchor: "BB中詳細" }
             },
             "HANABI": {
                 name: "新ハナビ",
                 total: { key: "総プレイ数", type: "total" },
-                bb:   { id: "bb", name: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
-                rb:   { id: "rb", name: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
                 ba:   { id: "ba", name: "風鈴A", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small", anchor: "小役" },
                 bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small", anchor: "小役" },
                 ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", anchor: "小役" },
                 ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", anchor: "チェリー合算" },
                 cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", anchor: "チェリー合算" },
-                vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "チャレンジ中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                vg:   { id: "vg", name: "ハナビゲームはずれ", key: "GAME中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vc:   { id: "vc", name: "ハナビチャンス中はずれ", key: "チャレンジ中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "ハナビゲーム中はずれ", key: "GAME中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
                 nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB中詳細" }
             }
         };
@@ -101,8 +101,7 @@
                     let w = item.w || 1.0;
                     if (item.type === "small") w *= dw;
                     const n = (item.type === "rt") ? (Math.max(1, data.count) * data.prob) : session.n;
-                    const k = data.count;
-                    // ベイズ公式：0回でもk=0として正しく計算に反映
+                    const k = data.count; // 0回をk=0として正しく尤度計算に反映
                     logL[s] += w * (k * Math.log(pExp / (k/n || 0.0001)) + (n - k) * Math.log((1 - pExp) / (1 - (k/n || 0.0001))));
                 });
             }
@@ -144,9 +143,7 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                
-                // 行の混線を防ぐため、しきい値を 2.5倍前後に引き締め
-                const threshold = Math.max(avgHeight * 2.5, 25);
+                const threshold = Math.max(avgHeight * 2.8, 28);
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -167,7 +164,7 @@
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent.substring(0, 500) + "...");
+                addLog(rawContent.substring(0, 400) + "...");
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
@@ -175,11 +172,10 @@
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                // 総ゲーム数を先に特定
                 const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,50}?([\\d,]+)G`));
                 if (totalM) {
                     session.n = parseInt(totalM[1].replace(/,/g, ''));
-                    addLog(`[OK] TOTAL: ${session.n}G`);
+                    addLog(`[OK] 総プレイ数: ${session.n}G`);
                 }
 
                 for (let key in config) {
@@ -196,15 +192,13 @@
                     const match = area.match(regex);
                     if (match) {
                         const text = match[0];
-                        // 【ロジック刷新】「回」の直前の数字を回数、「1/」の直後を確率として抽出
+                        // 単位「回」を絶対基準として数値を抽出
                         const countM = text.match(/([\d,]+)\s*回/);
                         const probM = text.match(/1\s*\/\s*([\d,.]+)/);
 
                         let count = countM ? parseInt(countM[1].replace(/,/g, '')) : null;
                         let prob = probM ? parseFloat(probM[1].replace(/,/g, '')) : null;
 
-                        // 補完ロジック
-                        if (count === null && prob) count = Math.round(session.n / prob);
                         if (count !== null) {
                             session.extracted[item.id] = { count, prob: prob || (session.n / count) || 1.0 };
                             addLog(`[OK] ${item.name}: ${count}回${prob ? " (1/" + prob + ")" : ""}`);
