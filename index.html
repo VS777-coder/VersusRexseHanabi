@@ -49,31 +49,31 @@
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
-                total: { key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "ベルA", key: "(?:ベル|ベル\\s*)A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "(?:ベル|ベル\\s*)B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
-                sa:   { id: "sa", name: "スイカA", key: "(?:スイカ|スイカ\\s*)A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", key: "(?:チェリー|チェリー\\s*)B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "バーサスチャンスはずれ", key: "(?:VS|VS\\s*)?チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                vg:   { id: "vg", name: "バーサスゲームはずれ", key: "(?:VSGAME|GAME)\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "small", anchor: "BB\\s*中\\s*詳細" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "small", anchor: "BB\\s*中\\s*詳細" }
+                total: { key: "総プレイ数", type: "total" },
+                bb:   { id: "bb", name: "#BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
+                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
+                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "VSチャンスはずれ", key: "チャンス中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "VSGAMEはずれ", key: "GAME中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "small", anchor: "BB中詳細" },
+                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "small", anchor: "BB中詳細" }
             },
             "HANABI": {
                 name: "新ハナビ",
-                total: { key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "風鈴A", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small", anchor: "小\\s*役" },
-                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small", anchor: "小\\s*役" },
-                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", anchor: "小\\s*役" },
-                ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", anchor: "チェリー\\s*合算" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", anchor: "チェリー\\s*合算" },
-                vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "(?:花火|ハナビ)?\\s*チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                vg:   { id: "vg", name: "ハナビゲームはずれ", key: "(?:花火|ハナビ)?\\s*GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB\\s*中\\s*詳細" }
+                total: { key: "総プレイ数", type: "total" },
+                bb:   { id: "bb", name: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
+                ba:   { id: "ba", name: "風鈴A", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small", anchor: "小役" },
+                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small", anchor: "小役" },
+                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", anchor: "小役" },
+                ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", anchor: "チェリー合算" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", anchor: "チェリー合算" },
+                vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "チャレンジ中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "ハナビゲームはずれ", key: "GAME中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
+                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB中詳細" }
             }
         };
 
@@ -94,15 +94,17 @@
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = Object.values(config).find(v => v.id === id);
-                if (!item || !data.prob || data.prob < 1.8) continue; // ゴミデータ除外
+                if (!item) continue;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     let w = item.w || 1.0;
                     if (item.type === "small") w *= dw;
+                    // n（試行数）の決定。RT中は回数*確率、通常は総プレイ数
                     const n = (item.type === "rt") ? (data.count * data.prob) : session.n;
-                    const k = (item.type === "rt") ? data.count : (session.n / data.prob);
-                    logL[s] += w * (k * Math.log(pExp / (k/n)) + (n - k) * Math.log((1 - pExp) / (1 - (k/n))));
+                    const k = data.count;
+                    // ベイズ公式（対数尤度）
+                    logL[s] += w * (k * Math.log(pExp / (k/n || 0.0001)) + (n - k) * Math.log((1 - pExp) / (1 - (k/n || 0.0001))));
                 });
             }
 
@@ -143,9 +145,8 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                
-                // 【デバッグの成果】しきい値を3.2倍に固定しつつ、後方探索を強化
-                const threshold = Math.max(avgHeight * 3.2, 32);
+                // しきい値を 2.6倍に設定（行の混線を防ぐ）
+                const threshold = avgHeight * 2.6;
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -168,65 +169,54 @@
                 addLog("--- [RAW DATA] ---");
                 addLog(rawContent.substring(0, 500) + "...");
                 
-                session.mode = (rawContent.includes("ハナビ") || rawContent.includes("ハナ ビ") || rawContent.includes("新 ハナビ")) ? "HANABI" : "VERSUS";
+                session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
                 
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
+                // 1. 総ゲーム数の抽出（最優先・厳密に）
+                const totalRegex = new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`);
+                const totalMatch = rawContent.match(totalRegex);
+                if (totalMatch) {
+                    session.n = parseInt(totalMatch[1].replace(/,/g, ''));
+                    addLog(`[OK] TOTAL: ${session.n}G`);
+                }
+
+                // 2. 各項目の抽出
                 for (let key in config) {
                     const item = config[key];
-                    if (typeof item !== 'object') continue;
+                    if (item.type === "total") continue;
 
-                    let searchArea = rawContent;
+                    let area = rawContent;
                     if (item.anchor) {
                         const am = rawContent.match(new RegExp(item.anchor));
-                        if (am) searchArea = rawContent.substring(am.index);
+                        if (am) area = rawContent.substring(am.index);
                     }
 
-                    if (item.type === "total") {
-                        const m = rawContent.match(new RegExp(`${item.key}[\\s\\S]{0,50}?([\\d,]+)G`));
-                        if (m) {
-                            session.n = parseInt(m[1].replace(/,/g, ''));
-                            addLog(`[OK] TOTAL: ${session.n}G`);
-                        }
-                        continue;
-                    }
-
-                    // 【究極ロジック】キーワードの手前40文字も探索対象とし、段ズレした回数を捕獲
-                    const regex = new RegExp(`[\\s\\S]{0,40}${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
-                    const lineMatch = searchArea.match(regex);
-                    if (lineMatch) {
-                        const nums = lineMatch[0].match(/[\d,.]+/g);
-                        if (nums && nums.length >= 1) {
-                            const ints = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
-                            const decimal = nums.find(n => n.includes('.') && parseFloat(n) > 1.0);
+                    // 項目名から改行までを探す
+                    const lineRegex = new RegExp(`${item.key}[\\s\\S]{0,80}?(?=\\n|$)`, 'i');
+                    const match = area.match(lineRegex);
+                    if (match) {
+                        const text = match[0];
+                        const nums = text.match(/[\d,.]+/g);
+                        if (nums) {
+                            // 回数(X回)または(0回)を最優先で探す
+                            const countMatch = text.match(/(\d+)\s*回/);
+                            let count = countMatch ? parseInt(countMatch[1]) : null;
                             
-                            let count = 0;
-                            let prob = 0;
+                            // 確率(1/X)を探す
+                            const probMatch = text.match(/1\s*\/\s*([\d.]+)/);
+                            let prob = probMatch ? parseFloat(probMatch[1]) : null;
 
-                            if (decimal) {
-                                prob = parseFloat(decimal);
-                                // 分子の「1 /」を除外した最大整数を回数として採用
-                                const filteredInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
-                                count = filteredInts.length > 0 ? Math.max(...filteredInts) : (ints.includes(1) ? 1 : 0);
-                            } else {
-                                if (ints.includes(0)) {
-                                    count = 0; prob = 0; // 1/1エラーの徹底防止
-                                } else if (ints.length >= 2) {
-                                    const filteredInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
-                                    prob = Math.max(...filteredInts);
-                                    count = filteredInts.length > 1 ? Math.min(...filteredInts) : (ints.includes(1) ? 1 : 0);
-                                } else {
-                                    prob = ints[0];
-                                }
+                            // 回数がnullで確率だけある場合の補完
+                            if (count === null && prob) {
+                                count = Math.round(session.n / prob);
                             }
 
-                            if (prob <= 1.5) {
-                                addLog(`[SKIP] ${item.name}: データなし(1/1等)`);
-                            } else {
-                                session.extracted[item.id] = { prob, count };
-                                addLog(`[OK] ${item.name}: ${count}回 (1/${prob})`);
+                            if (count !== null) {
+                                session.extracted[item.id] = { count, prob: prob || 1.0 };
+                                addLog(`[OK] ${item.name}: ${count}回${prob ? " (1/" + prob + ")" : ""}`);
                             }
                         }
                     }
