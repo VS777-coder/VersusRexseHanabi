@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.5 (Mobile Optimized)</title>
+    <title>みおの解析 1.1.6 (Perfect Stable)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-2">
         <div class="text-3xl font-black kawaii-title tracking-tighter leading-none">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.5</p>
+        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.6</p>
     </div>
 
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
@@ -49,44 +49,45 @@
     </div>
 
     <script>
+        // 【定義は維持】ただし検索キーをOCRのバラつきに強く修正
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
+                total: { key: "総プレイ数", label: "総プレイ数", type: "total" },
                 bb:   { key: "#BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0 },
                 rb:   { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6 },
-                ba:   { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
-                bb2:  { key: "ベル\\s*B", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
-                sa:   { key: "スイカ\\s*A", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
-                vc:   { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
-                bc_s: { key: "チェリー\\s*\\+\\s*ベル\\s*揃い", label: "中チェ+ベル揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0 },
-                bc_h: { key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", label: "中チェ+ベルはずれ", vals: {1: 256, 2: 128, 5: 256, 6: 128}, w: 1.5 },
-                mc:   { key: "中段\\s*チェリー", label: "中段チェリー", vals: {1: 16384, 2: 16384, 5: 16384, 6: 897.8}, w: 1.5 },
-                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
+                ba:   { key: "ベルA", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
+                bb2:  { key: "ベルB", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
+                sa:   { key: "スイカA", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
+                cb:   { key: "チェリーB", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
+                vc:   { key: "チャンス中はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
+                vg:   { key: "GAME中はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
+                bc_s: { key: "チェリー+ベル揃い", label: "中チェ+ベル揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0 },
+                bc_h: { key: "チェリー+ベルはずれ", label: "中チェ+ベルはずれ", vals: {1: 256, 2: 128, 5: 256, 6: 128}, w: 1.5 },
+                mc:   { key: "中段チェリー", label: "中段チェリー", vals: {1: 16384, 2: 16384, 5: 16384, 6: 897.8}, w: 1.5 },
+                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB中詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
             },
             "HANABI": {
                 name: "新ハナビ",
-                total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
+                total: { key: "総プレイ数", label: "総プレイ数", type: "total" },
                 bb:   { key: "#BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
                 rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
-                ba:   { key: "\\nA\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
-                bb2:  { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
-                sa:   { key: "氷\\s*A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
-                ca2:  { key: "チェリー\\s*A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
-                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
-                vc:   { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
-                vg:   { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                nb:   { key: "風鈴\\s*斜め\\s*揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
-                bk:   { key: "(バラケ目|レア\\s*役)", label: "バラケ目", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4}, w: 1.5 },
-                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
+                ba:   { key: "風鈴A", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
+                bb2:  { key: "風鈴B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
+                sa:   { key: "氷A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
+                ca2:  { key: "チェリーA2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
+                cb:   { key: "チェリーB", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
+                vc:   { key: "チャレンジ中はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
+                vg:   { key: "GAME中はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
+                nb:   { key: "風鈴斜め揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
+                bk:   { key: "バラケ目", label: "バラケ目", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4}, w: 1.5 },
+                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB中詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
             }
         };
 
         let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
 
-        function renderBufferTable(rawTextForDebug) {
+        function renderBufferTable(rawText) {
             const logArea = document.getElementById('log');
             let html = `■ 内部バッファ状態 (${sessionBuffer.activeMode})\n`;
             html += `<table><tr><th>項目</th><th>回数</th><th>確率分母</th></tr>`;
@@ -97,7 +98,6 @@
                 const val = sessionBuffer.extracted[id] || { prob: null, count: null };
                 const probText = val.prob === 0 ? '1/-' : (val.prob ? '1/' + val.prob : '---');
                 const countText = (val.count !== null && val.count !== undefined) ? val.count + '回' : '---';
-                
                 if (item.type === "total") {
                     html += `<tr><td>${item.label}</td><td colspan="2" style="color:#f472b6;font-weight:bold">${val.prob || '---'} G</td></tr>`;
                 } else {
@@ -105,10 +105,7 @@
                 }
             }
             html += `</table>`;
-            
-            // デバッグセクションの追加
-            html += `<div class="debug-text">--- OCR RECONSTRUCTED TEXT ---\n${rawTextForDebug}</div>`;
-            
+            html += `<div class="debug-text">--- OCR RECONSTRUCTED TEXT ---\n${rawText}</div>`;
             logArea.innerHTML = html;
             runBayesian();
         }
@@ -116,12 +113,7 @@
         function runBayesian() {
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
             let logL = { 1: Math.log(0.25), 2: Math.log(0.25), 5: Math.log(0.25), 6: Math.log(0.25) };
-            let dw = 1.0;
-            if (sessionBuffer.totalG < 500) dw = 0.2;
-            else if (sessionBuffer.totalG < 1000) dw = 0.4;
-            else if (sessionBuffer.totalG < 2000) dw = 0.7;
-            else if (sessionBuffer.totalG < 4000) dw = 1.0;
-            else dw = 1.5;
+            let dw = (sessionBuffer.totalG < 500) ? 0.2 : (sessionBuffer.totalG < 1000) ? 0.4 : (sessionBuffer.totalG < 2000) ? 0.7 : (sessionBuffer.totalG < 4000) ? 1.0 : 1.5;
 
             for (let id in sessionBuffer.extracted) {
                 const data = sessionBuffer.extracted[id];
@@ -130,9 +122,7 @@
 
                 [1, 2, 5, 6].forEach(s => {
                     if (logL[s] === -Infinity) return;
-                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) {
-                        logL[s] = -Infinity; return;
-                    }
+                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
                     const pExp = 1 / item.vals[s];
                     let w = item.w || 1.0;
                     if (id === "ba" || id === "bb2") w *= dw;
@@ -141,7 +131,6 @@
                     logL[s] += w * (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
                 });
             }
-
             const activeScores = Object.values(logL).filter(v => v !== -Infinity);
             const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
             let total = 0, probs = {};
@@ -156,46 +145,50 @@
             });
         }
 
+        // 【スマホ対応の抽出ロジック】
         function extractData(rawText) {
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            // スペースをすべて除去して検索用の平滑化テキストを作成
+            const cleanText = rawText.replace(/[ 　\n]/g, "");
+            sessionBuffer.activeMode = (cleanText.includes("ハナビ")) ? "HANABI" : "VERSUS";
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
             sessionBuffer.extracted = {};
 
             for (let id in config) {
                 if (id === "name") continue;
                 const item = config[id];
-                let searchText = rawText;
+                let searchRange = cleanText;
 
+                // アンカーがある場合はそこから後ろを見る
                 if (item.anchor) {
-                    const anchorMatch = rawText.match(new RegExp(item.anchor));
-                    if (anchorMatch) searchText = rawText.substring(anchorMatch.index);
+                    const anchorIdx = cleanText.indexOf(item.anchor);
+                    if (anchorIdx !== -1) searchRange = cleanText.substring(anchorIdx);
                     else { sessionBuffer.extracted[id] = { prob: null, count: null }; continue; }
                 }
 
-                if (item.type === "total") {
-                    const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,30}?([\\d,]+)G`));
-                    sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
-                    sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
-                    continue;
-                }
+                const keyIdx = searchRange.indexOf(item.key);
+                if (keyIdx !== -1) {
+                    // 項目の前後45文字を切り出して数値を探す（ウィンドウサーチ）
+                    const context = searchRange.substring(Math.max(0, keyIdx - 35), keyIdx + 55);
+                    
+                    if (item.type === "total") {
+                        const m = context.match(/([\d,]{3,})G/); // 3桁以上の数字+G
+                        sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
+                        sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
+                        continue;
+                    }
 
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`);
-                const lineMatch = searchText.match(regex);
-                if (lineMatch) {
-                    const seg = lineMatch[0];
-                    if (seg.includes('-')) {
+                    if (context.includes("/-")) {
                         sessionBuffer.extracted[id] = { prob: 0, count: 0 };
-                    } else {
-                        const nums = seg.match(/[\d,.]+/g);
-                        if (nums) {
-                            const decimal = nums.find(n => n.includes('.'));
-                            const integers = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
-                            const validCounts = integers.filter(n => n > 1);
-                            sessionBuffer.extracted[id] = { 
-                                prob: decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, '')),
-                                count: validCounts.length > 0 ? Math.max(...validCounts) : (integers[0] || 0)
-                            };
-                        }
+                        continue;
+                    }
+
+                    const nums = context.match(/[\d\.]+/g);
+                    if (nums) {
+                        const filtered = nums.map(n => n.replace(/,/g, '')).filter(n => n !== "1");
+                        const probStr = filtered.find(n => n.includes('.')) || filtered[filtered.length - 1];
+                        const prob = parseFloat(probStr);
+                        const countCandidate = filtered.filter(n => !n.includes('.') && parseInt(n) > 1 && parseInt(n) !== Math.floor(prob));
+                        sessionBuffer.extracted[id] = { prob: prob, count: countCandidate.length > 0 ? parseInt(countCandidate[0]) : 0 };
                     }
                 }
             }
@@ -219,42 +212,21 @@
                     const json = await res.json();
                     const ann = json.responses[0]?.textAnnotations;
                     if (ann) {
-                        // 【動的しきい値計算】
                         const items = ann.slice(1).map(a => {
                             const v = a.boundingPoly.vertices;
-                            // 頂点が欠けている場合を考慮
-                            const y1 = v[0].y ?? 0, y2 = v[2].y ?? 0;
-                            const x1 = v[0].x ?? 0, x2 = v[2].x ?? 0;
-                            return {
-                                text: a.description,
-                                x: (x1 + x2) / 2,
-                                y: (y1 + y2) / 2,
-                                h: Math.abs(y2 - y1)
-                            };
+                            const y1 = v[0].y ?? 0, y2 = v[2].y ?? 0, x1 = v[0].x ?? 0, x2 = v[2].x ?? 0;
+                            return { text: a.description, x: (x1 + x2) / 2, y: (y1 + y2) / 2, h: Math.abs(y2 - y1) };
                         });
-
-                        // 平均的な文字の高さを算出し、その60%を行判定のしきい値とする
-                        const avgHeight = items.reduce((acc, cur) => acc + cur.h, 0) / items.length;
-                        const dynamicThreshold = avgHeight * 0.6;
-
+                        const avgH = items.reduce((acc, c) => acc + c.h, 0) / items.length;
+                        const threshold = avgH * 0.7;
                         items.sort((a, b) => a.y - b.y);
                         let rows = [], cur = [items[0]];
-                        for (let i = 1; i < items.length; i++) { 
-                            // 固定の30pxではなく、dynamicThresholdを使用
-                            if (Math.abs(items[i].y - cur[0].y) < dynamicThreshold) {
-                                cur.push(items[i]); 
-                            } else { 
-                                rows.push(cur); 
-                                cur = [items[i]]; 
-                            } 
-                        }
+                        for (let i = 1; i < items.length; i++) { if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]); else { rows.push(cur); cur = [items[i]]; } }
                         rows.push(cur);
                         const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
                         extractData(rawText);
                     }
-                } catch (err) {
-                    document.getElementById('log').innerText = "ERROR: " + err.message;
-                }
+                } catch (err) { document.getElementById('log').innerText = "ERROR: " + err.message; }
             };
         };
     </script>
