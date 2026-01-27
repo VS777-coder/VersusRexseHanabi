@@ -2,259 +2,143 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.9 (Extreme Stable)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>ユニメモ解析ツール Rev 1.2.0</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; box-shadow: 0 4px 10px rgba(255,0,128,0.3); border: 2px solid #ffffff; line-height: 1.2; }
-        .main-btn:active { transform: scale(0.97); }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; border: 1px solid #30363d; height: 33vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #fbcfe8; height: 50vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; box-shadow: inset 0 0 15px rgba(0,255,204,0.1); }
-        .bar-bg { background-color: #0d1117; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #21262d; margin-top: 2px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.19, 1, 0.22, 1); }
-        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 4px 16px; font-size: 11px; width: 100%; border: 1px solid #30363d; outline: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
-        th, td { border-bottom: 1px solid #333; padding: 4px 0; text-align: left; }
-        .debug-text { color: #666; font-size: 9px; margin-top: 10px; border-top: 1px dashed #444; padding-top: 5px; }
+        body { font-family: sans-serif; margin: 20px; background: #f4f4f4; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 200px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f8f9fa; }
+        .error { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-2">
-        <div class="text-3xl font-black kawaii-title tracking-tighter leading-none">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.9</p>
-    </div>
 
-    <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer tracking-widest leading-tight">
-            ユニメモ<br>解析実行
-        </label>
-        <input type="file" id="file-input" class="hidden" accept="image/*">
-    </div>
+<div class="container">
+    <h2>ユニメモ解析ツール (Rev 1.2.0)</h2>
+    <p>OCRで読み取ったテキストを貼り付けてください。</p>
+    <textarea id="ocrInput" placeholder="ここにテキストを貼り付け..."></textarea>
+    <button onclick="analyze()">解析実行</button>
+    <div id="result"></div>
+</div>
 
-    <div class="w-full max-w-md mx-auto graph-area">
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-cyan-400">設定1</span><span id="p1" class="text-xl font-bold text-cyan-400">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-yellow-400">設定2</span><span id="p2" class="text-xl font-bold text-yellow-400">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-green-400">設定5</span><span id="p5" class="text-xl font-bold text-green-400">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-red-500">設定6</span><span id="p6" class="text-xl font-bold text-red-500">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
-    </div>
+<script>
+/**
+ * 憲法：常駐項目のみを対象とし、指定された名称でログを出力する
+ */
+const MASTER_CONFIG = {
+    VERSUS: {
+        name: "バーサスリヴァイズ",
+        items: [
+            { id: "total_g", name: "総プレイ数", key: "総プレイ数", type: "count" },
+            { id: "bb", name: "ビックボーナス", key: "#BB", type: "ratio" },
+            { id: "rb", name: "レギュラーボーナス", key: "RB", type: "ratio" },
+            { id: "bell_a", name: "ベルA", key: "ベル A", type: "ratio" },
+            { id: "bell_b", name: "ベルB", key: "ベル B", type: "ratio" },
+            { id: "suika_a", name: "スイカA", key: "スイカ A", type: "ratio" },
+            { id: "cherry_b", name: "チェリーB", key: "チェリー B", type: "ratio" },
+            { id: "vc_h", name: "バーサスチャンスはずれ", key: "VSチャンス中はずれ", type: "ratio", anchor: "RT詳細" },
+            { id: "vg_h", name: "バーサスゲームはずれ", key: "VSGAME中はずれ", type: "ratio", anchor: "RT詳細" },
+            { id: "cb_s", name: "チェリー＋ベル揃い", key: "チェリー+ベル揃い", type: "ratio", anchor: "BB中詳細" },
+            { id: "cb_h", name: "チェリー＋ベルはずれ", key: "チェリー+ベルはずれ", type: "ratio", anchor: "BB中詳細" }
+        ]
+    },
+    HANABI: {
+        name: "新ハナビ",
+        items: [
+            { id: "total_g", name: "総プレイ数", key: "総プレイ数", type: "count" },
+            { id: "bb", name: "ビックボーナス", key: "BB", type: "ratio" },
+            { id: "rb", name: "レギュラーボーナス", key: "RB", type: "ratio" },
+            { id: "bell_a", name: "風鈴A", key: "風鈴 A", type: "ratio" },
+            { id: "bell_b", name: "風鈴B", key: "風鈴 B", type: "ratio" },
+            { id: "ice_a", name: "氷A", key: "氷 A", type: "ratio" },
+            { id: "cherry_a2", name: "チェリーA2", key: "チェリー A2", type: "ratio" },
+            { id: "cherry_b", name: "チェリーB", key: "チェリー B", type: "ratio" },
+            { id: "hc_h", name: "ハナビチャンスはずれ", key: "HC中はずれ", type: "ratio", anchor: "RT詳細" },
+            { id: "hg_h", name: "ハナビゲームはずれ", key: "HG中はずれ", type: "ratio", anchor: "RT詳細" },
+            { id: "slope_f", name: "斜め風鈴", key: "斜め風鈴", type: "ratio", anchor: "BB中詳細" }
+        ]
+    }
+};
 
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">内部バッファ待機中。画像を選択してください。</div>
+function analyze() {
+    let rawText = document.getElementById('ocrInput').value;
+    if (!rawText) return;
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2 px-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-1 px-4 rounded-full text-[10px]">SAVE</button>
-    </div>
+    // 1. カンマを抹殺
+    const text = rawText.replace(/,/g, '');
 
-    <script>
-        // 設定データ（PC版で完動しているものを維持）
-        const MASTER_CONFIG = {
-            "VERSUS": {
-                name: "バーサスリヴァイズ",
-                total: { key: "総プレイ数", label: "総プレイ数", type: "total" },
-                bb:   { key: "#BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6 },
-                ba:   { key: "ベルA", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
-                bb2:  { key: "ベルB", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
-                sa:   { key: "スイカA", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
-                cb:   { key: "チェリーB", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
-                vc:   { key: "チャンス中はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
-                vg:   { key: "GAME中はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
-                bc_s: { key: "チェリー+ベル揃い", label: "中チェ+ベル揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0 },
-                bc_h: { key: "チェリー+ベルはずれ", label: "中チェ+ベルはずれ", vals: {1: 256, 2: 128, 5: 256, 6: 128}, w: 1.5 },
-                mc:   { key: "中段チェリー", label: "中段チェリー", vals: {1: 16384, 2: 16384, 5: 16384, 6: 897.8}, w: 1.5 },
-                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB中詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            },
-            "HANABI": {
-                name: "新ハナビ",
-                total: { key: "総プレイ数", label: "総プレイ数", type: "total" },
-                bb:   { key: "#BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
-                rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
-                ba:   { key: "A", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
-                bb2:  { key: "風B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
-                sa:   { key: "氷A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
-                ca2:  { key: "A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
-                cb:   { key: "チェリーB", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
-                vc:   { key: "チャレンジ中はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
-                vg:   { key: "GAME中はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 },
-                nb:   { key: "斜め揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5 },
-                bk:   { key: "バラケ目", label: "バラケ目", vals: {1: 16384, 2: 16384, 5: 16384, 6: 655.4}, w: 1.5 },
-                rbh:  { key: "ハズレ", label: "RBハズレ", anchor: "RB中詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
-            }
+    // 2. 機種判定
+    const machine = text.includes("バーサス") ? "VERSUS" : (text.includes("ハナビ") ? "HANABI" : null);
+    if (!machine) {
+        document.getElementById('result').innerHTML = '<p class="error">機種が判定できません（バーサス/ハナビの文字が必要）</p>';
+        return;
+    }
+
+    const config = MASTER_CONFIG[machine];
+    
+    // 3. セクション分割 (アンカーによる隔離)
+    const sections = splitSections(text);
+
+    let html = `<h3>${config.name} 解析結果</h3><table><tr><th>項目</th><th>回数</th><th>確率分母</th></tr>`;
+
+    config.items.forEach(item => {
+        const targetText = item.anchor ? (sections[item.anchor] || "") : text;
+        const result = extractValue(targetText, item.key, item.type);
+        
+        html += `<tr>
+            <td>${item.name}</td>
+            <td>${result.count ? result.count.toLocaleString() + (item.id === "total_g" ? " G" : " 回") : "---"}</td>
+            <td>${result.ratio ? "1 / " + result.ratio : "---"}</td>
+        </tr>`;
+    });
+
+    html += `</table>`;
+    document.getElementById('result').innerHTML = html;
+}
+
+function splitSections(text) {
+    const anchors = ["RT詳細", "BB中詳細", "RB中詳細", "連チャンBGM", "その他"];
+    let sections = {};
+    let lastIndex = 0;
+    
+    for (let i = 0; i < anchors.length; i++) {
+        let currentIndex = text.indexOf(anchors[i]);
+        if (currentIndex !== -1) {
+            if (i > 0) sections[anchors[i-1]] = text.substring(lastIndex, currentIndex);
+            lastIndex = currentIndex;
+        }
+    }
+    sections[anchors[anchors.length-1]] = text.substring(lastIndex);
+    return sections;
+}
+
+function extractValue(text, key, type) {
+    // キーワード直後の数値を抽出。確率分母は 1/XXX.X 形式を狙う
+    const keyEscaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(keyEscaped + "[\\s\\S]{0,50}?(\\d+)\\s*回?\\s*(?:1/(\\d+\\.?\\d*))?");
+    const match = text.match(regex);
+
+    if (match) {
+        return {
+            count: parseInt(match[1]),
+            ratio: match[2] ? parseFloat(match[2]) : null
         };
+    }
+    
+    // 総プレイ数用の特別パターン
+    if (key === "総プレイ数") {
+        const gMatch = text.match(/総プレイ数\s*(\d+)G/);
+        if (gMatch) return { count: parseInt(gMatch[1]), ratio: null };
+    }
 
-        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
+    return { count: null, ratio: null };
+}
+</script>
 
-        function renderBufferTable(rawText) {
-            const logArea = document.getElementById('log');
-            let html = `■ 内部バッファ状態 (${sessionBuffer.activeMode})\n`;
-            html += `<table><tr><th>項目</th><th>回数</th><th>確率分母</th></tr>`;
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            for (let id in config) {
-                if (id === "name") continue;
-                const item = config[id];
-                const val = sessionBuffer.extracted[id] || { prob: null, count: null };
-                const probText = val.prob === 0 ? '1/-' : (val.prob ? '1/' + val.prob : '---');
-                const countText = (val.count !== null && val.count !== undefined) ? val.count + '回' : '---';
-                if (item.type === "total") {
-                    html += `<tr><td>${item.label}</td><td colspan="2" style="color:#f472b6;font-weight:bold">${val.prob || '---'} G</td></tr>`;
-                } else {
-                    html += `<tr><td>${item.label}</td><td>${countText}</td><td style="color:#f472b6;font-weight:bold">${probText}</td></tr>`;
-                }
-            }
-            html += `</table>`;
-            html += `<div class="debug-text">--- OCR RECONSTRUCTED TEXT ---\n${rawText}</div>`;
-            logArea.innerHTML = html;
-            runBayesian();
-        }
-
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            let logL = { 1: Math.log(0.25), 2: Math.log(0.25), 5: Math.log(0.25), 6: Math.log(0.25) };
-            let dw = (sessionBuffer.totalG < 500) ? 0.2 : (sessionBuffer.totalG < 1000) ? 0.4 : (sessionBuffer.totalG < 2000) ? 0.7 : (sessionBuffer.totalG < 4000) ? 1.0 : 1.5;
-
-            for (let id in sessionBuffer.extracted) {
-                const data = sessionBuffer.extracted[id];
-                const item = config[id];
-                if (!item || !data.prob || item.type === "total") continue;
-
-                [1, 2, 5, 6].forEach(s => {
-                    if (logL[s] === -Infinity) return;
-                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
-                    const pExp = 1 / item.vals[s];
-                    let w = item.w || 1.0;
-                    if (id === "ba" || id === "bb2") w *= dw;
-                    const n = (id === "vc" || id === "vg") ? (data.count * data.prob) : sessionBuffer.totalG;
-                    const k = (id === "vc" || id === "vg") ? data.count : (sessionBuffer.totalG / data.prob);
-                    logL[s] += w * (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
-                });
-            }
-            const activeScores = Object.values(logL).filter(v => v !== -Infinity);
-            const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
-            let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => {
-                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
-                total += probs[s];
-            });
-            [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
-            });
-        }
-
-        // 【Rev 1.1.9】極限安定化解析エンジン
-        function extractData(rawText) {
-            const lines = rawText.split('\n').map(l => l.replace(/[ 　]/g, ""));
-            const cleanFullText = lines.join("");
-            sessionBuffer.activeMode = (cleanFullText.includes("ハナビ")) ? "HANABI" : "VERSUS";
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-
-            let lastFoundIdx = 0;
-
-            for (let id in config) {
-                if (id === "name") continue;
-                const item = config[id];
-                let foundIdx = -1;
-
-                // シーケンシャル・サーチ（順序を守って誤読を回避）
-                for (let i = lastFoundIdx; i < lines.length; i++) {
-                    if (lines[i].includes(item.key)) {
-                        // ハナビの"A"が"氷A"などに誤爆するのを防ぐ
-                        if (sessionBuffer.activeMode === "HANABI" && id === "ba") {
-                            if (lines[i].includes("氷") || lines[i].includes("チェリー") || lines[i].length > 4) continue;
-                        }
-                        foundIdx = i;
-                        lastFoundIdx = i;
-                        break;
-                    }
-                }
-
-                if (foundIdx !== -1) {
-                    let prob = null, count = 0;
-
-                    // 1. 確率の抽出 (同じ行、または次の行)
-                    const pRange = [lines[foundIdx], (lines[foundIdx + 1] || "")];
-                    for (let s of pRange) {
-                        const m = s.match(/1\/([\d\.]+)|(\d+\.\d+)/);
-                        if (m) { prob = parseFloat(m[1] || m[2]); break; }
-                    }
-
-                    // 2. 回数の抽出 (同じ行、または前の行)
-                    const cRange = [lines[foundIdx], (lines[foundIdx - 1] || "")];
-                    for (let s of cRange) {
-                        const mUnit = s.match(/(\d+)回/);
-                        if (mUnit) { count = parseInt(mUnit[1]); break; }
-                        const mNum = s.match(/(\d+)/);
-                        if (mNum) {
-                            let v = parseInt(mNum[1]);
-                            // 確率の分母や1を誤認しないチェック
-                            if (v !== 1 && v !== Math.floor(prob || 0)) { count = v; }
-                        }
-                    }
-
-                    // 総プレイ数専用処理
-                    if (item.type === "total") {
-                        const m = (lines[foundIdx] + (lines[foundIdx+1]||"")).match(/([\d,]{3,})G/);
-                        sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
-                        sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
-                        continue;
-                    }
-
-                    // OCRの結合ミス（246回 -> 2460）の自動補正
-                    if (prob > 4 && count > 0 && sessionBuffer.totalG > 0) {
-                        // 推定値より2.2倍以上多ければ末尾の誤字を切り捨てる
-                        if (count * prob > sessionBuffer.totalG * 2.2) {
-                            count = Math.floor(count / 10);
-                        }
-                    }
-
-                    if (lines[foundIdx].includes("/-")) { prob = 0; count = 0; }
-                    sessionBuffer.extracted[id] = { prob, count };
-                } else {
-                    sessionBuffer.extracted[id] = { prob: null, count: null };
-                }
-            }
-            renderBufferTable(rawText);
-        }
-
-        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証キー保存。'); };
-
-        document.getElementById('file-input').onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = async () => {
-                document.getElementById('log').innerText = "Analyzing data...";
-                try {
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const json = await res.json();
-                    const ann = json.responses[0]?.textAnnotations;
-                    if (ann) {
-                        const items = ann.slice(1).map(a => {
-                            const v = a.boundingPoly.vertices;
-                            const y1 = v[0].y ?? 0, y2 = v[2].y ?? 0, x1 = v[0].x ?? 0, x2 = v[2].x ?? 0;
-                            return { text: a.description, x: (x1 + x2) / 2, y: (y1 + y2) / 2, h: Math.abs(y2 - y1) };
-                        });
-                        const avgH = items.reduce((acc, c) => acc + c.h, 0) / items.length;
-                        const threshold = avgH * 0.7;
-                        items.sort((a, b) => a.y - b.y);
-                        let rows = [], cur = [items[0]];
-                        for (let i = 1; i < items.length; i++) { if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]); else { rows.push(cur); cur = [items[i]]; } }
-                        rows.push(cur);
-                        const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                        extractData(rawText);
-                    }
-                } catch (err) { document.getElementById('log').innerText = "ERROR: " + err.message; }
-            };
-        };
-    </script>
 </body>
 </html>
