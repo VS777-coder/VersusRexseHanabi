@@ -1,93 +1,174 @@
-function extractData(rawText) {
-    sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-    const config = MASTER_CONFIG[sessionBuffer.activeMode];
-    sessionBuffer.extracted = {};
-    let logHtml = `■ 内部バッファ (${sessionBuffer.activeMode})\n<table>`;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>みおの解析 1.1.13 (Debug)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; padding: 12px; display: flex; flex-direction: column; align-items: center; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; width: 100%; max-width: 400px; padding: 16px; text-align: center; cursor: pointer; font-weight: 900; font-size: 1.5rem; }
+        .graph-area { background-color: #161b22; border-radius: 16px; padding: 16px; width: 100%; max-width: 400px; margin-top: 12px; }
+        .future-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 11px; width: 100%; max-width: 400px; margin-top: 12px; overflow-y: auto; white-space: pre-wrap; }
+        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #333; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        td { border-bottom: 1px solid #222; padding: 6px 0; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <label for="file-input" class="main-btn">ユニメモ解析<br>Rev 1.1.13</label>
+    <input type="file" id="file-input" class="hidden" accept="image/*">
 
-    // 【P0】総プレイ数を絶対に見逃さない (Gの前の数字を広域スキャン)
-    const gRegex = /([\d,]+)\s*G/i;
-    const gMatch = rawText.match(gRegex);
-    sessionBuffer.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
+    <div class="graph-area">
+        <div class="mb-3">
+            <div class="flex justify-between text-cyan-400 font-bold"><span>設定1</span><span id="p1">---</span></div>
+            <div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
+        </div>
+        <div class="mb-3">
+            <div class="flex justify-between text-yellow-400 font-bold"><span>設定2</span><span id="p2">---</span></div>
+            <div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div>
+        </div>
+        <div class="mb-3">
+            <div class="flex justify-between text-green-400 font-bold"><span>設定5</span><span id="p5">---</span></div>
+            <div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div>
+        </div>
+        <div class="mb-1">
+            <div class="flex justify-between text-red-500 font-bold"><span>設定6</span><span id="p6">---</span></div>
+            <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
+        </div>
+    </div>
 
-    // もしラベル「総プレイ数」の近くに別の数字があれば上書きを試みる
-    const labelMatch = rawText.match(/(?:総|プレイ|数)[\s\S]{0,100}?([\d,]+)/);
-    if (labelMatch && !gMatch) {
-        sessionBuffer.totalG = parseInt(labelMatch[1].replace(/,/g, ''));
-    }
+    <div id="log" class="future-log">画像をアップロードしてください。</div>
+    <input type="password" id="api-key" class="hidden">
 
-    for (let id in config) {
-        if (id === "name" || id === "total") continue;
-        const item = config[id];
-        let searchText = rawText;
-        if (item.anchor) {
-            const am = rawText.match(new RegExp(item.anchor));
-            if (am) searchText = rawText.substring(am.index);
+    <script>
+        const MASTER_CONFIG = {
+            "VERSUS": {
+                bb: { key: "BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0} },
+                rb: { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+                ba: { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+                vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, type: 'vc' },
+                vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, type: 'vg' }
+            },
+            "HANABI": {
+                bb: { key: "BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+                rb: { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+                ba: { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
+                hc: { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, type: 'hc' },
+                hg: { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, type: 'hg' }
+            }
+        };
+
+        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
+
+        function extractData(rawText) {
+            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            const config = MASTER_CONFIG[sessionBuffer.activeMode];
+            sessionBuffer.extracted = {};
+
+            // 【P0】総プレイ数の奪取ロジック
+            const gMatch = rawText.match(/([\d,]+)\s*G/i);
+            sessionBuffer.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
+
+            let logHtml = `■ 解析バッファ (${sessionBuffer.activeMode})\n<table>`;
+            logHtml += `<tr><td>総プレイ数</td><td colspan="2">${sessionBuffer.totalG} G</td></tr>`;
+
+            for (let id in config) {
+                const item = config[id];
+                const regex = new RegExp(`${item.key}[\\s\\S]{0,120}`);
+                const m = rawText.match(regex);
+                if (m) {
+                    const segment = m[0];
+                    const nums = (segment.match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
+                    let count = null, prob = null;
+
+                    // 1/XX YY 形式の抽出
+                    const p1 = segment.match(/1\s*\/\s*([\d.]+)\s+([\d.]+)/);
+                    const p2 = segment.match(/1\s+([\d.]+)\s*\/\s*([\d.]+)/);
+
+                    if (p1) { count = p1[1]; prob = p1[2]; }
+                    else if (p2) { count = p2[1]; prob = p2[2]; }
+                    else if (nums.length >= 2) {
+                        prob = nums.find(n => n.includes('.')) || nums[0];
+                        count = nums.find(n => n !== prob && n !== "1") || "0";
+                    }
+
+                    if (prob) {
+                        let cVal = parseFloat(count || 0);
+                        let pVal = parseFloat(prob);
+                        if (cVal > pVal && pVal > 1.2) [cVal, pVal] = [pVal, cVal];
+                        
+                        sessionBuffer.extracted[id] = { prob: pVal, count: Math.round(cVal) };
+                        logHtml += `<tr><td>${item.label}</td><td>${Math.round(cVal)}回</td><td>1/${pVal}</td></tr>`;
+                    }
+                }
+            }
+            document.getElementById('log').innerHTML = logHtml + `</table>`;
+            runBayesian();
         }
 
-        const regex = new RegExp(`${item.key}[\\s\\S]{0,120}`);
-        const m = searchText.match(regex);
-        if (m) {
-            const segment = m[0];
-            const p1 = segment.match(/1\s*\/\s*([\d,.]+)\s+([\d,.]+)/);
-            const p2 = segment.match(/1\s+([\d,.]+)\s*\/\s*([\d,.]+)/);
-            
-            let c = null, p = null;
-            if (p1) { c = p1[1]; p = p1[2]; }
-            else if (p2) { c = p2[1]; p = p2[2]; }
-            
-            if (c && p) {
-                let count = parseFloat(c.replace(/,/g, ''));
-                let prob = parseFloat(p.replace(/,/g, ''));
-                
-                // 数値特性による自動スワップ
-                if (count > prob && prob > 1.2) { [count, prob] = [prob, count]; }
+        function runBayesian() {
+            const config = MASTER_CONFIG[sessionBuffer.activeMode];
+            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
+            const bbCount = sessionBuffer.extracted['bb']?.count || 0;
 
-                // データをバッファに格納 (指示通り、棄却は廃止)
-                sessionBuffer.extracted[id] = { prob: prob, count: Math.round(count) };
-                
-                logHtml += `<tr><td>${item.label}</td><td>${Math.round(count)}回</td><td>1/${prob}</td></tr>`;
+            for (let id in sessionBuffer.extracted) {
+                const data = sessionBuffer.extracted[id];
+                const item = config[id];
+                if (!item) continue;
+
+                [1, 2, 5, 6].forEach(s => {
+                    const pExp = 1 / item.vals[s];
+                    let n, k = data.count;
+                    // 【指示】RT項目の分母計算
+                    if (['vc', 'hc'].includes(id)) n = bbCount * 11.8;
+                    else if (['vg', 'hg'].includes(id)) n = data.count * data.prob;
+                    else n = sessionBuffer.totalG;
+
+                    if (n > 0) logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
+                });
             }
+            const active = Object.values(logL);
+            const maxL = Math.max(...active);
+            let total = 0, probs = {};
+            [1, 2, 5, 6].forEach(s => { probs[s] = Math.exp(logL[s] - maxL); total += probs[s]; });
+            [1, 2, 5, 6].forEach(s => {
+                const p = (probs[s] / total * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = p + "%";
+                document.getElementById(`b${s}`).style.width = p + "%";
+            });
         }
-    }
 
-    logHtml = `<tr><td>総プレイ数(確定)</td><td colspan="2">${sessionBuffer.totalG} G</td></tr>` + logHtml;
-    document.getElementById('log').innerHTML = logHtml + `</table>`;
-    runBayesian();
-}
-
-function runBayesian() {
-    const config = MASTER_CONFIG[sessionBuffer.activeMode];
-    let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-    const bbCount = sessionBuffer.extracted['bb']?.count || 0;
-
-    for (let id in sessionBuffer.extracted) {
-        const data = sessionBuffer.extracted[id];
-        const item = config[id];
-        if (!item || !data.prob) continue;
-
-        [1, 2, 5, 6].forEach(s => {
-            const pExp = 1 / item.vals[s];
-            let n, k;
-
-            // 【指示事項】RT項目の試行ゲーム数計算
-            if (['vc', 'hc'].includes(id)) {
-                // VC/HC: 指示通り 11.8 * BB回数を分母とする
-                n = bbCount * 11.8;
-                k = data.count;
-            } else if (['vg', 'hg'].includes(id)) {
-                // VG/HG: 回数 * 分母 から区間ゲーム数を算出
-                n = data.count * data.prob;
-                k = data.count;
-            } else {
-                // 通常時: 総プレイ数を使用
-                n = sessionBuffer.totalG;
-                k = data.count;
-            }
-
-            if (n > 0) {
-                logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
-            }
-        });
-    }
-    // ... (以下、確率変換処理)
-}
+        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        document.getElementById('file-input').onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = async () => {
+                document.getElementById('log').innerText = "Analyzing...";
+                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json();
+                const ann = json.responses[0]?.textAnnotations;
+                if (ann) {
+                    const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
+                    const maxY = Math.max(...items.map(it => it.y)), minY = Math.min(...items.map(it => it.y));
+                    const threshold = (maxY - minY) * 0.015;
+                    items.sort((a, b) => a.y - b.y);
+                    let rows = [], cur = [items[0]];
+                    for (let i = 1; i < items.length; i++) {
+                        if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
+                        else { rows.push(cur); cur = [items[i]]; }
+                    }
+                    rows.push(cur);
+                    const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
+                    extractData(rawText);
+                }
+            };
+        };
+    </script>
+</body>
+</html>
