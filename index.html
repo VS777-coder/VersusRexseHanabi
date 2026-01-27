@@ -3,46 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.0.0 (True Stable)</title>
+    <title>みおの解析 1.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; box-shadow: 0 4px 10px rgba(255,0,128,0.3); border: 2px solid #ffffff; line-height: 1.2; }
-        .main-btn:active { transform: scale(0.97); }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; border: 1px solid #30363d; height: 33vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #fbcfe8; height: 50vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.4; box-shadow: inset 0 0 15px rgba(0,255,204,0.1); }
-        .bar-bg { background-color: #0d1117; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #21262d; margin-top: 2px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.19, 1, 0.22, 1); }
-        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 4px 16px; font-size: 11px; width: 100%; border: 1px solid #30363d; outline: none; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.4; }
+        .main-btn:active { transform: scale(0.95); }
+        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(0,255,204,0.1); }
+        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-2">
-        <div class="text-xl font-black kawaii-title tracking-tighter leading-none">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.0.0</p>
+    <div class="text-center shrink-0 mb-4">
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.0.0</p>
     </div>
 
-    <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer tracking-widest leading-tight">
+    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
+        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
             ユニメモ<br>解析実行
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto graph-area">
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-cyan-400">設定1</span><span id="p1" class="text-xl font-bold text-cyan-400">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-yellow-400">設定2</span><span id="p2" class="text-xl font-bold text-yellow-400">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-green-400">設定5</span><span id="p5" class="text-xl font-bold text-green-400">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between items-end"><span class="text-2xl font-black text-red-500">設定6</span><span id="p6" class="text-xl font-bold text-red-500">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+    <div class="w-full max-w-md mx-auto result-card">
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">READY...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">SYSTEM READY. WAITING FOR UNIMEMO...</div>
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2 px-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-1 px-4 rounded-full text-[10px]">SAVE</button>
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
+        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
     </div>
 
     <script>
@@ -56,10 +56,9 @@
                 bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
                 sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
                 cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "small", anchor: "BB中詳細" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "small", anchor: "BB中詳細" }
+                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg", anchor: "RT詳細" },
+                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail", anchor: "BB中詳細" }
             },
             "HANABI": {
                 name: "新ハナビ",
@@ -71,9 +70,9 @@
                 ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", anchor: "小役" },
                 ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", anchor: "チェリー合算" },
                 cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", anchor: "チェリー合算" },
-                vc:   { id: "vc", name: "ハナビチャンス中はずれ", key: "チャレンジ中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                vg:   { id: "vg", name: "ハナビゲーム中はずれ", key: "GAME中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT詳細" },
-                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB中詳細" }
+                vc:   { id: "vc", name: "ハナビチャンス中はずれ", key: "チャレンジ中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt_vc", anchor: "RT詳細" },
+                vg:   { id: "vg", name: "ハナビゲーム中はずれ", key: "GAME中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt_vg", anchor: "RT詳細" },
+                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5, type: "bb_detail", anchor: "BB中詳細" }
             }
         };
 
@@ -86,23 +85,35 @@
         }
 
         function runBayesian() {
-            addLog("INITIALIZING BAYESIAN ENGINE...");
+            addLog("INITIALIZING DEFINITION ENGINE...");
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            let dw = session.n < 1000 ? 0.4 : session.n < 3000 ? 0.8 : session.n < 6000 ? 1.2 : 1.6;
+            
+            // BB回数の逆算（定義に基づく）
+            const bbProb = session.extracted['bb'] ? session.extracted['bb'].prob : 0;
+            const k_bb = bbProb > 0 ? Math.round(session.n / bbProb) : 0;
+            addLog(`ESTIMATED BB COUNT: ${k_bb}`);
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
-                const item = Object.values(config).find(v => v.id === id);
-                if (!item) continue;
+                const item = config[id];
+                if (!item || item.type === "total") continue;
+
+                // 試行数(n)の決定定義
+                let n_trial = session.n; // 通常時デフォルト
+                if (item.type === "rt_vc") n_trial = k_bb * 15;
+                if (item.type === "rt_vg") n_trial = k_bb * 20;
+                if (item.type === "bb_detail") n_trial = k_bb * 25;
+
+                // 出現数(k)の決定定義（確率分母から逆算）
+                // data.prob が 0 (1/-) の場合は k=0 とする
+                const k_event = data.prob > 0 ? n_trial / data.prob : 0;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
-                    let w = item.w || 1.0;
-                    if (item.type === "small") w *= dw;
-                    const n = (item.type === "rt") ? (Math.max(1, data.count) * data.prob) : session.n;
-                    const k = data.count; // 0回をk=0として正しく尤度計算に反映
-                    logL[s] += w * (k * Math.log(pExp / (k/n || 0.0001)) + (n - k) * Math.log((1 - pExp) / (1 - (k/n || 0.0001))));
+                    const w = item.w || 1.0;
+                    // ベイズ推論計算
+                    logL[s] += w * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
                 });
             }
 
@@ -125,7 +136,8 @@
         async function analyze(file) {
             const logElement = document.getElementById('log');
             logElement.innerText = ">> BOOTING ANALYZER...";
-            const reader = new FileReader(); reader.readAsDataURL(file);
+            const reader = new FileReader(); 
+            reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
@@ -139,7 +151,7 @@
                 const words = ann.slice(1);
                 const heights = words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y));
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                const threshold = Math.max(avgHeight * 2.5, 25);
+                const threshold = avgHeight * 2.3; 
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let rows = [];
@@ -155,7 +167,7 @@
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent); // 省略せず全て出力
+                addLog(rawContent);
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
@@ -163,9 +175,10 @@
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                const totalMatch = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`));
-                if (totalMatch) {
-                    session.n = parseInt(totalMatch[1].replace(/,/g, ''));
+                // 総ゲーム数抽出
+                const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`));
+                if (totalM) {
+                    session.n = parseInt(totalM[1].replace(/,/g, ''));
                     addLog(`[OK] 総プレイ数: ${session.n}G`);
                 }
 
@@ -183,20 +196,16 @@
                     const match = area.match(regex);
                     if (match) {
                         const text = match[0];
-                        // PC版のロジック継承：「-」があれば0回
+                        // 確率（1/X）のみを抽出ロジックに特化
                         if (text.includes('-')) {
-                            session.extracted[item.id] = { count: 0, prob: 0 };
-                            addLog(`[OK] ${item.name}: 0回 (1/-)`);
+                            session.extracted[item.id] = { prob: 0 };
+                            addLog(`[OK] ${item.name}: 1/- (0回)`);
                         } else {
-                            // 単位「回」を絶対基準として数値を抽出
-                            const countM = text.match(/([\d,]+)\s*回/);
                             const probM = text.match(/1\s*\/\s*([\d,.]+)/);
-                            let count = countM ? parseInt(countM[1].replace(/,/g, '')) : null;
-                            let prob = probM ? parseFloat(probM[1].replace(/,/g, '')) : null;
-
-                            if (count !== null) {
-                                session.extracted[item.id] = { count, prob: prob || (session.n / count) || 1.0 };
-                                addLog(`[OK] ${item.name}: ${count}回${prob ? " (1/" + prob + ")" : ""}`);
+                            if (probM) {
+                                const prob = parseFloat(probM[1].replace(/,/g, ''));
+                                session.extracted[item.id] = { prob };
+                                addLog(`[OK] ${item.name}: 1/${prob}`);
                             }
                         }
                     }
