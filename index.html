@@ -38,7 +38,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">SYSTEM READY.</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
@@ -58,7 +58,7 @@
                 cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
                 vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc", anchor: "RT\\s*詳細" },
                 vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg", anchor: "RT\\s*詳細" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, type: "bb_detail", anchor: "BB\\s*中\\s*詳細" },
+                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 16384.0}, w: 1.0, type: "bb_detail", anchor: "BB\\s*中\\s*詳細" },
                 cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail", anchor: "BB\\s*中\\s*詳細" }
             },
             "HANABI": {
@@ -86,38 +86,30 @@
         }
 
         function runBayesian() {
-            addLog("INITIALIZING DEFINITION ENGINE...");
+            addLog("INITIALIZING DECIMAL ENGINE...");
             const config = MASTER_CONFIG[session.mode];
-            if (!session.n || session.n === 0) {
-                addLog("[ERROR] 総プレイ数が0のため解析を中断しました。");
-                return;
-            }
+            if (!session.n) return addLog("[ERROR] TOTAL PLAYS MISSING.");
 
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            
-            // BB回数の逆算（定義に基づく）
             const bbData = session.extracted['bb'];
             const k_bb = (bbData && bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
-            addLog(`ESTIMATED BB COUNT: ${k_bb}`);
+            addLog(`ESTIMATED BB COUNT: ${k_bb.toFixed(1)}`);
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = config[id];
                 if (!item || item.type === "total") continue;
 
-                // 試行数(n)の決定定義
                 let n_trial = session.n; 
                 if (item.type === "rt_vc") n_trial = k_bb * 15;
                 if (item.type === "rt_vg") n_trial = k_bb * 20;
                 if (item.type === "bb_detail") n_trial = k_bb * 25;
 
-                // 出現数(k)の決定定義（確率分母から逆算）
                 const k_event = data.prob > 0 ? n_trial / data.prob : 0;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     const w = item.w || 1.0;
-                    // ベイズ推論計算（0回データもk=0として正しく尤度計算に反映）
                     logL[s] += w * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
                 });
             }
@@ -156,8 +148,6 @@
                 const words = ann.slice(1);
                 const heights = words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y));
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                
-                // PC版の「30px」ロジックを継承しモバイル向けに動的化
                 const threshold = avgHeight * 2.3; 
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
@@ -170,11 +160,11 @@
                 });
 
                 const rawContent = rows.sort((a, b) => a.y - b.y)
-                    .map(l => l.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "))
+                    .map(r => r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "))
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent);
+                addLog(rawContent.substring(0, 500) + "...");
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ") || rawContent.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
@@ -182,11 +172,10 @@
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                // 総ゲーム数抽出（スペース耐性を強化）
                 const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,50}?([\\d,.]+)\\s*G`));
                 if (totalM) {
                     session.n = parseInt(totalM[1].replace(/[,.]/g, ''));
-                    addLog(`[OK] 総プレイ数: ${session.n}G`);
+                    addLog(`[OK] 総プレイ数: ${session.n.toFixed(1)}G`);
                 } else {
                     addLog(`[ERROR] 総プレイ数: 抽出失敗`);
                 }
@@ -205,26 +194,24 @@
                     const match = area.match(regex);
                     if (match) {
                         const text = match[0];
-                        // ハイフン判定を強化（0回を逃さない）
                         if (text.includes('-')) {
-                            session.extracted[item.id] = { prob: 0 };
-                            addLog(`[OK] ${item.name}: 1/- (0回)`);
+                            session.extracted[item.id] = { prob: 0.0 };
+                            addLog(`[OK] ${item.name}: 1/- (0.0回)`);
                         } else {
+                            // 末尾優先ロジック：行の中の最後の数値を確率分母として採用
                             const nums = text.match(/[\d,.]+/g);
                             if (nums) {
-                                // 複数の数字から「小数点」を持つ分母を優先的に選別
-                                const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                // 最後の数値を取得し、フォーマットを整える
                                 const lastNum = nums[nums.length - 1].replace(/,/g, '');
-                                const prob = decimal ? parseFloat(decimal.replace(/,/g, '')) : parseFloat(lastNum);
-                                
-                                session.extracted[item.id] = { prob };
-                                addLog(`[OK] ${item.name}: 1/${prob}`);
+                                const prob = parseFloat(lastNum);
+                                session.extracted[item.id] = { prob: prob };
+                                addLog(`[OK] ${item.name}: 1/${prob.toFixed(1)}`);
                             } else {
-                                addLog(`[ERROR] ${item.name}: 確率データ未検出`);
+                                addLog(`[ERROR] ${item.name}: データ未検出`);
                             }
                         }
                     } else {
-                        addLog(`[ERROR] ${item.name}: 項目が見つかりません`);
+                        addLog(`[ERROR] ${item.name}: 項目不明`);
                     }
                 }
                 runBayesian();
