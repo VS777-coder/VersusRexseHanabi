@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.8 (Final Stable)</title>
+    <title>みおの解析 1.1.9 (Extreme Stable)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@900&family=Share+Tech+Mono&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-2">
         <div class="text-3xl font-black kawaii-title tracking-tighter leading-none">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.8</p>
+        <p class="text-xs text-pink-300 font-bold mt-1">みおちゃん専用 Rev 1.1.9</p>
     </div>
 
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
@@ -49,6 +49,7 @@
     </div>
 
     <script>
+        // 設定データ（PC版で完動しているものを維持）
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -144,6 +145,7 @@
             });
         }
 
+        // 【Rev 1.1.9】極限安定化解析エンジン
         function extractData(rawText) {
             const lines = rawText.split('\n').map(l => l.replace(/[ 　]/g, ""));
             const cleanFullText = lines.join("");
@@ -151,19 +153,19 @@
             const config = MASTER_CONFIG[sessionBuffer.activeMode];
             sessionBuffer.extracted = {};
 
-            let lastFoundIdx = 0; // 順序を守って検索するためのインデックス
+            let lastFoundIdx = 0;
 
             for (let id in config) {
                 if (id === "name") continue;
                 const item = config[id];
                 let foundIdx = -1;
 
-                // キーワードの検索（ハナビのA問題対策としてlastFoundIdxから開始）
+                // シーケンシャル・サーチ（順序を守って誤読を回避）
                 for (let i = lastFoundIdx; i < lines.length; i++) {
                     if (lines[i].includes(item.key)) {
-                        // ハナビの"A"が"氷A"や"チェリーA"に誤爆するのを防ぐ
+                        // ハナビの"A"が"氷A"などに誤爆するのを防ぐ
                         if (sessionBuffer.activeMode === "HANABI" && id === "ba") {
-                            if (lines[i].includes("氷") || lines[i].includes("チェリー")) continue;
+                            if (lines[i].includes("氷") || lines[i].includes("チェリー") || lines[i].length > 4) continue;
                         }
                         foundIdx = i;
                         lastFoundIdx = i;
@@ -172,46 +174,45 @@
                 }
 
                 if (foundIdx !== -1) {
-                    // 周辺3行をコンテキストとして取得
-                    let windowLines = [];
-                    if (foundIdx > 0) windowLines.push(lines[foundIdx - 1]);
-                    windowLines.push(lines[foundIdx]);
-                    if (foundIdx < lines.length - 1) windowLines.push(lines[foundIdx + 1]);
-                    const contextStr = windowLines.join(" ");
+                    let prob = null, count = 0;
 
+                    // 1. 確率の抽出 (同じ行、または次の行)
+                    const pRange = [lines[foundIdx], (lines[foundIdx + 1] || "")];
+                    for (let s of pRange) {
+                        const m = s.match(/1\/([\d\.]+)|(\d+\.\d+)/);
+                        if (m) { prob = parseFloat(m[1] || m[2]); break; }
+                    }
+
+                    // 2. 回数の抽出 (同じ行、または前の行)
+                    const cRange = [lines[foundIdx], (lines[foundIdx - 1] || "")];
+                    for (let s of cRange) {
+                        const mUnit = s.match(/(\d+)回/);
+                        if (mUnit) { count = parseInt(mUnit[1]); break; }
+                        const mNum = s.match(/(\d+)/);
+                        if (mNum) {
+                            let v = parseInt(mNum[1]);
+                            // 確率の分母や1を誤認しないチェック
+                            if (v !== 1 && v !== Math.floor(prob || 0)) { count = v; }
+                        }
+                    }
+
+                    // 総プレイ数専用処理
                     if (item.type === "total") {
-                        const m = contextStr.match(/([\d,]{3,})G/);
+                        const m = (lines[foundIdx] + (lines[foundIdx+1]||"")).match(/([\d,]{3,})G/);
                         sessionBuffer.totalG = m ? parseInt(m[1].replace(/,/g, '')) : 0;
                         sessionBuffer.extracted[id] = { prob: sessionBuffer.totalG };
                         continue;
                     }
 
-                    // 確率の抽出 (1/XX または XX.X)
-                    let prob = null;
-                    const probMatch = contextStr.match(/1\/([\d\.]+)|(\d+\.\d+)/);
-                    if (probMatch) prob = parseFloat(probMatch[1] || probMatch[2]);
-
-                    // 回数の抽出
-                    let count = 0;
-                    const countWithUnit = contextStr.match(/(\d+)回/);
-                    if (countWithUnit) {
-                        count = parseInt(countWithUnit[1]);
-                    } else {
-                        // 単位がない場合、数字の羅列からもっともらしいものを探す
-                        const allNums = contextStr.match(/\d+/g);
-                        if (allNums) {
-                            const filtered = allNums.map(n => parseInt(n)).filter(n => n > 1 && n !== Math.floor(prob || -1));
-                            if (filtered.length > 0) {
-                                count = filtered[0];
-                                // OCRの結合ミス（246回 -> 2460）の補正
-                                if (sessionBuffer.totalG > 0 && count > sessionBuffer.totalG) {
-                                    count = parseInt(count.toString().slice(0, -1));
-                                }
-                            }
+                    // OCRの結合ミス（246回 -> 2460）の自動補正
+                    if (prob > 4 && count > 0 && sessionBuffer.totalG > 0) {
+                        // 推定値より2.2倍以上多ければ末尾の誤字を切り捨てる
+                        if (count * prob > sessionBuffer.totalG * 2.2) {
+                            count = Math.floor(count / 10);
                         }
                     }
 
-                    if (contextStr.includes("/-")) { prob = 0; count = 0; }
+                    if (lines[foundIdx].includes("/-")) { prob = 0; count = 0; }
                     sessionBuffer.extracted[id] = { prob, count };
                 } else {
                     sessionBuffer.extracted[id] = { prob: null, count: null };
