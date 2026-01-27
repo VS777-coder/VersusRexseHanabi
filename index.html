@@ -3,146 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおのデバッグ解析 1.1.14</title>
+    <title>デバッグ版 1.1.15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; width: 100%; max-width: 450px; padding: 12px; text-align: center; cursor: pointer; font-weight: 900; font-size: 1.4rem; }
-        .debug-panel { background-color: #161b22; border: 2px solid #ff758c; border-radius: 16px; padding: 12px; width: 100%; max-width: 450px; margin-top: 10px; }
-        .result-scroll { background-color: #000; border: 1px solid #444; border-radius: 8px; padding: 10px; height: 400px; overflow-y: auto; font-family: monospace; font-size: 11px; color: #fbcfe8; }
-        .bar-bg { background-color: #0d1117; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 4px; border: 1px solid #333; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.5s ease-out; }
-        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        td { border-bottom: 1px solid #222; padding: 4px 0; }
-        .label-red { color: #ff4d4d; font-weight: bold; }
-        .label-green { color: #4dff88; font-weight: bold; }
+        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; padding: 12px; }
+        .debug-panel { background-color: #161b22; border: 2px solid #ff0080; border-radius: 16px; padding: 16px; width: 100%; max-width: 450px; margin: 0 auto; }
+        .raw-viewer { background-color: #000; color: #00ff41; font-family: monospace; font-size: 10px; padding: 10px; border-radius: 8px; margin-top: 12px; height: 30vh; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+        .main-btn { background: linear-gradient(135deg, #444 0%, #000 100%); border: 1px solid #ff0080; color: #ff0080; width: 100%; padding: 16px; border-radius: 12px; text-align: center; font-weight: bold; cursor: pointer; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: #ff0080; font-size: 11px; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        td { padding: 8px 0; font-size: 12px; border-bottom: 1px solid #222; }
+        .total-g { font-size: 20px; font-weight: 900; color: #00f2ff; text-align: center; margin-bottom: 10px; border-bottom: 2px dashed #333; padding-bottom: 10px; }
     </style>
 </head>
 <body>
-    <label for="file-input" class="main-btn">ユニメモ解析<br>【デバッグ版 1.1.14】</label>
-    <input type="file" id="file-input" class="hidden" accept="image/*">
-
     <div class="debug-panel">
-        <div class="flex justify-between mb-2 px-1">
-            <span class="label-green">総プレイ数: <span id="total-display">---</span> G</span>
-            <span id="mode-display" class="label-red">MODE: ---</span>
-        </div>
-        <div id="result-area" class="result-scroll">解析結果がここに表示されます。</div>
-    </div>
+        <label for="file-input" class="main-btn">デバッグ画像を選択 (Rev 1.1.15)</label>
+        <input type="file" id="file-input" class="hidden" accept="image/*">
 
-    <div class="w-full max-w-[450px] mt-3 space-y-2">
-        <div class="flex justify-between text-xs"><span>設定1</span><span id="p1">---</span></div>
-        <div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
-        <div class="flex justify-between text-xs"><span>設定6</span><span id="p6">---</span></div>
-        <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
-    </div>
+        <div id="total-display" class="total-g">G数: --- G</div>
 
-    <input type="password" id="api-key" class="hidden">
+        <table>
+            <thead>
+                <tr><th>項目</th><th>当選回数</th><th>確率分母</th></tr>
+            </thead>
+            <tbody id="buffer-table">
+                </tbody>
+        </table>
+
+        <div id="raw-log" class="raw-viewer">待機中...</div>
+    </div>
 
     <script>
-        const MASTER_CONFIG = {
-            "VERSUS": {
-                bb: { key: "BB", label: "BB", vals: {1: 273.1, 6: 256.0} },
-                rb: { key: "RB", label: "RB", vals: {1: 374.5, 6: 292.6} },
-                ba: { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 6: 10.2} },
-                vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 6: 4.5}, type: 'vc' },
-                vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 6: 8.1}, type: 'vg' }
-            },
-            "HANABI": {
-                bb: { key: "BB", label: "BB", vals: {1: 277.7, 6: 248.2} },
-                rb: { key: "RB", label: "RB", vals: {1: 356.2, 6: 280.1} },
-                ba: { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 6: 14.1} },
-                hc: { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 6: 5.1}, type: 'hc' },
-                hg: { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 6: 9.5}, type: 'hg' }
-            }
+        const CONFIG = {
+            "HANABI": ["BB", "RB", "A\\s+1", "風鈴\\s*B", "氷\\s*A", "中\\s*はずれ"],
+            "VERSUS": ["BB", "RB", "ベル\\s*A", "ベル\\s*B", "スイカ\\s*A", "中\\s*はずれ"]
         };
 
-        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
+        async function processOCR(readerResult) {
+            const apiKey = localStorage.getItem('v_key');
+            const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+                method: 'POST',
+                body: JSON.stringify({ requests: [{ image: { content: readerResult.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            const ann = json.responses[0]?.textAnnotations;
+            if (!ann) return;
 
-        function extractData(rawText) {
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            document.getElementById('mode-display').innerText = `MODE: ${sessionBuffer.activeMode}`;
-            
+            const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
+            const maxY = Math.max(...items.map(it => it.y)), minY = Math.min(...items.map(it => it.y));
+            const threshold = (maxY - minY) * 0.015;
+
+            items.sort((a, b) => a.y - b.y);
+            let rows = [], cur = [items[0]];
+            for (let i = 1; i < items.length; i++) {
+                if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
+                else { rows.push(cur); cur = [items[i]]; }
+            }
+            rows.push(cur);
+            const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
+            document.getElementById('raw-log').innerText = rawText;
+
+            // 1. 総プレイ数抽出
             const gMatch = rawText.match(/([\d,]+)\s*G/i);
-            sessionBuffer.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
-            document.getElementById('total-display').innerText = sessionBuffer.totalG;
+            const totalG = gMatch ? gMatch[1] : "未検出";
+            document.getElementById('total-display').innerText = `G数: ${totalG} G`;
 
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-            let tableHtml = `<table>`;
+            // 2. モード判定
+            const mode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            const targetKeys = CONFIG[mode];
+            
+            const tbody = document.getElementById('buffer-table');
+            tbody.innerHTML = "";
 
-            for (let id in config) {
-                const item = config[id];
-                const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,120}`));
-                if (m) {
-                    const seg = m[0];
-                    const p1 = seg.match(/1\s*\/\s*([\d.]+)\s+([\d.]+)/);
-                    const p2 = seg.match(/1\s+([\d.]+)\s*\/\s*([\d.]+)/);
-                    let c = null, p = null;
-                    if (p1) { c = p1[1]; p = p1[2]; } else if (p2) { c = p2[1]; p = p2[2]; }
+            targetKeys.forEach(key => {
+                const regex = new RegExp(`${key}[\\s\\S]{0,100}`);
+                const match = rawText.match(regex);
+                if (match) {
+                    const segment = match[0];
+                    const nums = (segment.match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
                     
-                    if (c && p) {
-                        let cV = parseFloat(c), pV = parseFloat(p);
-                        if (cV > pV && pV > 1.2) [cV, pV] = [pV, cV];
-                        sessionBuffer.extracted[id] = { prob: pV, count: Math.round(cV) };
-                        tableHtml += `<tr><td>${item.label}</td><td>${Math.round(cV)}回</td><td>1/${pV}</td></tr>`;
-                    }
+                    // 【指示】小数点がある方を分母にするロジック
+                    let prob = nums.find(n => n.includes('.')) || "---";
+                    let count = nums.find(n => !n.includes('.') && n !== "1" && n !== prob) || "---";
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${key.replace('\\s+1','A')}</td><td>${count} 回</td><td>1/${prob}</td>`;
+                    tbody.appendChild(tr);
                 }
-            }
-            document.getElementById('result-area').innerHTML = tableHtml + `</table><hr class="my-2 border-gray-700"><div class="text-[9px] text-gray-500">${rawText.substring(0,500)}...</div>`;
-            runBayesian();
+            });
         }
 
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            let logL = { 1: 0, 6: 0 };
-            const bb = sessionBuffer.extracted['bb']?.count || 0;
-
-            for (let id in sessionBuffer.extracted) {
-                const data = sessionBuffer.extracted[id];
-                [1, 6].forEach(s => {
-                    const pExp = 1 / config[id].vals[s];
-                    let n = (['vc','hc'].includes(id)) ? bb * 11.8 : (['vg','hg'].includes(id) ? data.count * data.prob : sessionBuffer.totalG);
-                    if (n > 0) logL[s] += (data.count * Math.log(pExp) + (n - data.count) * Math.log(1 - pExp));
-                });
-            }
-            const maxL = Math.max(logL[1], logL[6]);
-            const p1 = Math.exp(logL[1] - maxL), p6 = Math.exp(logL[6] - maxL);
-            const sum = p1 + p6;
-            document.getElementById('p1').innerText = (p1/sum*100).toFixed(1) + "%";
-            document.getElementById('b1').style.width = (p1/sum*100) + "%";
-            document.getElementById('p6').innerText = (p6/sum*100).toFixed(1) + "%";
-            document.getElementById('b6').style.width = (p6/sum*100) + "%";
-        }
-
-        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = async () => {
-                document.getElementById('result-area').innerText = "Analyzing...";
-                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                    method: 'POST',
-                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const json = await res.json();
-                const ann = json.responses[0]?.textAnnotations;
-                if (ann) {
-                    const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-                    const maxY = Math.max(...items.map(it => it.y)), minY = Math.min(...items.map(it => it.y));
-                    const threshold = (maxY - minY) * 0.015;
-                    items.sort((a, b) => a.y - b.y);
-                    let rows = [], cur = [items[0]];
-                    for (let i = 1; i < items.length; i++) {
-                        if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
-                        else { rows.push(cur); cur = [items[i]]; }
-                    }
-                    rows.push(cur);
-                    const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    extractData(rawText);
-                }
-            };
+            reader.onload = () => processOCR(reader.result);
         };
     </script>
 </body>
