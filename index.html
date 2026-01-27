@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.40 [Integrated]</title>
+    <title>みおの解析 1.1.41 [Debug Logger]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
         .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 8px 15px rgba(255,0,128,0.3); border: 2px solid #ffffff; transition: transform 0.1s; line-height: 1.4; cursor: pointer; }
-        .main-btn:active { transform: scale(0.95); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 8px 15px rgba(255,0,128,0.3); border: 2px solid #ffffff; line-height: 1.4; cursor: pointer; }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 160px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
+        .raw-debug { color: #f472b6; font-size: 9px; border-top: 1px solid #333; margin-top: 8px; padding-top: 4px; }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
         table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 4px; }
         th, td { border-bottom: 1px solid #21262d; padding: 2px 0; text-align: left; }
@@ -23,7 +23,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-2xl font-black kawaii-title tracking-tighter leading-tight">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.1.40</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.1.41</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -48,7 +48,7 @@
     </div>
 
     <script>
-        // --- （1）定義の部分：CONFIG_MODULE ---
+        // --- （1）定義の部分：そのまま維持 ---
         const MASTER_CONFIG = {
             "HANABI": {
                 bb: { key: "BB", label: "BB合算", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, nType: 'normal' },
@@ -69,20 +69,19 @@
             }
         };
 
-        let session = { mode: null, n: 0, extracted: {} };
+        let session = { mode: null, n: 0, extracted: {}, rawText: "" };
 
-        // --- （2）尤度の定義の部分：ENGINE_MODULE ---
+        // --- （2）尤度のエンジン：そのまま維持 ---
         function runLikelihoodEngine() {
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            
-            let dw = 1.0; // 動的ウェイト
+            let dw = 1.0; 
             if (session.n < 1000) dw = 0.4; else if (session.n < 4000) dw = 1.0; else dw = 1.6;
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = config[id];
-                if (!item || data.prob === null) continue;
+                if (!item || data.prob === null || data.prob === 0) continue;
 
                 [1, 2, 5, 6].forEach(s => {
                     if (logL[s] === -Infinity) return;
@@ -92,7 +91,6 @@
                     if (data.prob > 0 && pExp > 0) {
                         let w = item.w || 1.0; if (item.nType === 'small') w *= dw;
                         let n, k = data.count;
-                        // ぷりんちゃん最新指示：分母nの切り分け
                         switch(item.nType) {
                             case 'rt_pre': n = (session.extracted['bb']?.count || 0) * 11.8; break;
                             case 'rt_post': n = data.count * data.prob; break;
@@ -100,19 +98,22 @@
                             case 'rb_in': n = (session.extracted['rb']?.count || 0) * 8; break;
                             default: n = session.n;
                         }
-                        // KL尤度計算式 (KL Divergence based)
                         const pObs = k / n;
-                        logL[s] += w * (k * Math.log(pExp / pObs) + (n - k) * Math.log((1 - pExp) / (1 - pObs)));
+                        // NaN回避のための微小値補正
+                        if (pObs > 0 && pObs < 1) {
+                            logL[s] += w * (k * Math.log(pExp / pObs) + (n - k) * Math.log((1 - pExp) / (1 - pObs)));
+                        }
                     }
                 });
             }
             updateUI(logL);
         }
 
-        // --- （3）画像取り込めの部分：OCR_MODULE ---
+        // --- （3）画像取り込めの部分：ロガー追加 ---
         async function analyze(file) {
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
+                document.getElementById('log').innerText = "OCR IN PROGRESS...";
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
                     body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
@@ -122,36 +123,34 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (!ann) return;
                 
-                const raw = ann[0].description;
-                session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+                session.rawText = ann[0].description; // 生テキストを保存
+                session.mode = (session.rawText.includes("ハナビ") || session.rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+                
+                const mTotal = session.rawText.match(/([\d,]+)\s*G/i);
+                session.n = mTotal ? parseInt(mTotal[1].replace(/,/g, '')) : 0;
+
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
-                
-                // 総G数奪取 P0ロジック
-                const mTotal = raw.match(/([\d,]+)\s*G/i);
-                session.n = mTotal ? parseInt(mTotal[1].replace(/,/g, '')) : 0;
 
                 for (let id in config) {
                     const item = config[id];
-                    let searchText = raw;
+                    let searchText = session.rawText;
                     if (item.anchor) {
-                        const am = raw.match(new RegExp(item.anchor));
-                        if (am) searchText = raw.substring(am.index);
+                        const am = session.rawText.match(new RegExp(item.anchor));
+                        if (am) searchText = session.rawText.substring(am.index);
                     }
                     const line = searchText.match(new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`));
                     if (line) {
-                        // 小数点（分母）と整数（回数）を厳密に仕分け
                         const nums = line[0].replace(/1\s*\/\s*/g, '').match(/[\d,.]+/g);
                         if (nums) {
-                            const decimalIdx = nums.findIndex(n => n.includes('.'));
+                            const dIdx = nums.findIndex(n => n.includes('.'));
                             let prob, count;
-                            if (decimalIdx !== -1) {
-                                prob = parseFloat(nums[decimalIdx]);
-                                count = parseInt(nums.find((_, i) => i !== decimalIdx) || 0);
+                            if (dIdx !== -1) {
+                                prob = parseFloat(nums[dIdx]);
+                                count = parseInt(nums.find((_, i) => i !== dIdx) || 0);
                             } else {
                                 prob = Math.max(...nums.map(n => parseFloat(n)));
                                 count = Math.min(...nums.map(n => parseFloat(n)));
-                                if (count === 1 && nums.length > 2) count = parseFloat(nums[1]);
                             }
                             session.extracted[id] = { prob, count };
                         }
@@ -161,7 +160,6 @@
             };
         }
 
-        // --- （4）判別の部分：UI_MODULE ---
         function updateUI(logL) {
             const activeScores = Object.values(logL).filter(v => v !== -Infinity);
             const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
@@ -171,9 +169,9 @@
                 total += probs[s];
             });
             [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
+                const p = (total === 0) ? "---" : (probs[s] / total * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = p + (total === 0 ? "" : "%");
+                document.getElementById(`b${s}`).style.width = (total === 0 ? 0 : p) + "%";
             });
         }
 
@@ -183,7 +181,8 @@
                 const d = session.extracted[id];
                 h += `<tr><td>${MASTER_CONFIG[session.mode][id].label}</td><td>${d.count}</td><td>1/${d.prob}</td></tr>`;
             }
-            document.getElementById('log').innerHTML = h + `</table>`;
+            h += `</table><div class="raw-debug">■ OCR RAW TEXT (Debug Mode)\n${session.rawText.substring(0, 500)}...</div>`;
+            document.getElementById('log').innerHTML = h;
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
