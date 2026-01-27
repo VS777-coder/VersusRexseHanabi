@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.2.2 (Final Mobile)</title>
+    <title>みおの解析 1.2.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.2.2</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.2.3</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -46,7 +46,7 @@
     </div>
 
     <script>
-        // 【Rev 1.2.2】 モバイルOCR特有の「文字揺れ」と「分断」をすべてカバーする正規表現
+        // 【Rev 1.2.3】 風鈴誤爆修正 & ハナビ最適化版
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -67,14 +67,14 @@
                 total: { key: "総\\s*プレイ\\s*数", type: "total" },
                 bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
                 rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "風鈴A", key: "(?:風鈴|風|A)\\s*A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small" },
-                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風|B)\\s*B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small" },
-                ice:  { id: "ice", name: "氷A", key: "(?:氷|氷\\s*)A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small" },
-                ca2:  { id: "ca2", name: "チェリーA2", key: "(?:チェリー|チェリー\\s*)A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", key: "(?:チェリー|チェリー\\s*)B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small" },
+                ba:   { id: "ba", name: "風鈴A", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small", anchor: "小\\s*役" },
+                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small", anchor: "小\\s*役" },
+                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", anchor: "小\\s*役" },
+                ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", anchor: "チェリー\\s*合算" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", anchor: "チェリー\\s*合算" },
                 vc:   { id: "vc", name: "ハナビチャンスはずれ", key: "(?:花火|ハナビ)?\\s*チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
                 vg:   { id: "vg", name: "ハナビゲームはずれ", key: "(?:花火|ハナビ)?\\s*GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt", anchor: "RT\\s*詳細" },
-                nf:   { id: "nf", name: "斜め風鈴", key: "(?:斜め風鈴|風鈴\\s*斜め)", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB\\s*中\\s*詳細" }
+                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.2, type: "small", anchor: "BB\\s*中\\s*詳細" }
             }
         };
 
@@ -95,7 +95,7 @@
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = Object.values(config).find(v => v.id === id);
-                if (!item || !data.prob || data.prob < 2.0) continue; // 異常値(1/1等)は除外
+                if (!item || !data.prob || data.prob < 2.0) continue;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
@@ -144,10 +144,8 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                
-                // --- 【究極調整】しきい値を3.0倍へ。段ズレを完全に許容する ---
                 const threshold = avgHeight * 3.0;
-                addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px (AVG_H: ${avgHeight.toFixed(1)})`);
+                addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
                 words.forEach(word => {
@@ -167,7 +165,7 @@
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent.substring(0, 1000) + "..."); // ログ圧迫防止
+                addLog(rawContent.substring(0, 800) + "...");
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("ハナ ビ") || rawContent.includes("新 ハナビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
@@ -194,7 +192,6 @@
                         continue;
                     }
 
-                    // 改行やゴミを跨いで数値を拾うための正規表現
                     const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
                     const lineMatch = searchArea.match(regex);
                     if (lineMatch) {
