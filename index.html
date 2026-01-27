@@ -3,52 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 Rev 1.1.16</title>
+    <title>みおの解析 Rev 1.1.17 [Modular]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; padding: 12px; display: flex; flex-direction: column; align-items: center; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; width: 100%; max-width: 400px; padding: 16px; text-align: center; cursor: pointer; font-weight: 900; font-size: 1.5rem; transition: transform 0.1s; }
-        .main-btn:active { transform: scale(0.98); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; width: 100%; max-width: 400px; padding: 16px; text-align: center; cursor: pointer; font-weight: 900; font-size: 1.5rem; }
         .graph-area { background-color: #161b22; border-radius: 16px; padding: 16px; width: 100%; max-width: 400px; margin-top: 12px; border: 1px solid #333; }
         .buffer-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 10px; width: 100%; max-width: 400px; margin-top: 12px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #333; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
         table { width: 100%; border-collapse: collapse; margin-top: 8px; }
         td { border-bottom: 1px solid #222; padding: 4px 0; }
-        .text-header { color: #ff758c; font-weight: bold; font-size: 12px; margin-bottom: 4px; display: block; }
     </style>
 </head>
 <body>
-    <label for="file-input" class="main-btn">ユニメモ解析<br>Rev 1.1.16</label>
+    <label for="file-input" class="main-btn">ユニメモ解析<br>Rev 1.1.17</label>
     <input type="file" id="file-input" class="hidden" accept="image/*">
 
     <div class="graph-area">
-        <div id="result-header" class="flex justify-between mb-4 border-b border-gray-700 pb-2">
-            <span id="display-mode" class="text-xs font-bold text-gray-400">WAITING...</span>
+        <div class="flex justify-between mb-4 border-b border-gray-700 pb-2">
+            <span id="display-mode" class="text-xs font-bold text-gray-400">READY</span>
             <span id="display-total" class="text-xs font-bold text-green-400">0 G</span>
         </div>
-        <div class="mb-3">
-            <div class="flex justify-between text-cyan-400 font-bold text-sm"><span>設定1</span><span id="p1">---</span></div>
-            <div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
-        </div>
-        <div class="mb-3">
-            <div class="flex justify-between text-yellow-400 font-bold text-sm"><span>設定2</span><span id="p2">---</span></div>
-            <div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div>
-        </div>
-        <div class="mb-3">
-            <div class="flex justify-between text-green-400 font-bold text-sm"><span>設定5</span><span id="p5">---</span></div>
-            <div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div>
-        </div>
-        <div class="mb-1">
-            <div class="flex justify-between text-red-500 font-bold text-sm"><span>設定6</span><span id="p6">---</span></div>
-            <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
+        <div id="prob-bars">
+            <div class="mb-3">
+                <div class="flex justify-between text-cyan-400 font-bold text-sm"><span>設定1</span><span id="p1">---</span></div>
+                <div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
+            </div>
+            <div class="mb-3">
+                <div class="flex justify-between text-yellow-400 font-bold text-sm"><span>設定2</span><span id="p2">---</span></div>
+                <div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div>
+            </div>
+            <div class="mb-3">
+                <div class="flex justify-between text-green-400 font-bold text-sm"><span>設定5</span><span id="p5">---</span></div>
+                <div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div>
+            </div>
+            <div class="mb-1">
+                <div class="flex justify-between text-red-500 font-bold text-sm"><span>設定6</span><span id="p6">---</span></div>
+                <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
+            </div>
         </div>
     </div>
 
-    <div id="log" class="buffer-log">画像を読み込んでください。</div>
+    <div id="log" class="buffer-log">画像をアップロードしてください。</div>
     <input type="password" id="api-key" class="hidden">
 
     <script>
+        // --- （1）定義の部分：CONFIG_MODULE ---
         const MASTER_CONFIG = {
             "HANABI": {
                 bb: { key: "BB", label: "BB合算", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, nType: 'normal' },
@@ -81,68 +82,23 @@
                 vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, nType: 'hc' },
                 vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, nType: 'hg' },
                 bb_diag: { key: "ベル\\s*斜め\\s*揃い", label: "BB斜めベル", vals: {1: 10.1, 2: 9.2, 5: 8.4, 6: 7.7}, nType: 'bb_in_vs' },
+                bb_mid: { key: "ベル\\s*中段\\s*揃い", label: "BB中段ベル", vals: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0}, nType: 'bb_in_vs' },
                 rb_1m: { key: "1\\s*枚\\s*役", label: "RB1枚役", vals: {1: 5.4, 2: 5.2, 5: 5.0, 6: 4.7}, nType: 'rb_in' }
             }
         };
 
-        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
+        // 状態管理
+        let session = { activeMode: null, totalG: 0, extracted: {} };
 
-        function extractData(rawText) {
-            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
-            sessionBuffer.extracted = {};
-
-            // 【P0】総プレイ数奪取
-            const gMatch = rawText.match(/([\d,]+)\s*G/i);
-            sessionBuffer.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
-            document.getElementById('display-mode').innerText = "MODE: " + sessionBuffer.activeMode;
-            document.getElementById('display-total').innerText = sessionBuffer.totalG + " G";
-
-            let logHtml = `<span class="text-header">■ 抽出バッファ</span><table>`;
-            
-            for (let id in config) {
-                const item = config[id];
-                const regex = new RegExp(`${item.key}[\\s\\S]{0,120}`);
-                const m = rawText.match(regex);
-                if (m) {
-                    const segment = m[0];
-                    // 「1 /」を無視して、その後の数値2つを特定
-                    const nums = (segment.replace(/1\s*\/\s*/g, '').match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
-                    
-                    let count = null, prob = null;
-                    if (nums.length >= 1) {
-                        // 小数点がある方を分母、整数を回数にする
-                        const decimalIdx = nums.findIndex(n => n.includes('.'));
-                        if (decimalIdx !== -1) {
-                            prob = nums[decimalIdx];
-                            count = nums.find((n, idx) => idx !== decimalIdx) || "0";
-                        } else if (nums.length >= 2) {
-                            [count, prob] = nums;
-                            if (parseFloat(count) > parseFloat(prob)) [count, prob] = [prob, count];
-                        } else {
-                            prob = nums[0]; // 1つしかない場合は分母と仮定
-                            count = "0";
-                        }
-                    }
-
-                    if (prob) {
-                        sessionBuffer.extracted[id] = { prob: parseFloat(prob), count: parseInt(count || 0) };
-                        logHtml += `<tr><td>${item.label}</td><td>${count}回</td><td>1/${prob}</td></tr>`;
-                    }
-                }
-            }
-            document.getElementById('log').innerHTML = logHtml + `</table>`;
-            runBayesian();
-        }
-
-        function runBayesian() {
-            const config = MASTER_CONFIG[sessionBuffer.activeMode];
+        // --- （2）尤度の定義の部分：ENGINE_MODULE ---
+        function runLikelihoodEngine() {
+            const config = MASTER_CONFIG[session.activeMode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            const bbCount = sessionBuffer.extracted['bb']?.count || 0;
-            const rbCount = sessionBuffer.extracted['rb']?.count || 0;
+            const bb = session.extracted['bb']?.count || 0;
+            const rb = session.extracted['rb']?.count || 0;
 
-            for (let id in sessionBuffer.extracted) {
-                const data = sessionBuffer.extracted[id];
+            for (let id in session.extracted) {
+                const data = session.extracted[id];
                 const item = config[id];
                 if (!item || !data.prob) continue;
 
@@ -150,22 +106,68 @@
                     const pExp = 1 / item.vals[s];
                     let n, k = data.count;
 
-                    // 【指示】カテゴリ別試行数(n)の計算
+                    // カテゴリ別試行数計算ロジック
                     switch(item.nType) {
-                        case 'hc': n = bbCount * 11.8; break;
+                        case 'hc': n = bb * 11.8; break;
                         case 'hg': n = data.count * data.prob; break;
-                        case 'bb_in': n = bbCount * 29; break;
-                        case 'bb_in_vs': n = bbCount * 24; break;
-                        case 'rb_in': n = rbCount * 8; break;
-                        default: n = sessionBuffer.totalG;
+                        case 'bb_in': n = bb * 29; break;
+                        case 'bb_in_vs': n = bb * 24; break;
+                        case 'rb_in': n = rb * 8; break;
+                        default: n = session.totalG;
                     }
-
-                    if (n > 0 && k > 0) {
-                        logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
-                    }
+                    if (n > 0 && k > 0) logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
                 });
             }
+            updateUIProbs(logL);
+        }
 
+        // --- （3）画像取り込めの部分：OCR_MODULE ---
+        async function processOCR(readerResult) {
+            const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
+                method: 'POST',
+                body: JSON.stringify({ requests: [{ image: { content: readerResult.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const json = await res.json();
+            const ann = json.responses[0]?.textAnnotations;
+            if (!ann) return;
+            
+            const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
+            items.sort((a, b) => a.y - b.y);
+            let rows = [], cur = [items[0]];
+            for (let i = 1; i < items.length; i++) {
+                if (Math.abs(items[i].y - cur[0].y) < 15) cur.push(items[i]);
+                else { rows.push(cur); cur = [items[i]]; }
+            }
+            rows.push(cur);
+            const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
+            parseRawText(rawText);
+        }
+
+        function parseRawText(rawText) {
+            session.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            const gMatch = rawText.match(/([\d,]+)\s*G/i);
+            session.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
+            session.extracted = {};
+
+            for (let id in MASTER_CONFIG[session.activeMode]) {
+                const item = MASTER_CONFIG[session.activeMode][id];
+                const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,120}`));
+                if (m) {
+                    const nums = (m[0].replace(/1\s*\/\s*/g, '').match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
+                    let count = 0, prob = 0;
+                    const dIdx = nums.findIndex(n => n.includes('.'));
+                    if (dIdx !== -1) { prob = parseFloat(nums[dIdx]); count = parseInt(nums.find((_, i) => i !== dIdx) || 0); }
+                    else if (nums.length >= 2) { prob = Math.max(...nums.map(parseFloat)); count = Math.min(...nums.map(parseFloat)); }
+                    if (prob) session.extracted[id] = { prob, count };
+                }
+            }
+            renderBuffer();
+            runLikelihoodEngine();
+        }
+
+        // --- （4）判別の部分：UI_MODULE ---
+        function updateUIProbs(logL) {
             const active = Object.values(logL);
             const maxL = Math.max(...active);
             let total = 0, probs = {};
@@ -175,38 +177,24 @@
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
+            document.getElementById('display-mode').innerText = "MODE: " + session.activeMode;
+            document.getElementById('display-total').innerText = session.totalG + " G";
         }
 
-        // --- Google Vision API Bridge (Pulin-chan Special) ---
+        function renderBuffer() {
+            let h = `<b>■ 抽出バッファ</b><table>`;
+            for (let id in session.extracted) {
+                const d = session.extracted[id];
+                h += `<tr><td>${MASTER_CONFIG[session.activeMode][id].label}</td><td>${d.count}回</td><td>1/${d.prob}</td></tr>`;
+            }
+            document.getElementById('log').innerHTML = h + `</table>`;
+        }
+
+        // OCR起動
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
         document.getElementById('file-input').onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = async () => {
-                document.getElementById('log').innerText = "Analyzing image...";
-                try {
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const json = await res.json();
-                    const ann = json.responses[0]?.textAnnotations;
-                    if (!ann) throw new Error("OCR Failed");
-                    const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-                    const maxY = Math.max(...items.map(it => it.y)), minY = Math.min(...items.map(it => it.y));
-                    const threshold = (maxY - minY) * 0.015;
-                    items.sort((a, b) => a.y - b.y);
-                    let rows = [], cur = [items[0]];
-                    for (let i = 1; i < items.length; i++) {
-                        if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
-                        else { rows.push(cur); cur = [items[i]]; }
-                    }
-                    rows.push(cur);
-                    const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    extractData(rawText);
-                } catch(err) { document.getElementById('log').innerText = "Error: " + err.message; }
-            };
+            const reader = new FileReader(); reader.readAsDataURL(e.target.files[0]);
+            reader.onload = () => processOCR(reader.result);
         };
     </script>
 </body>
