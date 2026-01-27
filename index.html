@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.2.3</title>
+    <title>みおの解析 1.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -20,8 +20,8 @@
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.2.3</p>
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.0.0</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -46,7 +46,7 @@
     </div>
 
     <script>
-        // 【Rev 1.2.3】 風鈴誤爆修正 & ハナビ最適化版
+        // 常駐項目ロジック維持
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -144,7 +144,7 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                const threshold = avgHeight * 3.0;
+                const threshold = avgHeight * 3.0; // 動的しきい値維持
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -165,7 +165,7 @@
                     .join("\n");
 
                 addLog("--- [RAW DATA] ---");
-                addLog(rawContent.substring(0, 800) + "...");
+                addLog(rawContent.substring(0, 500) + "...");
                 
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("ハナ ビ") || rawContent.includes("新 ハナビ")) ? "HANABI" : "VERSUS";
                 addLog(`DETECTED: ${session.mode}`);
