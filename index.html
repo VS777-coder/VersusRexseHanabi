@@ -3,199 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 Rev 1.1.17 [Modular]</title>
+    <title>みおの解析 1.1.40 [Integrated]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; padding: 12px; display: flex; flex-direction: column; align-items: center; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; width: 100%; max-width: 400px; padding: 16px; text-align: center; cursor: pointer; font-weight: 900; font-size: 1.5rem; }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 16px; width: 100%; max-width: 400px; margin-top: 12px; border: 1px solid #333; }
-        .buffer-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 12px; font-family: monospace; font-size: 10px; width: 100%; max-width: 400px; margin-top: 12px; }
-        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #333; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
-        table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        td { border-bottom: 1px solid #222; padding: 4px 0; }
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
+        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 8px 15px rgba(255,0,128,0.3); border: 2px solid #ffffff; transition: transform 0.1s; line-height: 1.4; cursor: pointer; }
+        .main-btn:active { transform: scale(0.95); }
+        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 160px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
+        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 4px; }
+        th, td { border-bottom: 1px solid #21262d; padding: 2px 0; text-align: left; }
     </style>
 </head>
 <body>
-    <label for="file-input" class="main-btn">ユニメモ解析<br>Rev 1.1.17</label>
-    <input type="file" id="file-input" class="hidden" accept="image/*">
-
-    <div class="graph-area">
-        <div class="flex justify-between mb-4 border-b border-gray-700 pb-2">
-            <span id="display-mode" class="text-xs font-bold text-gray-400">READY</span>
-            <span id="display-total" class="text-xs font-bold text-green-400">0 G</span>
-        </div>
-        <div id="prob-bars">
-            <div class="mb-3">
-                <div class="flex justify-between text-cyan-400 font-bold text-sm"><span>設定1</span><span id="p1">---</span></div>
-                <div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
-            </div>
-            <div class="mb-3">
-                <div class="flex justify-between text-yellow-400 font-bold text-sm"><span>設定2</span><span id="p2">---</span></div>
-                <div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div>
-            </div>
-            <div class="mb-3">
-                <div class="flex justify-between text-green-400 font-bold text-sm"><span>設定5</span><span id="p5">---</span></div>
-                <div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div>
-            </div>
-            <div class="mb-1">
-                <div class="flex justify-between text-red-500 font-bold text-sm"><span>設定6</span><span id="p6">---</span></div>
-                <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
-            </div>
-        </div>
+    <div class="text-center shrink-0 mb-4">
+        <div class="text-2xl font-black kawaii-title tracking-tighter leading-tight">✨ バーサス ＆ ハナビ ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">Mio's Analysis System Rev 1.1.40</p>
     </div>
 
-    <div id="log" class="buffer-log">画像をアップロードしてください。</div>
-    <input type="password" id="api-key" class="hidden">
+    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
+        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center">
+            ユニメモ<br>解析実行
+        </label>
+        <input type="file" id="file-input" class="hidden" accept="image/*">
+    </div>
+
+    <div class="w-full max-w-md mx-auto result-card">
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+    </div>
+
+    <div id="log" class="future-log w-full max-w-md mx-auto">SYSTEM READY. WAITING FOR UNIMEMO...</div>
+
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
+        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
+    </div>
 
     <script>
         // --- （1）定義の部分：CONFIG_MODULE ---
         const MASTER_CONFIG = {
             "HANABI": {
-                bb: { key: "BB", label: "BB合算", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, nType: 'normal' },
-                dbb: { key: "ドン\\s*BB", label: "ドンBB", vals: {1: 819.2, 2: 780.2, 5: 744.7, 6: 682.7}, nType: 'normal' },
-                rbb: { key: "赤\\s*七\\s*BB", label: "赤七BB", vals: {1: 819.2, 2: 780.2, 5: 744.7, 6: 682.7}, nType: 'normal' },
-                rb: { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, nType: 'normal' },
-                ba: { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, nType: 'normal' },
-                bb2: { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.7, 2: 15.7, 5: 15.7, 6: 15.7}, nType: 'normal' },
-                sa: { key: "氷\\s*A", label: "氷A", vals: {1: 49.8, 2: 49.8, 5: 49.8, 6: 49.8}, nType: 'normal' },
-                sb: { key: "氷\\s*B", label: "氷B", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, nType: 'normal' },
-                ca1: { key: "チェリー\\s*A1", label: "チェA1", vals: {1: 19.1, 2: 18.8, 5: 18.5, 6: 18.2}, nType: 'normal' },
-                ca2: { key: "チェリー\\s*A2", label: "チェA2", vals: {1: 21.6, 2: 21.4, 5: 21.2, 6: 20.9}, nType: 'normal' },
-                cb: { key: "チェリー\\s*B", label: "チェB", vals: {1: 359.2, 2: 334.4, 5: 312.1, 6: 292.6}, nType: 'normal' },
-                hc: { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, nType: 'hc' },
-                hg: { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, nType: 'hg' },
-                bb_diag: { key: "風鈴\\s*斜め\\s*揃い", label: "BB斜め風鈴", vals: {1: 16.0, 2: 12.8, 5: 10.7, 6: 8.2}, nType: 'bb_in' },
-                rb_1m: { key: "1\\s*枚\\s*役", label: "RB1枚役", vals: {1: 10.2, 2: 9.1, 5: 8.2, 6: 7.3}, nType: 'rb_in' },
-                rb_h: { key: "RB\\s*ハズレ", label: "RBはずれ", vals: {1: 16384, 2: 16384, 5: 16384, 6: 327.7}, nType: 'rb_in' }
+                bb: { key: "BB", label: "BB合算", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, nType: 'normal' },
+                rb: { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, nType: 'normal' },
+                ba: { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, nType: 'small' },
+                hc: { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, nType: 'rt_pre' },
+                hg: { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, nType: 'rt_post' },
+                nb: { key: "風鈴\\s*斜め\\s*揃い", label: "斜め風鈴", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5, nType: 'bb_in_hanabi' },
+                rbh: { key: "ハズレ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial", nType: 'rb_in' }
             },
             "VERSUS": {
-                bb: { key: "BB", label: "BB合算", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, nType: 'normal' },
-                xbb: { key: "XBB", label: "XBB", vals: {1: 546.1, 2: 537.1, 5: 528.5, 6: 512.0}, nType: 'normal' },
-                rbb: { key: "赤\\s*7BB", label: "赤七BB", vals: {1: 546.1, 2: 537.1, 5: 528.5, 6: 512.0}, nType: 'normal' },
-                rb: { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, nType: 'normal' },
-                ba: { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, nType: 'normal' },
-                bb2: { key: "ベル\\s*B", label: "ベルB", vals: {1: 16.7, 2: 16.7, 5: 16.7, 6: 16.7}, nType: 'normal' },
-                sa: { key: "スイカ\\s*A", label: "スイカA", vals: {1: 92.2, 2: 92.2, 5: 92.2, 6: 92.2}, nType: 'normal' },
-                sb: { key: "スイカ\\s*B", label: "スイカB", vals: {1: 219.0, 2: 219.0, 5: 219.0, 6: 219.0}, nType: 'normal' },
-                ca: { key: "チェリー\\s*合算", label: "チェリー", vals: {1: 37.3, 2: 37.3, 5: 37.3, 6: 37.3}, nType: 'normal' },
-                vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, nType: 'hc' },
-                vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, nType: 'hg' },
-                bb_diag: { key: "ベル\\s*斜め\\s*揃い", label: "BB斜めベル", vals: {1: 10.1, 2: 9.2, 5: 8.4, 6: 7.7}, nType: 'bb_in_vs' },
-                bb_mid: { key: "ベル\\s*中段\\s*揃い", label: "BB中段ベル", vals: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0}, nType: 'bb_in_vs' },
-                rb_1m: { key: "1\\s*枚\\s*役", label: "RB1枚役", vals: {1: 5.4, 2: 5.2, 5: 5.0, 6: 4.7}, nType: 'rb_in' }
+                bb: { key: "BB", label: "BB合算", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, nType: 'normal' },
+                rb: { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, nType: 'normal' },
+                ba: { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, nType: 'small' },
+                vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, nType: 'rt_pre' },
+                vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, nType: 'rt_post' },
+                rbh: { key: "はずれ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial", nType: 'rb_in' }
             }
         };
 
-        // 状態管理
-        let session = { activeMode: null, totalG: 0, extracted: {} };
+        let session = { mode: null, n: 0, extracted: {} };
 
         // --- （2）尤度の定義の部分：ENGINE_MODULE ---
         function runLikelihoodEngine() {
-            const config = MASTER_CONFIG[session.activeMode];
+            const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            const bb = session.extracted['bb']?.count || 0;
-            const rb = session.extracted['rb']?.count || 0;
+            
+            let dw = 1.0; // 動的ウェイト
+            if (session.n < 1000) dw = 0.4; else if (session.n < 4000) dw = 1.0; else dw = 1.6;
 
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = config[id];
-                if (!item || !data.prob) continue;
+                if (!item || data.prob === null) continue;
 
                 [1, 2, 5, 6].forEach(s => {
+                    if (logL[s] === -Infinity) return;
+                    if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
+                    
                     const pExp = 1 / item.vals[s];
-                    let n, k = data.count;
-
-                    // カテゴリ別試行数計算ロジック
-                    switch(item.nType) {
-                        case 'hc': n = bb * 11.8; break;
-                        case 'hg': n = data.count * data.prob; break;
-                        case 'bb_in': n = bb * 29; break;
-                        case 'bb_in_vs': n = bb * 24; break;
-                        case 'rb_in': n = rb * 8; break;
-                        default: n = session.totalG;
+                    if (data.prob > 0 && pExp > 0) {
+                        let w = item.w || 1.0; if (item.nType === 'small') w *= dw;
+                        let n, k = data.count;
+                        // ぷりんちゃん最新指示：分母nの切り分け
+                        switch(item.nType) {
+                            case 'rt_pre': n = (session.extracted['bb']?.count || 0) * 11.8; break;
+                            case 'rt_post': n = data.count * data.prob; break;
+                            case 'bb_in_hanabi': n = (session.extracted['bb']?.count || 0) * 29; break;
+                            case 'rb_in': n = (session.extracted['rb']?.count || 0) * 8; break;
+                            default: n = session.n;
+                        }
+                        // KL尤度計算式 (KL Divergence based)
+                        const pObs = k / n;
+                        logL[s] += w * (k * Math.log(pExp / pObs) + (n - k) * Math.log((1 - pExp) / (1 - pObs)));
                     }
-                    if (n > 0 && k > 0) logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
                 });
             }
-            updateUIProbs(logL);
+            updateUI(logL);
         }
 
         // --- （3）画像取り込めの部分：OCR_MODULE ---
-        async function processOCR(readerResult) {
-            const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                method: 'POST',
-                body: JSON.stringify({ requests: [{ image: { content: readerResult.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const json = await res.json();
-            const ann = json.responses[0]?.textAnnotations;
-            if (!ann) return;
-            
-            const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-            items.sort((a, b) => a.y - b.y);
-            let rows = [], cur = [items[0]];
-            for (let i = 1; i < items.length; i++) {
-                if (Math.abs(items[i].y - cur[0].y) < 15) cur.push(items[i]);
-                else { rows.push(cur); cur = [items[i]]; }
-            }
-            rows.push(cur);
-            const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-            parseRawText(rawText);
-        }
+        async function analyze(file) {
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = async () => {
+                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json();
+                const ann = json.responses[0]?.textAnnotations;
+                if (!ann) return;
+                
+                const raw = ann[0].description;
+                session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+                const config = MASTER_CONFIG[session.mode];
+                session.extracted = {};
+                
+                // 総G数奪取 P0ロジック
+                const mTotal = raw.match(/([\d,]+)\s*G/i);
+                session.n = mTotal ? parseInt(mTotal[1].replace(/,/g, '')) : 0;
 
-        function parseRawText(rawText) {
-            session.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            const gMatch = rawText.match(/([\d,]+)\s*G/i);
-            session.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
-            session.extracted = {};
-
-            for (let id in MASTER_CONFIG[session.activeMode]) {
-                const item = MASTER_CONFIG[session.activeMode][id];
-                const m = rawText.match(new RegExp(`${item.key}[\\s\\S]{0,120}`));
-                if (m) {
-                    const nums = (m[0].replace(/1\s*\/\s*/g, '').match(/[\d,.]+/g) || []).map(n => n.replace(/,/g, ''));
-                    let count = 0, prob = 0;
-                    const dIdx = nums.findIndex(n => n.includes('.'));
-                    if (dIdx !== -1) { prob = parseFloat(nums[dIdx]); count = parseInt(nums.find((_, i) => i !== dIdx) || 0); }
-                    else if (nums.length >= 2) { prob = Math.max(...nums.map(parseFloat)); count = Math.min(...nums.map(parseFloat)); }
-                    if (prob) session.extracted[id] = { prob, count };
+                for (let id in config) {
+                    const item = config[id];
+                    let searchText = raw;
+                    if (item.anchor) {
+                        const am = raw.match(new RegExp(item.anchor));
+                        if (am) searchText = raw.substring(am.index);
+                    }
+                    const line = searchText.match(new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`));
+                    if (line) {
+                        // 小数点（分母）と整数（回数）を厳密に仕分け
+                        const nums = line[0].replace(/1\s*\/\s*/g, '').match(/[\d,.]+/g);
+                        if (nums) {
+                            const decimalIdx = nums.findIndex(n => n.includes('.'));
+                            let prob, count;
+                            if (decimalIdx !== -1) {
+                                prob = parseFloat(nums[decimalIdx]);
+                                count = parseInt(nums.find((_, i) => i !== decimalIdx) || 0);
+                            } else {
+                                prob = Math.max(...nums.map(n => parseFloat(n)));
+                                count = Math.min(...nums.map(n => parseFloat(n)));
+                                if (count === 1 && nums.length > 2) count = parseFloat(nums[1]);
+                            }
+                            session.extracted[id] = { prob, count };
+                        }
+                    }
                 }
-            }
-            renderBuffer();
-            runLikelihoodEngine();
+                renderTable(); runLikelihoodEngine();
+            };
         }
 
         // --- （4）判別の部分：UI_MODULE ---
-        function updateUIProbs(logL) {
-            const active = Object.values(logL);
-            const maxL = Math.max(...active);
+        function updateUI(logL) {
+            const activeScores = Object.values(logL).filter(v => v !== -Infinity);
+            const maxLog = activeScores.length > 0 ? Math.max(...activeScores) : 0;
             let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => { probs[s] = Math.exp(logL[s] - maxL); total += probs[s]; });
+            [1, 2, 5, 6].forEach(s => {
+                probs[s] = (logL[s] === -Infinity) ? 0 : Math.exp(logL[s] - maxLog);
+                total += probs[s];
+            });
             [1, 2, 5, 6].forEach(s => {
                 const p = (probs[s] / total * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
-            document.getElementById('display-mode').innerText = "MODE: " + session.activeMode;
-            document.getElementById('display-total').innerText = session.totalG + " G";
         }
 
-        function renderBuffer() {
-            let h = `<b>■ 抽出バッファ</b><table>`;
+        function renderTable() {
+            let h = `■ EXTRACTED DATA (${session.mode})\nTOTAL: ${session.n} G\n<table><tr><th>ITEM</th><th>COUNT</th><th>PROB</th></tr>`;
             for (let id in session.extracted) {
                 const d = session.extracted[id];
-                h += `<tr><td>${MASTER_CONFIG[session.activeMode][id].label}</td><td>${d.count}回</td><td>1/${d.prob}</td></tr>`;
+                h += `<tr><td>${MASTER_CONFIG[session.mode][id].label}</td><td>${d.count}</td><td>1/${d.prob}</td></tr>`;
             }
             document.getElementById('log').innerHTML = h + `</table>`;
         }
 
-        // OCR起動
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('file-input').onchange = (e) => {
-            const reader = new FileReader(); reader.readAsDataURL(e.target.files[0]);
-            reader.onload = () => processOCR(reader.result);
-        };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('ACCESS GRANTED.'); };
+        document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
 </html>
