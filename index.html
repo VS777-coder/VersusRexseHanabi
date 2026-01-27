@@ -3,150 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの安全性検証 1.1.9</title>
+    <title>みおのデバッグ解析 1.1.11</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .main-btn { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border-radius: 12px; border: 2px solid #fff; }
-        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; height: 25vh; flex-shrink: 0; margin-bottom: 8px; border: 1px solid #30363d; }
-        .debug-log { background-color: #000; border: 1px solid #00ffcc; border-radius: 12px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 60vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; box-shadow: inset 0 0 10px rgba(0,255,204,0.2); }
-        .log-item { border-bottom: 1px solid #222; margin-bottom: 4px; padding-bottom: 2px; }
-        .warn { color: #ff3e3e; font-weight: bold; }
-        .info { color: #facc15; }
-        .success { color: #4ade80; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 12px; border: 2px solid #fff; }
+        .graph-area { background-color: #161b22; border-radius: 16px; padding: 12px; height: 30vh; flex-shrink: 0; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 8px; }
+        .future-log { background-color: #000; border: 1px solid #ff758c; border-radius: 12px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 53vh; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; }
+        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 2px; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.8s ease-out; }
+        .debug-line { color: #facc15; border-bottom: 1px dashed #333; margin-bottom: 4px; padding-bottom: 2px; }
+        .success-msg { color: #4ade80; }
+        .fail-msg { color: #f87171; }
     </style>
 </head>
 <body>
     <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">
-            ユニメモ<br>安全性検証実行
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center cursor-pointer">
+            デバッグ解析<br>実行
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto graph-area flex flex-col justify-center items-center text-center">
-        <p class="text-xs text-gray-400">現在「事実確認モード」です</p>
-        <p class="text-lg font-bold text-indigo-400">設定推測はログ検証後に再開します</p>
+    <div class="w-full max-w-md mx-auto graph-area">
+        <div><div class="flex justify-between font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div><div class="flex justify-between font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div><div class="flex justify-between font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="debug-log" class="debug-log w-full max-w-md mx-auto">
-        画像を選択して、数値抽出の「安全性」を確認してください。
-    </div>
-
+    <div id="log" class="future-log w-full max-w-md mx-auto mb-2">デバッグログ待機中...</div>
     <input type="password" id="api-key" class="hidden">
 
     <script>
         const MASTER_CONFIG = {
             "VERSUS": {
-                name: "バーサスリヴァイズ",
+                name: "VERSUS",
                 total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb: { key: "BB", label: "BB" },
-                rb: { key: "RB", label: "RB" },
-                ba: { key: "ベル\\s*A", label: "ベルA" },
-                bb2: { key: "ベル\\s*B", label: "ベルB" },
-                sa: { key: "スイカ\\s*A", label: "スイカA" },
-                ca: { key: "チェリー\\s*A", label: "チェリーA" },
-                cb: { key: "チェリー\\s*B", label: "チェリーB" },
-                vc: { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ" },
-                vg: { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ" }
+                bb:   { key: "BB", label: "BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0 },
+                rb:   { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6 },
+                ba:   { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 0.8 },
+                bb2:  { key: "ベル\\s*B", label: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8 },
+                sa:   { key: "スイカ\\s*A", label: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0 },
+                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0 },
+                vc:   { key: "チャンス\\s*中\\s*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0 },
+                vg:   { key: "GAME\\s*中\\s*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0 },
+                rbh:  { key: "はずれ", label: "RBハズレ", anchor: "RB\\s*中\\s*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial" }
             },
             "HANABI": {
-                name: "新ハナビ",
+                name: "HANABI",
                 total: { key: "総\\s*プレイ\\s*数", label: "総プレイ数", type: "total" },
-                bb: { key: "BB", label: "BB" },
-                rb: { key: "RB", label: "RB" },
-                ba: { key: "A\\s+1", label: "風鈴A" },
-                bb2: { key: "風鈴\\s*B", label: "風鈴B" },
-                sa: { key: "氷\\s*A", label: "氷A" },
-                ca2: { key: "チェリー\\s*A2", label: "チェリーA2" },
-                cb: { key: "チェリー\\s*B", label: "チェリーB" },
-                vc: { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ" },
-                vg: { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ" }
+                bb:   { key: "BB", label: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0 },
+                rb:   { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6 },
+                ba:   { key: "A\\s+1", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 0.8 },
+                bb2:  { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8 },
+                sa:   { key: "氷\\s*A", label: "氷A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0 },
+                ca2:  { key: "チェリー\\s*A2", label: "チェリーA2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0 },
+                cb:   { key: "チェリー\\s*B", label: "チェリーB", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0 },
+                vc:   { key: "チャレンジ\\s*中\\s*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0 },
+                vg:   { key: "GAME\\s*中\\s*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0 }
             }
         };
 
-        let totalG = 0;
+        let sessionBuffer = { activeMode: null, extracted: {}, totalG: 0 };
 
-        function addLog(msg, type = '') {
-            const logArea = document.getElementById('debug-log');
-            const div = document.createElement('div');
-            div.className = `log-item ${type}`;
-            div.innerHTML = msg;
-            logArea.appendChild(div);
+        function logDebug(msg, color = "") {
+            const logArea = document.getElementById('log');
+            const span = document.createElement('div');
+            if (color) span.className = color;
+            span.innerHTML = msg;
+            logArea.appendChild(span);
             logArea.scrollTop = logArea.scrollHeight;
         }
 
-        function safeExtract(rawText) {
-            document.getElementById('debug-log').innerHTML = '';
-            const mode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-            addLog(`■ 検出モード: ${mode}`, 'info');
-            
-            const config = MASTER_CONFIG[mode];
-            totalG = 0;
+        function extractData(rawText) {
+            const logArea = document.getElementById('log');
+            logArea.innerHTML = ""; // クリア
+            sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+            logDebug(`■ 検出モード: ${sessionBuffer.activeMode}`);
 
-            // 1. 総プレイ数の確定
-            const totalMatch = rawText.match(new RegExp(`${config.total.key}[\\s\\S]{0,30}?([\\d,]+)G`));
+            const config = MASTER_CONFIG[sessionBuffer.activeMode];
+            sessionBuffer.extracted = {};
+
+            // 1. 総プレイ数抽出 (強化版)
+            const totalMatch = rawText.match(/総\s*プレイ\s*数[\s\S]{0,150}?([\d,]+)\s*G/);
             if (totalMatch) {
-                totalG = parseInt(totalMatch[1].replace(/,/g, ''));
-                addLog(`[SUCCESS] 総プレイ数確定: ${totalG} G`, 'success');
+                sessionBuffer.totalG = parseInt(totalMatch[1].replace(/,/g, ''));
+                logDebug(`[SUCCESS] 総プレイ数確定: ${sessionBuffer.totalG} G`, "success-msg");
             } else {
-                addLog(`[WARN] 総プレイ数が未検出です。検証精度が低下します。`, 'warn');
+                logDebug(`[FAIL] 総プレイ数が見つかりません。`, "fail-msg");
             }
 
-            // 2. 各項目の安全性検証
             for (let id in config) {
-                if (id === "total" || id === "name") continue;
+                if (id === "name" || id === "total") continue;
                 const item = config[id];
+                logDebug(`--------------------<br>CHECK: [${item.label}]`);
+
+                let searchText = rawText;
+                if (item.anchor) {
+                    const am = rawText.match(new RegExp(item.anchor));
+                    if (am) searchText = rawText.substring(am.index);
+                }
+
                 const regex = new RegExp(`${item.key}[\\s\\S]{0,100}`);
-                const m = rawText.match(regex);
-
+                const m = searchText.match(regex);
                 if (m) {
-                    let segment = m[0].split('\n')[0]; // とりあえず1行分
-                    addLog(`--------------------`);
-                    addLog(`CHECK: [${item.label}]`);
-                    addLog(`RAW: "${segment}"`);
+                    const segment = m[0].split('\n')[0]; // 1行目のみ対象
+                    logDebug(`RAW: "${segment}"`);
 
-                    // 【安全性検討】ラベルに含まれる数字を物理的に消去
-                    const labelCleaned = segment.replace(new RegExp(item.key), '');
-                    
-                    // 「1 / XXX」形式の優先スキャン
-                    const slashMatch = labelCleaned.match(/1\s*\/\s*([\d.]+)/);
-                    const allNums = labelCleaned.match(/[\d,.]+/g);
+                    // ユニメモ形式 "1 / [回数] [分母]" の抽出
+                    const pairMatch = segment.match(/1\s*\/\s*([\d,]+)\s+([\d,.]+)/);
+                    if (pairMatch) {
+                        const count = parseInt(pairMatch[1].replace(/,/g, ''));
+                        const prob = parseFloat(pairMatch[2].replace(/,/g, ''));
+                        logDebug(`  -> 抽出: 1 / ${count} (${prob})`);
 
-                    if (allNums) {
-                        const prob = slashMatch ? slashMatch[1] : (allNums.find(n => n.includes('.')) || allNums[allNums.length-1]);
-                        const count = allNums.filter(n => !n.includes('.') && n !== "1").sort((a,b)=>b.length-a.length)[0] || "---";
-                        
-                        const pVal = parseFloat(prob.toString().replace(/,/g, ''));
-                        const cVal = parseInt(count.toString().replace(/,/g, ''));
+                        // 整合性バリデーション
+                        const checkValue = count * prob;
+                        const errorRate = Math.abs(checkValue - sessionBuffer.totalG) / sessionBuffer.totalG;
 
-                        addLog(`  -> 候補: 確率 1/${pVal} | 回数 ${cVal}`);
-
-                        // 数学的整合性チェック
-                        if (totalG > 0 && !isNaN(pVal) && !isNaN(cVal)) {
-                            const expectedTotal = pVal * cVal;
-                            const diff = Math.abs(expectedTotal - totalG) / totalG;
-                            if (diff < 0.1) {
-                                addLog(`  -> [SAFE] 整合性確認OK (誤差 ${(diff*100).toFixed(1)}%)`, 'success');
-                            } else {
-                                addLog(`  -> [WARN] 整合性不一致: 回数×分母=${expectedTotal.toFixed(0)} (総プレイ数と${(diff*100).toFixed(1)}%乖離)`, 'warn');
-                            }
+                        if (sessionBuffer.totalG > 0 && errorRate < 0.2) {
+                            sessionBuffer.extracted[id] = { prob, count };
+                            logDebug(`  -> [SAFE] 整合性確認OK (誤差 ${(errorRate * 100).toFixed(1)}%)`, "success-msg");
+                        } else {
+                            logDebug(`  -> [WARN] 整合性不一致: 回数×分母=${checkValue.toFixed(0)} (乖離過大)`, "fail-msg");
                         }
                     } else {
-                        addLog(`  -> [ERROR] 数値が検出できません`, 'warn');
+                        logDebug(`  -> [FAIL] 数値ペアが見つかりません。`, "fail-msg");
                     }
                 }
             }
+            runBayesian();
+        }
+
+        function runBayesian() {
+            const config = MASTER_CONFIG[sessionBuffer.activeMode];
+            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
+            let hasValidData = false;
+
+            for (let id in sessionBuffer.extracted) {
+                const data = sessionBuffer.extracted[id];
+                const item = config[id];
+                if (!item || !data.prob) continue;
+                hasValidData = true;
+                [1, 2, 5, 6].forEach(s => {
+                    const pExp = 1 / item.vals[s];
+                    const n = (id === "vc" || id === "vg") ? (data.count * data.prob) : sessionBuffer.totalG;
+                    logL[s] += (data.count * Math.log(pExp) + (n - data.count) * Math.log(1 - pExp));
+                });
+            }
+
+            if (!hasValidData) return;
+
+            const maxLog = Math.max(...Object.values(logL));
+            let total = 0, probs = {};
+            [1, 2, 5, 6].forEach(s => { probs[s] = Math.exp(logL[s] - maxLog); total += probs[s]; });
+            [1, 2, 5, 6].forEach(s => {
+                const p = (probs[s] / total * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = p + "%";
+                document.getElementById(`b${s}`).style.width = p + "%";
+            });
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        
         document.getElementById('file-input').onchange = (e) => {
             const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                addLog("Vision API 接続中...", 'info');
+                logDebug("OCR API リクエスト送信中...");
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                     method: 'POST',
                     body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
@@ -156,21 +181,20 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (ann) {
                     const items = ann.slice(1).map(a => ({ text: a.description, x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2, y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2 }));
-                    
                     const maxY = Math.max(...items.map(it => it.y));
                     const minY = Math.min(...items.map(it => it.y));
-                    const threshold = (maxY - minY) * 0.015;
-                    addLog(`動的しきい値算出: ${threshold.toFixed(2)}px`, 'info');
+                    const dynamicThreshold = (maxY - minY) * 0.015;
+                    logDebug(`[SYSTEM] Dynamic Threshold: ${dynamicThreshold.toFixed(2)}px`);
 
                     items.sort((a, b) => a.y - b.y);
                     let rows = [], cur = [items[0]];
                     for (let i = 1; i < items.length; i++) {
-                        if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
+                        if (Math.abs(items[i].y - cur[0].y) < dynamicThreshold) cur.push(items[i]);
                         else { rows.push(cur); cur = [items[i]]; }
                     }
                     rows.push(cur);
                     const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    safeExtract(rawText);
+                    extractData(rawText);
                 }
             };
         };
