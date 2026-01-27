@@ -1,76 +1,93 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの生データ確認 1.1.13-Raw</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background-color: #0d0f14; color: #ffffff; font-family: monospace; padding: 12px; }
-        .main-btn { background: #334155; border: 2px solid #fff; border-radius: 8px; width: 100%; py: 16px; font-weight: bold; }
-        .raw-log { background-color: #000; border: 1px solid #00ffcc; border-radius: 8px; padding: 12px; font-size: 12px; color: #00ffcc; white-space: pre-wrap; height: 80vh; overflow-y: auto; margin-top: 12px; }
-    </style>
-</head>
-<body>
-    <label for="file-input" class="main-btn flex items-center justify-center p-4 cursor-pointer">
-        画像をアップロードして生テキストを確認
-    </label>
-    <input type="file" id="file-input" class="hidden" accept="image/*">
-    <input type="password" id="api-key" class="mt-2 w-full p-2 bg-gray-800 text-white text-xs" placeholder="API KEY">
+function extractData(rawText) {
+    sessionBuffer.activeMode = (rawText.includes("ハナビ") || rawText.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+    const config = MASTER_CONFIG[sessionBuffer.activeMode];
+    sessionBuffer.extracted = {};
+    let logHtml = `■ 内部バッファ (${sessionBuffer.activeMode})\n<table>`;
 
-    <div id="log" class="raw-log">ここにOCRの生データが表示されます。</div>
+    // 【P0】総プレイ数を絶対に見逃さない (Gの前の数字を広域スキャン)
+    const gRegex = /([\d,]+)\s*G/i;
+    const gMatch = rawText.match(gRegex);
+    sessionBuffer.totalG = gMatch ? parseInt(gMatch[1].replace(/,/g, '')) : 0;
 
-    <script>
-        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        
-        document.getElementById('file-input').onchange = (e) => {
-            const file = e.target.files[0]; if (!file) return;
-            localStorage.setItem('v_key', document.getElementById('api-key').value);
-            const reader = new FileReader(); reader.readAsDataURL(file);
-            reader.onload = async () => {
-                document.getElementById('log').innerText = "OCR解析中...";
-                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                    method: 'POST',
-                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const json = await res.json();
-                const ann = json.responses[0]?.textAnnotations;
+    // もしラベル「総プレイ数」の近くに別の数字があれば上書きを試みる
+    const labelMatch = rawText.match(/(?:総|プレイ|数)[\s\S]{0,100}?([\d,]+)/);
+    if (labelMatch && !gMatch) {
+        sessionBuffer.totalG = parseInt(labelMatch[1].replace(/,/g, ''));
+    }
+
+    for (let id in config) {
+        if (id === "name" || id === "total") continue;
+        const item = config[id];
+        let searchText = rawText;
+        if (item.anchor) {
+            const am = rawText.match(new RegExp(item.anchor));
+            if (am) searchText = rawText.substring(am.index);
+        }
+
+        const regex = new RegExp(`${item.key}[\\s\\S]{0,120}`);
+        const m = searchText.match(regex);
+        if (m) {
+            const segment = m[0];
+            const p1 = segment.match(/1\s*\/\s*([\d,.]+)\s+([\d,.]+)/);
+            const p2 = segment.match(/1\s+([\d,.]+)\s*\/\s*([\d,.]+)/);
+            
+            let c = null, p = null;
+            if (p1) { c = p1[1]; p = p1[2]; }
+            else if (p2) { c = p2[1]; p = p2[2]; }
+            
+            if (c && p) {
+                let count = parseFloat(c.replace(/,/g, ''));
+                let prob = parseFloat(p.replace(/,/g, ''));
                 
-                if (ann) {
-                    const items = ann.slice(1).map(a => ({
-                        text: a.description,
-                        x: (a.boundingPoly.vertices[0].x + a.boundingPoly.vertices[2].x) / 2,
-                        y: (a.boundingPoly.vertices[0].y + a.boundingPoly.vertices[2].y) / 2
-                    }));
+                // 数値特性による自動スワップ
+                if (count > prob && prob > 1.2) { [count, prob] = [prob, count]; }
 
-                    // 動的しきい値の計算
-                    const maxY = Math.max(...items.map(it => it.y));
-                    const minY = Math.min(...items.map(it => it.y));
-                    const threshold = (maxY - minY) * 0.015;
+                // データをバッファに格納 (指示通り、棄却は廃止)
+                sessionBuffer.extracted[id] = { prob: prob, count: Math.round(count) };
+                
+                logHtml += `<tr><td>${item.label}</td><td>${Math.round(count)}回</td><td>1/${prob}</td></tr>`;
+            }
+        }
+    }
 
-                    // 座標ソート
-                    items.sort((a, b) => a.y - b.y);
-                    let rows = [], cur = [items[0]];
-                    for (let i = 1; i < items.length; i++) {
-                        if (Math.abs(items[i].y - cur[0].y) < threshold) cur.push(items[i]);
-                        else { rows.push(cur); cur = [items[i]]; }
-                    }
-                    rows.push(cur);
+    logHtml = `<tr><td>総プレイ数(確定)</td><td colspan="2">${sessionBuffer.totalG} G</td></tr>` + logHtml;
+    document.getElementById('log').innerHTML = logHtml + `</table>`;
+    runBayesian();
+}
 
-                    // 1行ずつ結合して出力
-                    const rawText = rows.map(r => r.sort((a, b) => a.x - b.x).map(it => it.text).join(' ')).join('\n');
-                    
-                    document.getElementById('log').innerHTML = 
-                        `【画像サイズ（Y軸範囲）】: ${maxY - minY}px\n` +
-                        `【計算された行判定閾値】: ${threshold.toFixed(2)}px\n` +
-                        `------------------------------------------\n` +
-                        rawText;
-                } else {
-                    document.getElementById('log').innerText = "文字が検出できませんでした。";
-                }
-            };
-        };
-    </script>
-</body>
-</html>
+function runBayesian() {
+    const config = MASTER_CONFIG[sessionBuffer.activeMode];
+    let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
+    const bbCount = sessionBuffer.extracted['bb']?.count || 0;
+
+    for (let id in sessionBuffer.extracted) {
+        const data = sessionBuffer.extracted[id];
+        const item = config[id];
+        if (!item || !data.prob) continue;
+
+        [1, 2, 5, 6].forEach(s => {
+            const pExp = 1 / item.vals[s];
+            let n, k;
+
+            // 【指示事項】RT項目の試行ゲーム数計算
+            if (['vc', 'hc'].includes(id)) {
+                // VC/HC: 指示通り 11.8 * BB回数を分母とする
+                n = bbCount * 11.8;
+                k = data.count;
+            } else if (['vg', 'hg'].includes(id)) {
+                // VG/HG: 回数 * 分母 から区間ゲーム数を算出
+                n = data.count * data.prob;
+                k = data.count;
+            } else {
+                // 通常時: 総プレイ数を使用
+                n = sessionBuffer.totalG;
+                k = data.count;
+            }
+
+            if (n > 0) {
+                logL[s] += (k * Math.log(pExp) + (n - k) * Math.log(1 - pExp));
+            }
+        });
+    }
+    // ... (以下、確率変換処理)
+}
