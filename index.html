@@ -94,7 +94,7 @@
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = Object.values(config).find(v => v.id === id);
-                if (!item || !data.prob || data.prob < 1.8) continue;
+                if (!item || !data.prob || data.prob < 1.8) continue; // ゴミデータ除外
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
@@ -144,8 +144,8 @@
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
                 
-                // 【重要】しきい値を4.0倍(約40px以上)に強化し、離れた箇所の回数を結合
-                const threshold = Math.max(avgHeight * 4.0, 40);
+                // 【デバッグの成果】しきい値を3.2倍に固定しつつ、後方探索を強化
+                const threshold = Math.max(avgHeight * 3.2, 32);
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -193,12 +193,12 @@
                         continue;
                     }
 
-                    const regex = new RegExp(`${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
+                    // 【究極ロジック】キーワードの手前40文字も探索対象とし、段ズレした回数を捕獲
+                    const regex = new RegExp(`[\\s\\S]{0,40}${item.key}[\\s\\S]{0,100}?(?=\\n|$)`, 'i');
                     const lineMatch = searchArea.match(regex);
                     if (lineMatch) {
                         const nums = lineMatch[0].match(/[\d,.]+/g);
                         if (nums && nums.length >= 1) {
-                            // 【ロジック改善】回数と確率をより正確に判別
                             const ints = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
                             const decimal = nums.find(n => n.includes('.') && parseFloat(n) > 1.0);
                             
@@ -207,22 +207,22 @@
 
                             if (decimal) {
                                 prob = parseFloat(decimal);
-                                // 回数は1/以外の最大整数を優先
-                                const validInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
-                                count = validInts.length > 0 ? Math.max(...validInts) : (ints.includes(1) ? 1 : 0);
-                            } else if (ints.includes(0)) {
-                                count = 0; prob = 0; // 0回 1/- パターンの排除
-                            } else if (ints.length >= 2) {
-                                // X回 1/Y パターン
-                                const validInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
-                                prob = Math.max(...validInts);
-                                count = validInts.length > 1 ? Math.min(...validInts) : (ints.includes(1) ? 1 : 0);
+                                // 分子の「1 /」を除外した最大整数を回数として採用
+                                const filteredInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
+                                count = filteredInts.length > 0 ? Math.max(...filteredInts) : (ints.includes(1) ? 1 : 0);
                             } else {
-                                prob = ints[0];
+                                if (ints.includes(0)) {
+                                    count = 0; prob = 0; // 1/1エラーの徹底防止
+                                } else if (ints.length >= 2) {
+                                    const filteredInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
+                                    prob = Math.max(...filteredInts);
+                                    count = filteredInts.length > 1 ? Math.min(...filteredInts) : (ints.includes(1) ? 1 : 0);
+                                } else {
+                                    prob = ints[0];
+                                }
                             }
 
-                            // 1/1エラーの最終ガード
-                            if (prob <= 1.1) {
+                            if (prob <= 1.5) {
                                 addLog(`[SKIP] ${item.name}: データなし(1/1等)`);
                             } else {
                                 session.extracted[item.id] = { prob, count };
