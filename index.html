@@ -94,7 +94,7 @@
             for (let id in session.extracted) {
                 const data = session.extracted[id];
                 const item = Object.values(config).find(v => v.id === id);
-                if (!item || !data.prob || data.prob < 2.0) continue;
+                if (!item || !data.prob || data.prob < 1.8) continue;
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
@@ -143,7 +143,9 @@
                     return Math.abs((v[2]?.y || 0) - (v[0]?.y || 0));
                 }).filter(h => h > 0);
                 const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                const threshold = avgHeight * 3.0; 
+                
+                // 【重要】しきい値を4.0倍(約40px以上)に強化し、離れた箇所の回数を結合
+                const threshold = Math.max(avgHeight * 4.0, 40);
                 addLog(`[DEBUG] THRESHOLD: ${threshold.toFixed(1)}px`);
 
                 let lines = [];
@@ -196,15 +198,32 @@
                     if (lineMatch) {
                         const nums = lineMatch[0].match(/[\d,.]+/g);
                         if (nums && nums.length >= 1) {
-                            // 改良：整数のみを抽出し、その最大値を回数とする
+                            // 【ロジック改善】回数と確率をより正確に判別
                             const ints = nums.filter(n => !n.includes('.')).map(n => parseInt(n.replace(/,/g, '')));
-                            const count = ints.length > 0 ? Math.max(...ints) : 0;
                             const decimal = nums.find(n => n.includes('.') && parseFloat(n) > 1.0);
-                            let prob = decimal ? parseFloat(decimal) : parseFloat(nums[nums.length - 1].replace(/,/g, ''));
+                            
+                            let count = 0;
+                            let prob = 0;
 
-                            // 1/1エラーの徹底ガード
-                            if (count === 0 && prob <= 1.5) {
-                                addLog(`[SKIP] ${item.name}: データなし(0回)`);
+                            if (decimal) {
+                                prob = parseFloat(decimal);
+                                // 回数は1/以外の最大整数を優先
+                                const validInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
+                                count = validInts.length > 0 ? Math.max(...validInts) : (ints.includes(1) ? 1 : 0);
+                            } else if (ints.includes(0)) {
+                                count = 0; prob = 0; // 0回 1/- パターンの排除
+                            } else if (ints.length >= 2) {
+                                // X回 1/Y パターン
+                                const validInts = ints.filter(n => n !== 1 || !lineMatch[0].includes('1 /'));
+                                prob = Math.max(...validInts);
+                                count = validInts.length > 1 ? Math.min(...validInts) : (ints.includes(1) ? 1 : 0);
+                            } else {
+                                prob = ints[0];
+                            }
+
+                            // 1/1エラーの最終ガード
+                            if (prob <= 1.1) {
+                                addLog(`[SKIP] ${item.name}: データなし(1/1等)`);
                             } else {
                                 session.extracted[item.id] = { prob, count };
                                 addLog(`[OK] ${item.name}: ${count}回 (1/${prob})`);
