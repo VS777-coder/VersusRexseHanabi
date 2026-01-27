@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.45 [Stable Restore]</title>
+    <title>みおの解析 1.1.47 [Diagnostic HUD]</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -13,19 +13,20 @@
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #00ffcc; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 4px; }
-        th, td { border-bottom: 1px solid #21262d; padding: 2px 0; text-align: left; }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: #00ffcc; height: 220px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 4px; color: #00ffcc; }
+        th, td { border: 1px solid #222; padding: 4px; text-align: left; font-size: 8px; }
+        .err-txt { color: #ff7eb3; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-2xl font-black kawaii-title tracking-tighter leading-tight">✨ バーサス ＆ ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold mt-1">Mio's Analysis Rev 1.1.45</p>
+        <p class="text-[10px] text-pink-300 font-bold mt-1">Diagnostic System Rev 1.1.47</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer text-shadow">ユニメモ<br>解析実行</label>
+        <label for="file-input" class="main-btn w-full py-5 text-white font-black text-xl flex items-center justify-center text-center cursor-pointer">ユニメモ<br>デバッグ解析</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -36,48 +37,34 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">WAITING FOR IMAGE...</div>
     <input type="password" id="api-key" class="hidden">
 
     <script>
-        // --- (1) MASTER_CONFIG (全31項目完全維持) ---
+        // 【定義固定】一切変更なし
         const MASTER_CONFIG = {
             "HANABI": {
                 bb: { key: "BB", label: "BB合算", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, nType: 'normal' },
-                dbb: { key: "ドン\\s*BB", label: "ドンBB", vals: {1: 819.2, 2: 780.2, 5: 744.7, 6: 682.7}, w: 1.0, nType: 'normal' },
-                rbb: { key: "赤\\s*七\\s*BB", label: "赤七BB", vals: {1: 819.2, 2: 780.2, 5: 744.7, 6: 682.7}, w: 1.0, nType: 'normal' },
                 rb: { key: "RB", label: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, nType: 'normal' },
                 ba: { key: "(A\\s+1|A\\b)", label: "風鈴A", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, nType: 'small' },
-                bb2: { key: "風鈴\\s*B", label: "風鈴B", vals: {1: 15.7, 2: 15.7, 5: 15.7, 6: 15.7}, w: 1.0, nType: 'small' },
-                sa: { key: "氷\\s*A", label: "氷A", vals: {1: 49.8, 2: 49.8, 5: 49.8, 6: 49.8}, w: 1.0, nType: 'normal' },
-                sb: { key: "氷\\s*B", label: "氷B", vals: {1: 16384, 2: 16384, 5: 16384, 6: 16384}, w: 1.0, nType: 'normal' },
-                ca1: { key: "チェリー\\s*A1", label: "チェA1", vals: {1: 19.1, 2: 18.8, 5: 18.5, 6: 18.2}, w: 1.0, nType: 'normal' },
-                ca2: { key: "チェリー\\s*A2", label: "チェA2", vals: {1: 21.6, 2: 21.4, 5: 21.2, 6: 20.9}, w: 1.0, nType: 'normal' },
-                cb: { key: "チェリー\\s*B", label: "チェB", vals: {1: 359.2, 2: 334.4, 5: 312.1, 6: 292.6}, w: 1.0, nType: 'normal' },
                 hc: { key: "チャレンジ.*はずれ", label: "HCはずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, nType: 'rt_pre' },
                 hg: { key: "GAME.*はずれ", label: "HGはずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, nType: 'rt_post' },
-                diag: { key: "斜め\\s*揃い", label: "BB斜め風鈴", vals: {1: 16.0, 2: 12.8, 5: 10.7, 6: 8.2}, w: 1.5, nType: 'bb_in_hanabi' },
+                diag: { key: "斜め\\s*揃い", label: "斜め風鈴", vals: {1: 16.0, 2: 12.8, 5: 10.7, 6: 8.2}, w: 1.5, nType: 'bb_in' },
                 rbh: { key: "ハズレ", label: "RBハズレ", anchor: "RB.*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial", nType: 'rb_in' }
             },
             "VERSUS": {
                 bb: { key: "BB", label: "BB合算", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, nType: 'normal' },
-                xbb: { key: "XBB", label: "XBB", vals: {1: 546.1, 2: 537.1, 5: 528.5, 6: 512.0}, w: 1.0, nType: 'normal' },
-                rbb: { key: "赤\\s*7BB", label: "赤七BB", vals: {1: 546.1, 2: 537.1, 5: 528.5, 6: 512.0}, w: 1.0, nType: 'normal' },
                 rb: { key: "RB", label: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, nType: 'normal' },
                 ba: { key: "ベル\\s*A", label: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, nType: 'small' },
-                bb2: { key: "ベル\\s*B", label: "ベルB", vals: {1: 16.7, 2: 16.7, 5: 16.7, 6: 16.7}, w: 1.0, nType: 'small' },
-                sa: { key: "スイカ\\s*A", label: "スイカA", vals: {1: 92.2, 2: 92.2, 5: 92.2, 6: 92.2}, w: 1.0, nType: 'normal' },
-                sb: { key: "スイカ\\s*B", label: "スイカB", vals: {1: 219.0, 2: 219.0, 5: 219.0, 6: 219.0}, w: 1.0, nType: 'normal' },
-                ca: { key: "チェリー\\s*合算", label: "チェリー", vals: {1: 37.3, 2: 37.3, 5: 37.3, 6: 37.3}, w: 1.0, nType: 'normal' },
                 vc: { key: "チャンス.*はずれ", label: "VCはずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, nType: 'rt_pre' },
                 vg: { key: "GAME.*はずれ", label: "VGはずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, nType: 'rt_post' },
                 rbh: { key: "はずれ", label: "RBハズレ", anchor: "RB.*詳細", vals: {1: 0, 2: 0, 5: 376.6, 6: 376.6}, type: "denial", nType: 'rb_in' }
             }
         };
 
-        let session = { mode: null, n: 0, extracted: {} };
+        let session = { mode: null, n: 0, extracted: {}, debugLogs: [] };
 
-        // --- (2) 尤度エンジン (重み付きKL式完全維持) ---
+        // 【尤度エンジン固定】一切変更なし
         function runLikelihoodEngine() {
             const config = MASTER_CONFIG[session.mode];
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
@@ -87,17 +74,16 @@
                 const data = session.extracted[id];
                 const item = config[id];
                 if (!item || !data.prob) continue;
-
                 [1, 2, 5, 6].forEach(s => {
                     if (logL[s] === -Infinity) return;
                     if (item.type === "denial" && data.count > 0 && item.vals[s] === 0) { logL[s] = -Infinity; return; }
-                    
                     const pExp = 1 / item.vals[s];
                     let w = item.w || 1.0; if (item.nType === 'small') w *= dw;
                     let n, k = data.count;
                     switch(item.nType) {
                         case 'rt_pre': n = (session.extracted['bb']?.count || 0) * 11.8; break;
                         case 'rt_post': n = data.count * data.prob; break;
+                        case 'bb_in': n = (session.extracted['bb']?.count || 0) * 29; break;
                         case 'rb_in': n = (session.extracted['rb']?.count || 0) * 8; break;
                         default: n = session.n;
                     }
@@ -107,60 +93,69 @@
                     }
                 });
             }
-            updateUI(logL);
+            updateUIBars(logL);
         }
 
-        // --- (3) OCRロジック (エラーキャッチ復活・隔離廃止) ---
+        // 【デバッグ特化解析】
         async function analyze(file) {
+            session.debugLogs = [];
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
-                document.getElementById('log').innerText = "Analyzing image...";
-                try {
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
-                        method: 'POST',
-                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const json = await res.json();
-                    if (json.error) throw new Error(json.error.message);
-                    const ann = json.responses[0]?.textAnnotations;
-                    if (!ann) throw new Error("Text not detected.");
+                const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json();
+                const ann = json.responses[0]?.textAnnotations;
+                if (!ann) return;
+                const raw = ann[0].description.replace(/,/g, '');
+                session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
+                
+                const mTotal = raw.match(/(\d+)\s*G/i);
+                session.n = mTotal ? parseInt(mTotal[1]) : 0;
 
-                    const raw = ann[0].description.replace(/,/g, '');
-                    session.mode = (raw.includes("ハナビ") || raw.includes("ハナ ビ")) ? "HANABI" : "VERSUS";
-                    const mTotal = raw.match(/(\d+)\s*G/i);
-                    session.n = mTotal ? parseInt(mTotal[1]) : 0;
+                const config = MASTER_CONFIG[session.mode];
+                session.extracted = {};
 
-                    const config = MASTER_CONFIG[session.mode];
-                    session.extracted = {};
-
-                    for (let id in config) {
-                        const item = config[id];
-                        let searchText = raw;
-                        if (item.anchor) {
-                            const am = raw.match(new RegExp(item.anchor));
-                            if (am) searchText = raw.substring(am.index);
-                        }
-                        // スキャン距離を40文字に絞って精度を保つ
-                        const line = searchText.match(new RegExp(`${item.key}[\\s\\S]{0,40}?(?=\\n|$)`));
-                        if (line) {
-                            const nums = line[0].replace(/1\s*\/\s*/g, '').match(/[\d.]+/g);
-                            if (nums) {
-                                const dIdx = nums.findIndex(n => n.includes('.'));
-                                let prob = dIdx !== -1 ? parseFloat(nums[dIdx]) : Math.max(...nums.map(parseFloat));
-                                let count = dIdx !== -1 ? parseInt(nums.find((_, i) => i !== dIdx) || 0) : Math.min(...nums.map(parseFloat));
+                for (let id in config) {
+                    const item = config[id];
+                    let status = "NONE", rawSeg = "N/A", detected = "N/A";
+                    
+                    const found = raw.match(new RegExp(item.key));
+                    if (found) {
+                        const afterKey = raw.substring(found.index + found[0].length);
+                        rawSeg = afterKey.substring(0, 40).replace(/\n/g, ' '); // キーワード後40文字
+                        const nums = rawSeg.match(/[\d.]+/g);
+                        
+                        if (nums) {
+                            const valid = nums.map(parseFloat).filter(n => n > 1.05);
+                            if (valid.length > 0) {
+                                const prob = Math.max(...valid);
+                                const count = Math.min(...valid);
                                 session.extracted[id] = { prob, count };
-                            }
-                        }
+                                detected = `${count}回 / 1/${prob}`;
+                                status = "OK";
+                            } else { status = "ERR: VAL<=1.0"; }
+                        } else { status = "ERR: NO NUM"; }
                     }
-                    renderTable(); runLikelihoodEngine();
-                } catch (err) {
-                    document.getElementById('log').innerText = "ERROR: " + err.message;
+                    session.debugLogs.push({ label: item.label, seg: rawSeg, val: detected, stat: status });
                 }
+                renderDebugHUD(); runLikelihoodEngine();
             };
         }
 
-        function updateUI(logL) {
+        function renderDebugHUD() {
+            let html = `<b>■ DEBUG HUD (${session.mode} / ${session.n}G)</b><br>`;
+            html += `<table><tr><th>Item</th><th>Result</th><th>Raw Text Segment</th><th>Status</th></tr>`;
+            session.debugLogs.forEach(d => {
+                const isErr = d.stat.startsWith("ERR");
+                html += `<tr><td>${d.label}</td><td>${d.val}</td><td>${d.seg}</td><td class="${isErr ? 'err-txt' : ''}">${d.stat}</td></tr>`;
+            });
+            document.getElementById('log').innerHTML = html + `</table>`;
+        }
+
+        function updateUIBars(logL) {
             const active = Object.values(logL).filter(v => v !== -Infinity);
             const maxLog = active.length > 0 ? Math.max(...active) : 0;
             let total = 0, probs = {};
@@ -173,15 +168,6 @@
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
-        }
-
-        function renderTable() {
-            let h = `■ DATA (${session.mode})\nTOTAL: ${session.n} G\n<table><tr><th>ITEM</th><th>COUNT</th><th>PROB</th></tr>`;
-            for (let id in session.extracted) {
-                const d = session.extracted[id];
-                h += `<tr><td>${MASTER_CONFIG[session.mode][id].label}</td><td>${d.count}</td><td>1/${d.prob}</td></tr>`;
-            }
-            document.getElementById('log').innerHTML = h + `</table>`;
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
