@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.5</title>
+    <title>みおの解析 1.1.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.5</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.6</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -95,7 +95,7 @@
 
             for (let id in config) {
                 const item = config[id];
-                if (!item || item.type === "total") continue;
+                if (!item || item.type === "total" || id === "name") continue;
                 const data = session.extracted[id] || { prob: 0.0 };
 
                 let n_trial = session.n; 
@@ -107,14 +107,16 @@
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
-                    const w = item.w || 1.0;
-                    logL[s] += w * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
+                    if (k_event === 0) {
+                        logL[s] += Math.log(1 - pExp) * n_trial; // ハイフン用簡略式
+                    } else {
+                        logL[s] += (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
+                    }
                 });
             }
 
             const maxLog = Math.max(...Object.values(logL));
             const sumExp = Object.values(logL).reduce((a, v) => a + Math.exp(v - maxLog), 0);
-
             [1, 2, 5, 6].forEach(s => {
                 const p = (Math.exp(logL[s] - maxLog) / sumExp * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
@@ -137,19 +139,13 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
                 
-                // --- (1) RAW OCR WORDS ---
                 addLog("--- (1) RAW OCR WORDS (X, Y, TEXT) ---");
-                ann.slice(1).forEach(w => {
-                    addLog(`[${w.boundingPoly.vertices[0].x},${w.boundingPoly.vertices[0].y}] ${w.description}`);
-                });
+                ann.slice(1).forEach(w => addLog(`[${w.boundingPoly.vertices[0].x},${w.boundingPoly.vertices[0].y}] ${w.description}`));
 
                 const words = ann.slice(1);
-                const heights = words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y));
-                const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                const threshold = avgHeight * 2.3; 
+                const threshold = (words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / words.length) * 2.3;
                 addLog(`[DEBUG] Threshold calculated: ${threshold.toFixed(1)}px`);
 
-                // --- (2) GROUPED ROWS ---
                 let rows = [];
                 words.forEach(word => {
                     const y = word.boundingPoly.vertices[0].y;
@@ -170,22 +166,18 @@
                 
                 const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
-                
-                // --- (3) EXTRACTED VALUES MAPPING ---
                 addLog("--- (3) EXTRACTED VALUES MAPPING ---");
                 
-                // 総ゲーム数：カンマとGを除去
-                const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
-                if (totalM) {
-                    session.n = parseFloat(totalM[1].replace(/[,]/g, ''));
+                // 総ゲーム数抽出（カンマ・G・スペース対策）
+                const totalMatch = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
+                if (totalMatch) {
+                    session.n = parseFloat(totalMatch[1].replace(/[,G]/g, ''));
                     addLog(`[OK] TOTAL: ${session.n.toFixed(1)}G`);
-                } else {
-                    addLog(`[ERROR] TOTAL G NOT FOUND.`);
-                }
+                } else { addLog(`[ERROR] TOTAL G NOT FOUND.`); }
 
                 for (let id in config) {
                     const item = config[id];
-                    if (item.type === "total") continue;
+                    if (id === "name" || item.type === "total") continue;
 
                     let area = rawContent;
                     if (item.anchor) {
@@ -193,27 +185,28 @@
                         if (am) area = rawContent.substring(am.index);
                     }
 
-                    // アンカーからの200文字スキャン（1行下対応）
+                    // 1行下理論：複数行(200文字)をチャンクとしてスキャン
                     const regex = new RegExp(`${item.key}[\\s\\S]{0,200}`, 'i');
                     const match = area.match(regex);
                     
                     let prob = 0.0;
                     if (match) {
-                        const chunk = match[0];
-                        // 1. ハイフン検知（出現0回）
+                        const chunk = match[0]; // 改行を切り捨てない
+                        
+                        // 判定順序：1. ハイフン(優先) > 2. 小数点 > 3. 整数
                         if (chunk.match(/1\s*\/\s*-/)) {
                             prob = 0.0;
                         } else {
-                            // 2. 小数点（.）を絶対正義とする
                             const nums = chunk.match(/[\d,.]+/g);
                             if (nums) {
+                                // 小数点付きを最優先
                                 const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
                                 if (decimal) {
                                     prob = parseFloat(decimal.replace(/,/g, ''));
                                 } else {
-                                    // 小数点がない場合、1 / の直後の数値を拾う
+                                    // なければ 1 / 以降、もしくは最後尾
                                     const explicit = chunk.match(/1\s*\/\s*([\d,.]+)/);
-                                    prob = explicit ? parseFloat(explicit[1].replace(/,/g, '')) : parseFloat(nums[nums.length-1]);
+                                    prob = explicit ? parseFloat(explicit[1].replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, ''));
                                 }
                             }
                         }
