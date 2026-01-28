@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.0</title>
+    <title>みおの解析 1.1.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 180px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 250px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.0</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.2</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -32,13 +32,13 @@
     </div>
 
     <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY.</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="ACCESS KEY (VISION API)">
@@ -48,18 +48,17 @@
     <script>
         const MASTER_CONFIG = {
             "VERSUS": {
-                name: "バーサスリヴァイズ",
-                total: { key: "総\\s*プレイ\\s*数", rule: "same_line" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus", rule: "same_line" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", rule: "same_line" },
-                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small", rule: "same_line" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small", rule: "same_line" },
-                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small", rule: "same_line" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small", rule: "same_line" },
-                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc", rule: "next_line" },
-                vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg", rule: "next_line" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー.*ベル.*揃い", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 16384.0}, w: 1.0, type: "bb_detail", rule: "next_line" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー.*ベル.*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail", rule: "next_line" }
+                total: { key: "総\\s*プレイ\\s*数", type: "total" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
+                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
+                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc", anchor: "RT\\s*詳細" },
+                vg:   { id: "vg", name: "VSGAME中はずれ", key: "GAME\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg", anchor: "RT\\s*詳細" },
+                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー.*ベル.*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail", anchor: "BB\\s*中\\s*詳細" },
+                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー.*ベル.*揃い", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 16384.0}, w: 1.0, type: "bb_detail", anchor: "BB\\s*中\\s*詳細" }
             }
         };
 
@@ -74,7 +73,7 @@
         function runBayesian() {
             addLog("INITIALIZING DEFINITION ENGINE...");
             const config = MASTER_CONFIG[session.mode];
-            if (!session.n || session.n === 0) return addLog("[ERROR] TOTAL G IS 0.");
+            if (!session.n) return addLog("[ERROR] TOTAL PLAYS IS 0.");
 
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             const bbData = session.extracted['bb'];
@@ -83,15 +82,16 @@
 
             for (let id in config) {
                 const item = config[id];
-                if (!item || item.rule === undefined) continue;
-                
+                if (!item || item.type === "total") continue;
                 const data = session.extracted[id] || { prob: 0.0 };
+
                 let n_trial = session.n; 
                 if (item.type === "rt_vc") n_trial = k_bb * 15;
                 if (item.type === "rt_vg") n_trial = k_bb * 20;
                 if (item.type === "bb_detail") n_trial = k_bb * 25;
 
                 const k_event = data.prob > 0 ? n_trial / data.prob : 0;
+
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     const w = item.w || 1.0;
@@ -99,12 +99,8 @@
                 });
             }
 
-            const activeLogLs = Object.values(logL).filter(v => isFinite(v));
-            const maxLog = activeLogLs.length > 0 ? Math.max(...activeLogLs) : 0;
-            let total = 0, probs = {};
-            [1, 2, 5, 6].forEach(s => { probs[s] = Math.exp(logL[s] - maxLog); total += probs[s]; });
             [1, 2, 5, 6].forEach(s => {
-                const p = (probs[s] / total * 100).toFixed(1);
+                const p = (Math.exp(logL[s] - Math.max(...Object.values(logL))) / Object.values(logL).reduce((a, b) => a + Math.exp(b - Math.max(...Object.values(logL))), 0) * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
@@ -125,76 +121,60 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
                 
-                const words = ann.slice(1);
-                const heights = words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y));
-                const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
-                const threshold = avgHeight * 2.3; 
-
-                let rows = [];
-                words.forEach(word => {
-                    const y = word.boundingPoly.vertices[0].y;
-                    let found = rows.find(r => Math.abs(r.y - y) < threshold);
-                    if (found) found.words.push(word);
-                    else rows.push({ y: y, words: [word] });
-                });
-
-                // 配列化した行データ（これが生データ兼、消去対象）
-                let lines = rows.sort((a, b) => a.y - b.y)
-                    .map(r => r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "));
-
+                const rawContent = ann[0].description;
                 addLog("--- RAW DATA EXTRACTED ---");
-                lines.forEach(l => addLog(l));
+                addLog(rawContent);
                 addLog("--------------------------");
                 
-                session.mode = "VERSUS"; // デフォルト
+                session.mode = (rawContent.includes("バーサス") || rawContent.includes("VERSUS") || rawContent.includes("リヴァイズ")) ? "VERSUS" : "HANABI";
+                addLog(`MODE: ${session.mode}`);
+                
+                const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
-
-                // 1. 総プレイ数抽出 (消去ルール)
-                const totalKey = new RegExp(MASTER_CONFIG.VERSUS.total.key, 'i');
-                const tIdx = lines.findIndex(l => totalKey.test(l));
-                if (tIdx !== -1) {
-                    const match = lines[tIdx].match(/([\d,.]+)\s*G/);
-                    if (match) {
-                        session.n = parseInt(match[1].replace(/[,.]/g, ''));
-                        addLog(`[OK] TOTAL: ${session.n.toFixed(1)}G`);
-                        lines[tIdx] = ""; // 使用済み行を消去
-                    }
+                
+                const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
+                if (totalM) {
+                    session.n = parseInt(totalM[1].replace(/[,.]/g, ''));
+                    addLog(`[OK] TOTAL: ${session.n.toFixed(1)}G`);
                 }
 
-                // 2. 項目ごとの「人間式ロジック」抽出
-                const config = MASTER_CONFIG.VERSUS;
-                for (let id in config) {
-                    const item = config[id];
-                    if (!item.rule) continue;
+                // 「はずれ」を確実に捉えるためにループの前に個別にチェックするか、検索範囲を厳密にする
+                for (let key in config) {
+                    const item = config[key];
+                    if (typeof item !== 'object' || item.type === "total") continue;
 
-                    const keyRegex = new RegExp(item.key, 'i');
-                    const idx = lines.findIndex(l => l && keyRegex.test(l));
+                    let area = rawContent;
+                    if (item.anchor) {
+                        const am = rawContent.match(new RegExp(item.anchor.replace(/ /g, "\\s*"), 'i'));
+                        if (am) area = rawContent.substring(am.index);
+                    }
 
-                    if (idx !== -1) {
-                        let targetText = "";
-                        if (item.rule === "same_line") {
-                            targetText = lines[idx];
-                            lines[idx] = ""; // その行を消す
-                        } else if (item.rule === "next_line" && lines[idx+1]) {
-                            targetText = lines[idx+1];
-                            lines[idx] = ""; lines[idx+1] = ""; // キー項目と数値行の両方を消す
-                        }
-
-                        if (targetText.includes('-')) {
-                            session.extracted[id] = { prob: 0.0 };
-                            addLog(`[OK] ${item.name}: 1/- (0.0)`);
+                    // 改行単位でデータを区切り、他の項目を拾いすぎないようにする
+                    const regex = new RegExp(`${item.key}[\\s\\S]{0,100}`, 'i');
+                    const match = area.match(regex);
+                    
+                    let prob = 0.0;
+                    if (match) {
+                        const text = match[0].split("\n")[0]; // 同一行のみを抽出
+                        if (text.match(/1\s*\/\s*-/)) {
+                            prob = 0.0; // ハイフンの場合は必ず0.0
                         } else {
-                            // 小数点または 1 / の後ろを狙う
-                            const probM = targetText.match(/1\s*\/\s*([\d,.]+)/) || targetText.match(/([\d,]+\.[\d]+)/) || targetText.match(/[\d,.]+/g);
-                            if (probM) {
-                                let val = Array.isArray(probM) ? probM[probM.length-1] : probM[1] || probM[0];
-                                const prob = parseFloat(val.toString().replace(/,/g, ''));
-                                session.extracted[id] = { prob: prob };
-                                addLog(`[OK] ${item.name}: 1/${prob.toFixed(1)}`);
+                            const nums = text.match(/[\d,.]+/g);
+                            if (nums) {
+                                // 小数点がある数値を優先
+                                const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                if (decimal) prob = parseFloat(decimal.replace(/,/g, ''));
+                                else {
+                                    const probExplicit = text.match(/1\s*\/\s*([\d,.]+)/);
+                                    prob = probExplicit ? parseFloat(probExplicit[1].replace(/,/g, '')) : parseFloat(nums[nums.length-1].replace(/,/g, ''));
+                                }
                             }
                         }
+                        session.extracted[item.id] = { prob: prob };
+                        addLog(`[OK] ${item.name}: 1/${prob.toFixed(1)}`);
                     } else {
-                        session.extracted[id] = { prob: 0.0 };
+                        // 未検出の場合は必ず 0.0 として定義・ログ出力
+                        session.extracted[item.id] = { prob: 0.0 };
                         addLog(`[OK] ${item.name}: 1/0.0 (未検出)`);
                     }
                 }
