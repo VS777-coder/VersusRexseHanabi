@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6</title>
+    <title>みおの解析 1.1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; line-height: 1.2; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 280px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.6</p>
+        <p class="text-[10px] text-pink-300 font-bold tracking-widest uppercase">みおちゃん専用 Rev 1.1.5</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -30,9 +30,9 @@
     </div>
 
     <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
@@ -46,21 +46,36 @@
     <script>
         const MASTER_CONFIG = {
             "VERSUS": {
-                total: { key: "総プレイ数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "#BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
+                name: "バーサスリヴァイズ",
+                total: { key: "総\\s*プレイ\\s*数", type: "total" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus" },
                 rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus" },
-                ba:   { id: "ba", name: "ベルA", key: "ベルA", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "ベルB", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
-                sa:   { id: "sa", name: "スイカA", key: "スイカA", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリーB", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
-                vc:   { id: "vc", name: "VSチャンス中はずれ", key: "VSチャンス中はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc" },
-                vg:   { id: "vg", name: "VSGAME中はずれ", key: "VSGAME中はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", key: "チェリー＋ベルはずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", key: "チェリー＋ベル揃い", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 16384.0}, w: 1.0, type: "bb_detail" }
+                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 1.0, type: "small" },
+                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "VSチャンス中ハズレ", anchor: "RT\\s*詳細", key: "チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 2.0, type: "rt_vc" },
+                vg:   { id: "vg", name: "VSGAME中ハズレ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 2.0, type: "rt_vg" },
+                cbh:  { id: "cbh", name: "チェリー+ベルはずれ", anchor: "BB\\s*中\\s*詳細", key: "チェリー\\s*[+＋]\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 2.5, type: "bb_detail" },
+                cbs:  { id: "cbs", name: "チェリー+ベル揃い", anchor: "BB\\s*中\\s*詳細", key: "チェリー\\s*[+＋]\\s*ベル\\s*揃い", vals: {1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 16384.0}, w: 1.0, type: "bb_detail" }
+            },
+            "HANABI": {
+                name: "新ハナビ",
+                total: { key: "総\\s*プレイ\\s*数", type: "total" },
+                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus" },
+                ba:   { id: "ba", name: "風鈴A", anchor: "風鈴\\s*合算", key: "\\bA\\b", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 1.0, type: "small" },
+                bb_b: { id: "bb_b", name: "風鈴B", anchor: "風鈴\\s*合算", key: "風.*B", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 1.0, type: "small" },
+                ice:  { id: "ice", name: "氷A", anchor: "氷\\s*合算", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small" },
+                ca2:  { id: "ca2", name: "チェリーA2", anchor: "チェリー\\s*合算", key: "A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*合算", key: "B\\b", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small" },
+                vc:   { id: "vc", name: "チャレンジ中ハズレ", anchor: "RT\\s*詳細", key: "チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 2.0, type: "rt_vc" },
+                vg:   { id: "vg", name: "GAME中ハズレ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 2.0, type: "rt_vg" },
+                nf:   { id: "nf", name: "斜め風鈴", anchor: "BB\\s*中\\s*詳細", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.5, type: "bb_detail" }
             }
         };
 
-        let session = { mode: "VERSUS", n: 0, extracted: {} };
+        let session = { mode: null, n: 0, extracted: {} };
 
         function addLog(msg) {
             const log = document.getElementById('log');
@@ -71,7 +86,7 @@
         function runBayesian() {
             addLog("INITIALIZING DEFINITION ENGINE...");
             const config = MASTER_CONFIG[session.mode];
-            if (!session.n || session.n === 0) return addLog("[ERROR] TOTAL G IS 0.");
+            if (!session.n) return addLog("[ERROR] TOTAL PLAYS IS 0.");
 
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             const bbData = session.extracted['bb'];
@@ -82,21 +97,26 @@
                 const item = config[id];
                 if (!item || item.type === "total") continue;
                 const data = session.extracted[id] || { prob: 0.0 };
+
                 let n_trial = session.n; 
                 if (item.type === "rt_vc") n_trial = k_bb * 15;
                 if (item.type === "rt_vg") n_trial = k_bb * 20;
                 if (item.type === "bb_detail") n_trial = k_bb * 25;
+
                 const k_event = data.prob > 0 ? n_trial / data.prob : 0;
+
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
                     const w = item.w || 1.0;
                     logL[s] += w * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
                 });
             }
-            const maxL = Math.max(...Object.values(logL));
-            const sumExp = Object.values(logL).reduce((a, b) => a + Math.exp(b - maxL), 0);
+
+            const maxLog = Math.max(...Object.values(logL));
+            const sumExp = Object.values(logL).reduce((a, v) => a + Math.exp(v - maxLog), 0);
+
             [1, 2, 5, 6].forEach(s => {
-                const p = (Math.exp(logL[s] - maxL) / sumExp * 100).toFixed(1);
+                const p = (Math.exp(logL[s] - maxLog) / sumExp * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = p + "%";
                 document.getElementById(`b${s}`).style.width = p + "%";
             });
@@ -117,14 +137,19 @@
                 const ann = json.responses[0]?.textAnnotations;
                 if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
                 
+                // --- (1) RAW OCR WORDS ---
+                addLog("--- (1) RAW OCR WORDS (X, Y, TEXT) ---");
+                ann.slice(1).forEach(w => {
+                    addLog(`[${w.boundingPoly.vertices[0].x},${w.boundingPoly.vertices[0].y}] ${w.description}`);
+                });
+
                 const words = ann.slice(1);
-                addLog("\n--- (1) RAW OCR WORDS (X, Y, TEXT) ---");
-                words.forEach(w => addLog(`[${w.boundingPoly.vertices[0].x},${w.boundingPoly.vertices[0].y}] ${w.description}`));
-
                 const heights = words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y));
-                const threshold = (heights.reduce((a, b) => a + b, 0) / heights.length) * 2.3;
-                addLog(`\n[DEBUG] Threshold calculated: ${threshold.toFixed(1)}px`);
+                const avgHeight = heights.reduce((a, b) => a + b, 0) / heights.length;
+                const threshold = avgHeight * 2.3; 
+                addLog(`[DEBUG] Threshold calculated: ${threshold.toFixed(1)}px`);
 
+                // --- (2) GROUPED ROWS ---
                 let rows = [];
                 words.forEach(word => {
                     const y = word.boundingPoly.vertices[0].y;
@@ -132,44 +157,73 @@
                     if (found) found.words.push(word);
                     else rows.push({ y: y, words: [word] });
                 });
-                rows.sort((a, b) => a.y - b.y);
 
-                addLog("\n--- (2) GROUPED ROWS (BY THRESHOLD) ---");
-                rows.forEach(r => {
-                    r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x);
-                    r.text = r.words.map(w => w.description).join(" ");
-                    addLog(`Line (Y:${r.y}): ${r.text}`);
-                });
+                const rawContent = rows.sort((a, b) => a.y - b.y)
+                    .map(r => r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "))
+                    .join("\n");
 
-                const fullText = rows.map(r => r.text).join("\n");
-                const config = MASTER_CONFIG["VERSUS"];
+                addLog("--- (2) GROUPED ROWS (BY THRESHOLD) ---");
+                addLog(rawContent);
+                
+                session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
+                addLog(`MODE DETECTED: ${session.mode}`);
+                
+                const config = MASTER_CONFIG[session.mode];
                 session.extracted = {};
                 
-                addLog("\n--- (3) EXTRACTED VALUES MAPPING ---");
+                // --- (3) EXTRACTED VALUES MAPPING ---
+                addLog("--- (3) EXTRACTED VALUES MAPPING ---");
                 
-                // バグったままの抽出ロジック（同一行のみ等）
-                const totalM = fullText.match(/総プレイ数\s*([\d,.]+)\s*G/);
+                // 総ゲーム数：カンマとGを除去
+                const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
                 if (totalM) {
-                    session.n = parseInt(totalM[1].replace(/[,.]/g, ''));
-                    addLog(`[MATCH] TOTAL: ${session.n.toFixed(1)}G`);
-                } else { addLog("[ERROR] TOTAL G NOT FOUND."); }
+                    session.n = parseFloat(totalM[1].replace(/[,]/g, ''));
+                    addLog(`[OK] TOTAL: ${session.n.toFixed(1)}G`);
+                } else {
+                    addLog(`[ERROR] TOTAL G NOT FOUND.`);
+                }
 
                 for (let id in config) {
                     const item = config[id];
                     if (item.type === "total") continue;
+
+                    let area = rawContent;
+                    if (item.anchor) {
+                        const am = rawContent.match(new RegExp(item.anchor, 'i'));
+                        if (am) area = rawContent.substring(am.index);
+                    }
+
+                    // アンカーからの200文字スキャン（1行下対応）
+                    const regex = new RegExp(`${item.key}[\\s\\S]{0,200}`, 'i');
+                    const match = area.match(regex);
                     
-                    // 以前の壊れたロジック：同一行内からのみ数値を探そうとする
-                    const row = rows.find(r => r.text.includes(item.key));
-                    if (row) {
-                        const nums = row.text.match(/[\d,.]+/g);
-                        let prob = nums ? parseFloat(nums[nums.length-1].replace(/,/g, '')) : 0.0;
+                    let prob = 0.0;
+                    if (match) {
+                        const chunk = match[0];
+                        // 1. ハイフン検知（出現0回）
+                        if (chunk.match(/1\s*\/\s*-/)) {
+                            prob = 0.0;
+                        } else {
+                            // 2. 小数点（.）を絶対正義とする
+                            const nums = chunk.match(/[\d,.]+/g);
+                            if (nums) {
+                                const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                if (decimal) {
+                                    prob = parseFloat(decimal.replace(/,/g, ''));
+                                } else {
+                                    // 小数点がない場合、1 / の直後の数値を拾う
+                                    const explicit = chunk.match(/1\s*\/\s*([\d,.]+)/);
+                                    prob = explicit ? parseFloat(explicit[1].replace(/,/g, '')) : parseFloat(nums[nums.length-1]);
+                                }
+                            }
+                        }
                         session.extracted[id] = { prob: prob };
                         addLog(`[MATCH] ${item.name}: 1/${prob.toFixed(1)}`);
                     } else {
-                        addLog(`[MISS] ${item.name}: Keyword not found in grouped rows.`);
+                        session.extracted[id] = { prob: 0.0 };
+                        addLog(`[MISS] ${item.name}: 1/0.0 (未検出)`);
                     }
                 }
-                addLog("\n>> CALCULATION START...");
                 runBayesian();
             };
         }
