@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.17</title>
+    <title>みおの解析 1.1.18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.1.17</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.1.18</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -39,7 +39,7 @@
     <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
         <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
     </div>
 
@@ -47,9 +47,10 @@
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
-                total: { id: "total", name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
+                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
+                bb_const: { bb: 25, vc: 15, vg: 20 },
                 bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus", remark: "すべての基本" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", remark: "高低推測の重要指標" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "^RB\\s+", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", remark: "高低推測の重要指標" },
                 ba:   { 
                     id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, 
                     w_steps: [{ limit: 1000, w: 0.5 }, { limit: 2000, w: 0.8 }, { limit: 3000, w: 1.0 }, { limit: 4000, w: 1.3 }, { limit: 5000, w: 1.8 }, { limit: Infinity, w: 2.0 }],
@@ -65,21 +66,22 @@
             },
             "HANABI": {
                 name: "新ハナビ",
-                total: { id: "total", name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus", remark: "ヒキも重要な要素" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus", remark: "高設定の証" },
+                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
+                bb_const: { bb: 25, vc: 15, vg: 20 },
+                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus", remark: "確率以上にヒキ重要" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "^RB\\s+", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus", remark: "高設定の証" },
                 ba:   { 
-                    id: "ba", name: "風鈴A", anchor: "小\\s*役", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, 
+                    id: "ba", name: "風鈴A", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, 
                     w_steps: [{ limit: 1000, w: 0.5 }, { limit: 2000, w: 0.8 }, { limit: 3000, w: 1.0 }, { limit: 4000, w: 1.3 }, { limit: 5000, w: 1.8 }, { limit: Infinity, w: 2.0 }],
-                    type: "small", remark: "分母から逆算。全設定共通要素"
+                    type: "small", remark: "分母から逆算。全設定共通"
                 },
-                bb_b: { id: "bb_b", name: "風鈴B", anchor: "小\\s*役", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8, type: "small", remark: "僅差のため抑制" },
-                ice:  { id: "ice", name: "氷A", anchor: "小\\s*役", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", remark: "高設定を炙り出す" },
-                ca2:  { id: "ca2", name: "チェリーA2", anchor: "チェリー\\s*合算", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", remark: "偶数設定優遇" },
-                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*合算", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", remark: "高設定期待度UP" },
-                vc:   { id: "vc", name: "ハナビチャンス中はずれ", anchor: "RT\\s*詳細", key: "チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 1.2, type: "rt_vc", remark: "RT高低判別の要" },
-                vg:   { id: "vg", name: "ハナビゲーム中はずれ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 1.6, type: "rt_vg", remark: "高設定判別の決め手" },
-                nf:   { id: "nf", name: "斜め風鈴", anchor: "BB\\s*中\\s*詳細", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0, type: "bb_detail", remark: "奇偶判別の生命線" }
+                bb_b: { id: "bb_b", name: "風鈴B", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8, type: "small", remark: "僅差のため抑制" },
+                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", remark: "高設定炙り出し" },
+                ca2:  { id: "ca2", name: "チェリーA2", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", remark: "偶数設定UP" },
+                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", remark: "高設定で優遇" },
+                vc:   { id: "vc", name: "ハナビチャンス中はずれ", anchor: "RT\\s*詳細", key: "チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 1.2, type: "rt_vc", remark: "RT高低(重要)" },
+                vg:   { id: "vg", name: "ハナビゲーム中はずれ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 1.6, type: "rt_vg", remark: "高設定判別" },
+                nf:   { id: "nf", name: "斜め風鈴", anchor: "BB\\s*中\\s*詳細", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0, type: "bb_detail", remark: "奇偶判別" }
             }
         };
 
@@ -94,21 +96,24 @@
         function runBayesian() {
             addLog("--- ANALYZING BAYESIAN (PROB-BACKCALC) ---");
             const config = MASTER_CONFIG[session.mode];
+            const g_const = config.bb_const;
             let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
             const bbData = session.extracted['bb'] || { prob: 0 };
             const k_bb = (bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
 
             for (let id in config) {
                 const item = config[id];
-                if (id === "name" || item.type === "total") continue;
-                const data = session.extracted[id] || { prob: 0 };
+                if (id === "name" || id === "bb_const" || item.type === "total") continue;
+                const data = session.extracted[id];
+                if (!data || data.prob <= 0) continue;
 
                 let n_trial = session.n; 
-                if (item.type === "rt_vc") n_trial = k_bb * (session.mode === "VERSUS" ? 15 : 19);
-                if (item.type === "rt_vg") n_trial = k_bb * 20;
-                if (item.type === "bb_detail") n_trial = k_bb * (session.mode === "VERSUS" ? 25 : 24);
+                if (item.type === "rt_vc") n_trial = k_bb * g_const.vc;
+                if (item.type === "rt_vg") n_trial = k_bb * g_const.vg;
+                if (item.type === "bb_detail") n_trial = k_bb * g_const.bb;
 
-                let k_event = (data.prob > 0) ? n_trial / data.prob : 0;
+                // 【精度死守】出現数kを小数点のまま保持
+                let k_event = n_trial / data.prob;
                 let weight = item.w || 1.0;
                 if (item.w_steps) {
                     for (let step of item.w_steps) { if (session.n < step.limit) { weight = step.w; break; } }
@@ -116,14 +121,10 @@
 
                 [1, 2, 5, 6].forEach(s => {
                     const pExp = 1 / item.vals[s];
-                    if (k_event === 0) { logL[s] += weight * Math.log(1 - pExp) * n_trial; }
-                    else { logL[s] += weight * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001)))); }
+                    // 尤度計算: k*ln(p) + (n-k)*ln(1-p)
+                    logL[s] += weight * (k_event * Math.log(pExp) + (n_trial - k_event) * Math.log(1 - pExp));
                 });
-                
-                // 【修復】出現なし（prob:0）の項目も備考とともにログ出力するように修正
-                if (session.extracted[id]) {
-                    addLog(`[LOGIC] ${item.name} (w=${weight.toFixed(1)}): ${item.remark}`);
-                }
+                addLog(`[LOGIC] ${item.name} (w=${weight.toFixed(1)}): ${item.remark} [n=${n_trial.toFixed(0)}G, k=${k_event.toFixed(2)}]`);
             }
 
             const maxLog = Math.max(...Object.values(logL));
@@ -137,8 +138,7 @@
         }
 
         async function analyze(file) {
-            const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING ANALYZE (Rev 1.1.17)...";
+            document.getElementById('log').innerText = ">> STARTING ANALYZE (Rev 1.1.18)...";
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
@@ -147,7 +147,7 @@
                 });
                 const json = await res.json();
                 const ann = json.responses[0]?.textAnnotations;
-                if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
+                if (!ann) return addLog("ERROR: NO TEXT.");
                 
                 const words = ann.slice(1);
                 const threshold = (words.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / words.length) * 2.3;
@@ -160,7 +160,7 @@
 
                 const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" "));
                 addLog("--- PHYSICAL ROWS GROUPED ---");
-                sortedLines.slice(0, 15).forEach((r, idx) => addLog(`[Row ${idx}] ${r}`));
+                sortedLines.forEach((r, idx) => addLog(`[Row ${idx}] ${r}`));
 
                 const rawContent = sortedLines.join("\n");
                 session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
@@ -175,12 +175,10 @@
                 sortedLines.forEach((line, i) => {
                     for (let id in config) {
                         const item = config[id];
-                        if (id === "name") continue;
+                        if (id !== "name" && id !== "bb_const" && item.key && new RegExp(item.key, 'i').test(line)) {
+                            // 既に一度正しい数値を拾っている場合はスキップ（上書き防止）
+                            if (session.extracted[id] && session.extracted[id].prob > 0) continue;
 
-                        // 【修復】一度抽出した項目は上書きしないルールを再適用
-                        if (session.extracted[id]) continue; 
-
-                        if (item.key && new RegExp(item.key, 'i').test(line)) {
                             const targetText = line + " " + (sortedLines[i+1] || "");
                             addLog(`[TARGET] ${item.name} -> Searching: "${targetText.substring(0, 45)}..."`);
                             let prob = 0;
