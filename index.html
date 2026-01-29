@@ -100,19 +100,19 @@
         async function shuffleResults() {
             const ids = ['p1', 'p2', 'p5', 'p6'];
             const bars = ['b1', 'b2', 'b5', 'b6'];
-            for (let i = 0; i < 15; i++) {
+            for (let i = 0; i < 20; i++) {
                 ids.forEach((id, idx) => {
-                    const val = Math.floor(Math.random() * 100);
-                    document.getElementById(id).innerText = `${val}.0%`;
+                    const val = (Math.random() * 100).toFixed(1);
+                    document.getElementById(id).innerText = `${val}%`;
                     document.getElementById(bars[idx]).style.width = `${val}%`;
                 });
-                await sleep(60);
+                await sleep(50);
             }
         }
 
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
-            if (!key) return alert('API KEYを入力してください');
+            if (!key) return alert('API KEY');
 
             const logBox = document.getElementById('log');
             logBox.innerText = "READY...";
@@ -127,7 +127,7 @@
                 const raw = json.responses[0]?.textAnnotations;
                 if(!raw) return addLog("文字が見つかりませんでした。");
 
-                await addLog("--- (1) OCR DATA RECOVERY ---", 200);
+                await addLog("\n--- (2) DYNAMIC ROW (10.0px) ---", 200);
                 const rawWords = raw.slice(1);
                 let rows = [];
                 rawWords.forEach(w => {
@@ -137,12 +137,11 @@
                 });
                 const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
                 
-                for(let i=0; i<Math.min(sortedLines.length, 10); i++) {
-                    await addLog(`Row ${i}: ${sortedLines[i]}`, 50);
+                for(let i=0; i<sortedLines.length; i++) {
+                    await addLog(`Row ${i}: ${sortedLines[i]}`, 20);
                 }
-                await addLog("...", 100);
 
-                await addLog("\n--- (2) SCANNING GATE ---", 200);
+                await addLog("\n--- (3) DATA MAPPING & VERIFICATION ---", 200);
                 let currentConfig = sortedLines[0].match(/バーサス|VERSUS/i) ? VERSUS_CONFIG : HANABI_CONFIG;
                 let startParsing = false;
                 let totalG = 0;
@@ -156,7 +155,7 @@
                         if (gMatch) {
                             totalG = parseInt(gMatch[1].replace(/,/g, ''));
                             startParsing = true;
-                            await addLog(`[OPEN] 総プレイ数: ${totalG}G (Row ${i})`, 300);
+                            await addLog(`[INFO] 総プレイ数: ${totalG}G (Row ${i} ゲート開放)`, 300);
                         }
                         continue;
                     }
@@ -176,27 +175,32 @@
                         let reverseCheck = (countIdx >= 0 && sortedLines[countIdx].includes("回") && sortedLines[countIdx+2].includes("/"));
                         extractedData.push({ item, k: countVal, p: probVal, hasKai, reverseCheck });
                         
-                        let status = reverseCheck ? "✅" : (countVal > 0 ? "⚠️" : "❌");
-                        await addLog(`> [${item.name}] ${status} 1/${probVal} | ${countVal}回`, 100);
+                        let status = reverseCheck ? "✅一致" : (countVal > 0 ? "⚠️警告" : "❌不明");
+                        await addLog(`> [${item.name}] ${status} | 1/${probVal} | ${countVal}回`, 50);
                         configPtr++;
                     }
                 }
 
                 if (!startParsing) return addLog("\n[ERROR] GATE NOT FOUND");
 
-                await addLog("\n--- (3) CALCULATING LIKELIHOOD ---", 400);
+                await addLog("\n--- (4) CALCULATION LOG ---", 200);
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
-                extractedData.forEach(d => {
+                for (const d of extractedData) {
                     if (d.item.active && d.p > 0 && totalG > 0) {
                         let isRT = d.item.id.includes("v") && (d.item.id.includes("c") || d.item.id.includes("g"));
                         let n = isRT ? Math.round(d.k * d.p) : totalG;
+                        let lineLog = `[${d.item.name.padEnd(6,' ')}] `;
                         [1,2,5,6].forEach(s => {
                             let prob = 1 / d.item.probs[s];
-                            logLikelihoods[s] += (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
+                            let L = (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
+                            logLikelihoods[s] += L;
+                            lineLog += `S${s}:${L.toFixed(1)} `;
                         });
+                        await addLog(lineLog, 30);
                     }
-                });
+                }
 
+                await addLog("\n--- (5) FINAL RESULT ---", 200);
                 await shuffleResults();
 
                 const max = Math.max(...Object.values(logLikelihoods));
@@ -207,7 +211,7 @@
                     document.getElementById(`p${s}`).innerText = `${pct}%`;
                     document.getElementById(`b${s}`).style.width = `${pct}%`;
                 });
-                await addLog("\n--- (4) FINAL RESULT COMPLETE ---");
+                await addLog(`RESULT: S1:${document.getElementById('p1').innerText} S2:${document.getElementById('p2').innerText} S5:${document.getElementById('p5').innerText} S6:${document.getElementById('p6').innerText}`);
             };
         }
 
