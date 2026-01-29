@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>✨ VERSUS & HANABI ✨</title>
+    <title>みおの解析 1.1.6 (Rev 1.0.23)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.15 (Debug Filter)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.23 (Final Release)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,178 +44,200 @@
     </div>
 
     <script>
-        // 定義されたインデックスマップ
-        const INDEX_MAP = [
-            { name: "総ボーナス合算" }, // 0
-            { name: "BIG合算" },       // 1
-            { name: "ドンBB" },        // 2
-            { name: "赤七BB" },        // 3
-            { name: "RB" },            // 4
-            { name: "風鈴合算" },      // 5
-            { name: "風鈴A" },         // 6
-            { name: "風鈴B" },         // 7
-            { name: "氷合算" },        // 8
-            { name: "氷A" },           // 9
-            { name: "氷B" },           // 10
-            { name: "チェリー合算" },   // 11
-            { name: "チェリーA1" },     // 12
-            { name: "チェリーA2" },     // 13
-            { name: "チェリーB" },      // 14
-            { name: "HC中ハズレ" },     // 15
-            { name: "HG中ハズレ" },     // 16
-            { name: "風鈴中段揃い" },   // 17
-            { name: "斜め風鈴" }        // 18
+        // Rev 1.0.22 定義表 (完全準拠)
+        const HANABI_CONFIG = [
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
+            { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
+            { index: 2, id: "don_bb", name: "ドンビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 3, id: "red_bb", name: "赤七ビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 277.7} },
+            { index: 5, id: "bell_total", name: "風鈴合算", active: false, weight: 0.0, probs: {1: 7.72, 2: 7.55, 5: 7.45, 6: 7.16} },
+            { index: 6, id: "ba", name: "風鈴Ａ", active: true, weight: 1.0, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { index: 7, id: "bb_b", name: "風鈴Ｂ", active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { index: 8, id: "ice_total", name: "氷合算", active: false, weight: 0.0, probs: {1: 52.9, 2: 57.5, 5: 49.7, 6: 52.8} },
+            { index: 9, id: "ice", name: "氷Ａ", active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { index: 10, id: "ice_b", name: "氷Ｂ", active: false, weight: 0.0, probs: {1: 1700.0, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 16.3, 2: 15.3, 5: 16.1, 6: 15.6} },
+            { index: 12, id: "cherry_a1", name: "チェリーＡ１", active: false, weight: 0.0, probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
+            { index: 13, id: "ca2", name: "チェリーＡ２", active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { index: 14, id: "cb", name: "チェリーＢ１", active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { index: 15, id: "vc", name: "ハナビチャレンジ中はずれ", active: true, weight: 1.2, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { index: 16, id: "vg", name: "ハナビゲーム中はずれ", active: true, weight: 1.6, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { index: 17, id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
+            { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
+
+        let TOTAL_GAMES = 0; // 解析された総プレイ数
 
         function addLog(msg) {
             const log = document.getElementById('log');
-            log.innerText += `\n> ${msg}`;
+            log.innerText += `\n${msg}`;
             log.scrollTop = log.scrollHeight;
+        }
+
+        // ベイズ推定計算 (確率密度)
+        function calcLikelihood(k, n, p) {
+            if (n <= 0 || p <= 0 || p >= 1) return 1.0;
+            const logL = k * Math.log(p) + (n - k) * Math.log(1 - p);
+            return Math.exp(logL);
         }
 
         async function analyze(file) {
             const apiKeyInput = document.getElementById('api-key');
             const apiKey = apiKeyInput.value.trim();
-            
-            if (!apiKey) { 
-                alert('APIキーが入力されていません！下の入力欄に入れてSAVEボタンを押してください。'); 
-                return; 
-            }
+            if (!apiKey) { alert('API KEYを入力してください'); return; }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING DEBUG FILTER (Rev 1.0.15)...";
-            addLog("画像読み込み中...");
+            logBox.innerText = ">> STARTING ANALYSIS (Rev 1.0.23)...";
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 try {
-                    addLog("APIリクエスト送信...");
+                    addLog("> 画像を解析中...");
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
                         method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                         headers: { 'Content-Type': 'application/json' }
                     });
                     
-                    addLog(`レスポンス受信: Status ${res.status}`);
-                    
-                    if (res.status !== 200) return;
-
+                    if (res.status !== 200) { addLog("通信エラー"); return; }
                     const json = await res.json();
-                    if (json.error) {
-                        addLog(`API ERROR: ${json.error.message}`);
-                        return;
-                    }
-                    
-                    const ann = json.responses[0]?.textAnnotations;
-                    if (!ann) return addLog("ERROR: 文字が見つかりませんでした。");
-                    
-                    const rawWords = ann.slice(1);
-                    addLog(`\n--- (1) API生データ (検出数: ${rawWords.length}) ---`);
-                    rawWords.forEach((w, i) => {
-                         const v = w.boundingPoly.vertices;
-                         const y = v && v[0] ? v[0].y : '?';
-                         addLog(`[Word ${i}] Y:${y} "${w.description}"`);
-                    });
+                    const rawWords = json.responses[0]?.textAnnotations?.slice(1);
+                    if (!rawWords) { addLog("文字が見つかりません"); return; }
 
-                    // 1. 動的しきい値計算
+                    // --- (1) 行結合 (しきい値処理) ---
+                    addLog("\n--- (1) 行データ (結合処理) ---");
+                    // Rev 1.0.15 Logic: 動的しきい値を使用 (デグレード防止のため固定値10ではなく文字高比率を採用)
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const dynamicThreshold = avgH * 0.6;
-                    addLog(`\n[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
+                    const dynamicThreshold = avgH * 0.6; // 概ね6~10px程度になります
+                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px`);
 
-                    // 2. 行結合
                     let rows = [];
                     rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
                         let found = rows.find(r => Math.abs(r.y - y) < dynamicThreshold);
                         if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                     });
-                    const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
+                    let sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    addLog(`\n--- (2) 結合データ (${sortedLines.length}行) ---`);
-                    sortedLines.forEach((r, idx) => {
-                        addLog(`[Row ${idx}] Y:${r.y} | ${r.text}`);
+                    // 結合データのログ出力 (要望1)
+                    sortedLines.forEach((line, i) => {
+                        addLog(`Row ${i}: ${line.text}`);
                     });
 
-                    // 3. 開始位置フィルタリング
-                    let startY = 0;
-                    // "総 プレイ 数" を含む行を探す (正規表現でスペース柔軟対応)
+                    // 開始位置特定
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
+                    let startY = startRow ? startRow.y : 0;
+                    
                     if (startRow) {
-                        startY = startRow.y;
-                        addLog(`\n[INFO] 開始位置特定: "総プレイ数" found at Y:${startY}`);
-                        addLog(`       -> Y:${startY} より上の行は無視します。`);
-                    } else {
-                        addLog(`\n[WARNING] "総プレイ数" が見つかりません。全行を対象にします。`);
+                        const gMatch = startRow.text.match(/([\d,]+)G/);
+                        if (gMatch) TOTAL_GAMES = parseInt(gMatch[1].replace(/,/g, ''));
+                        addLog(`\n[INFO] 総プレイ数: ${TOTAL_GAMES}G`);
                     }
 
-                    // 4. リスト抽出 (List P & List C) with Filter
+                    // 2. データ抽出 (PLE-C法)
                     let probList = [];
                     let countList = [];
 
                     sortedLines.forEach(line => {
-                        // フィルタリング実行
                         if (line.y < startY) return;
-
                         const text = line.text;
-                        
-                        // 確率行の検出 (1/数値 または 1/-)
-                        const probMatch = text.match(/1\s*\/\s*([\d,.]+|[\-–—])/);
-                        if (probMatch) {
-                            probList.push(text);
-                        }
+                        if (/1\s*\/\s*([\d,.]+|[\-–—])/.test(text)) probList.push(text);
+                        if (/([\d,]+)\s*回/.test(text)) countList.push(text);
+                    });
 
-                        // 回数行の検出 (数値 回)
-                        const countMatch = text.match(/([\d,]+)\s*回/);
-                        if (countMatch) {
-                            countList.push(text);
+                    // --- (2) & (3) データマッピングと尤度解析 ---
+                    addLog("\n--- (2) 抽出データ & (3) 解析ログ ---");
+                    
+                    let likelihoods = { 1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0 };
+                    let hasData = false;
+
+                    HANABI_CONFIG.forEach(item => {
+                        // 判定OFFでもログには出す場合もあるが、ここでは計算対象のみ詳細ログを出す
+                        const idx = item.index;
+                        let k = 0; 
+                        let n = 0; 
+                        let obsProb = "---";
+
+                        // マッピング
+                        if (idx < countList.length && idx < probList.length) {
+                            const cStr = countList[idx].match(/([\d,]+)\s*回/);
+                            if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
+
+                            const pStr = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
+                            let obsDenom = 0;
+                            if (pStr) {
+                                obsDenom = parseFloat(pStr[1].replace(/,/g, ''));
+                                obsProb = `1/${obsDenom}`;
+                            }
+
+                            // 試行回数 n 決定
+                            if (item.index >= 15 && obsDenom > 0) {
+                                n = Math.round(k * obsDenom);
+                            } else {
+                                n = TOTAL_GAMES;
+                            }
+
+                            // ログ出力 (要望2: 「ログ用名称」：「データ」)
+                            addLog(`> [${item.name}] 回数:${k} / 確率:${obsProb}`);
+
+                            if (item.active && n > 0) {
+                                hasData = true;
+                                
+                                // 尤度計算
+                                let debugStr = "   LIK(倍率): ";
+                                [1, 2, 5, 6].forEach(setting => {
+                                    const denom = item.probs[setting];
+                                    if (denom > 0) {
+                                        const p = 1.0 / denom;
+                                        const lik = calcLikelihood(k, n, p);
+                                        const weightedLik = Math.pow(lik, item.weight);
+                                        likelihoods[setting] *= weightedLik;
+                                        
+                                        // デバッグ用表示 (要望3)
+                                        debugStr += `S${setting}:${weightedLik.toExponential(2)} `;
+                                    }
+                                });
+                                addLog(debugStr);
+                            }
+                        } else {
+                            addLog(`> [${item.name}] データなし (Index ${idx})`);
                         }
                     });
 
-                    addLog(`\n--- (3) 抽出結果 (P:${probList.length}行 / C:${countList.length}行) ---`);
+                    if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // 5. マッピング出力
-                    addLog("\n--- 今回の結果 (Index 0-18) ---");
-                    
-                    for (let i = 0; i <= 18; i++) {
-                        const item = INDEX_MAP[i];
-                        
-                        // 確率の抽出
-                        let probVal = "取得失敗";
-                        if (i < probList.length) {
-                            const pText = probList[i];
-                            const pMatch = pText.match(/1\s*\/\s*([\d,.]+|[\-–—])/);
-                            if (pMatch) probVal = `1/${pMatch[1]}`;
-                        }
+                    // 正規化
+                    const totalLikelihood = likelihoods[1] + likelihoods[2] + likelihoods[5] + likelihoods[6];
+                    if (totalLikelihood === 0) { addLog("計算不能"); return; }
 
-                        // 回数の抽出
-                        let countVal = "取得失敗";
-                        if (i < countList.length) {
-                            const cText = countList[i];
-                            const cMatch = cText.match(/([\d,]+)\s*回/);
-                            if (cMatch) countVal = `${cMatch[1]}回`;
-                        }
+                    const p1 = (likelihoods[1] / totalLikelihood * 100).toFixed(1);
+                    const p2 = (likelihoods[2] / totalLikelihood * 100).toFixed(1);
+                    const p5 = (likelihoods[5] / totalLikelihood * 100).toFixed(1);
+                    const p6 = (likelihoods[6] / totalLikelihood * 100).toFixed(1);
 
-                        addLog(`[${i}] ${item.name} | 回数: ${countVal} | 確率: ${probVal}`);
-                    }
+                    document.getElementById('p1').innerText = `${p1}%`;
+                    document.getElementById('b1').style.width = `${p1}%`;
+                    document.getElementById('p2').innerText = `${p2}%`;
+                    document.getElementById('b2').style.width = `${p2}%`;
+                    document.getElementById('p5').innerText = `${p5}%`;
+                    document.getElementById('b5').style.width = `${p5}%`;
+                    document.getElementById('p6').innerText = `${p6}%`;
+                    document.getElementById('b6').style.width = `${p6}%`;
 
-                } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
+                    addLog(`\n[RESULT] S1:${p1}% S2:${p2}% S5:${p5}% S6:${p6}%`);
+
+                } catch (e) {
+                    addLog(`エラー発生: ${e.message}`);
+                    console.error(e);
+                }
             };
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('v_key');
-            if (savedKey) document.getElementById('api-key').value = savedKey;
-        });
-        document.getElementById('save-key').onclick = () => { 
-            const val = document.getElementById('api-key').value.trim();
-            localStorage.setItem('v_key', val); 
-            document.getElementById('api-key').value = val;
-            alert('API KEY SAVED!'); 
-        };
-        const fileInput = document.getElementById('file-input');
-        fileInput.onclick = (e) => { e.target.value = null; };
-        fileInput.onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
+        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了'); };
+        document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
 </html>
