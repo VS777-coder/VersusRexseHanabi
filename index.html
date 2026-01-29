@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6 (Rev 1.0.25)</title>
+    <title>みおの解析 1.1.6 (Rev 1.0.27 - Versus)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -20,8 +20,8 @@
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Current Logic)</p>
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS REVISE ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.27 (Versus Mode)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -36,7 +36,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY... (Mode: VERSUS)</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
@@ -44,7 +44,10 @@
     </div>
 
     <script>
-        // Rev 1.0.22 定義表 (完全維持)
+        // ★切り替えスイッチ ('HANABI' or 'VERSUS')
+        const CURRENT_MACHINE = 'VERSUS';
+
+        // 新ハナビ用定義 (Rev 1.0.25維持)
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -67,7 +70,32 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
+        // バーサスリヴァイズ用定義 (新規)
+        const VERSUS_CONFIG = [
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 160.6, 2: 153.1, 5: 141.2, 6: 135.7} },
+            { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 292.6, 2: 282.5, 5: 273.1, 6: 268.6} },
+            { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 565.0, 5: 546.1, 6: 537.2} },
+            { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 565.0, 5: 546.1, 6: 537.2} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 274.2} },
+            { index: 5, id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 12.5, 2: 12.3, 5: 12.0, 6: 11.8} },
+            { index: 6, id: "bell_a", name: "ベルＡ", active: true, weight: 1.0, probs: {1: 13.9, 2: 13.6, 5: 13.3, 6: 12.9} },
+            { index: 7, id: "bell_b", name: "ベルＢ", active: true, weight: 1.5, probs: {1: 136.5, 2: 128.0, 5: 120.0, 6: 113.8} },
+            { index: 8, id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 56.5, 2: 55.5, 5: 54.0, 6: 52.9} },
+            { index: 9, id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 61.2, 2: 59.9, 5: 58.0, 6: 56.7} },
+            { index: 10, id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 728.2, 2: 762.0, 5: 780.2, 6: 799.2} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: true, weight: 1.0, probs: {1: 18.7, 2: 18.4, 5: 18.1, 6: 17.8} },
+            { index: 12, id: "dummy_1", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
+            { index: 13, id: "dummy_2", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
+            { index: 14, id: "dummy_3", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
+            { index: 15, id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 6.5, 2: 6.1, 5: 5.7, 6: 5.3} },
+            { index: 16, id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.9, 2: 10.1, 5: 9.3, 6: 8.5} },
+            { index: 17, id: "bb_bell_center", name: "チェリー＋ベル", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
+            { index: 18, id: "bb_bell_cross", name: "チェリー＋ベルはずれ", active: true, weight: 1.0, probs: {1: 10.7, 2: 8.7, 5: 10.7, 6: 8.7} }
+        ];
+
         let TOTAL_GAMES = 0; 
+        // 選択中の設定を使う
+        const TARGET_CONFIG = (CURRENT_MACHINE === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
 
         function addLog(msg) {
             const log = document.getElementById('log');
@@ -75,7 +103,7 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // 対数尤度計算 (アンダーフロー対策済)
+        // 対数尤度計算
         function calcLogLikelihood(k, n, p) {
             if (n <= 0 || p <= 0 || p >= 1) return 0;
             return k * Math.log(p) + (n - k) * Math.log(1 - p);
@@ -87,7 +115,7 @@
             if (!apiKey) { alert('API KEYを入力してください'); return; }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING ANALYSIS (Rev 1.0.25)...";
+            logBox.innerText = `>> STARTING ANALYSIS (Rev 1.0.27 - ${CURRENT_MACHINE})...`;
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -104,9 +132,10 @@
                     if (!rawWords) { addLog("文字が見つかりません"); return; }
 
                     addLog("\n--- (1) 行データ (結合処理) ---");
+                    // しきい値計算 (動的)
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const dynamicThreshold = avgH * 0.6;
-                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px`);
+                    const dynamicThreshold = avgH * 0.6; // PC版で約10px前後になる設定
+                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px (avgH:${avgH.toFixed(2)})`);
 
                     let rows = [];
                     rawWords.forEach(word => {
@@ -131,7 +160,7 @@
                         addLog(`\n[INFO] 総プレイ数: ${TOTAL_GAMES}G`);
                     }
 
-                    // --- ここが現状の抽出ロジック（PC版でズレの原因箇所） ---
+                    // --- 抽出ロジック (Rev 1.0.25維持) ---
                     let probList = [];
                     let countList = [];
 
@@ -139,7 +168,7 @@
                         if (line.y < startY) return;
                         const text = line.text;
                         if (/1\s*\/\s*([\d,.]+|[\-–—])/.test(text)) probList.push(text);
-                        // 「回」必須のため、PC版のRB(16)等はここで弾かれる
+                        // 「回」必須 (PC版ズレの原因となるが、指示によりこのまま)
                         if (/([\d,]+)\s*回/.test(text)) countList.push(text);
                     });
 
@@ -148,13 +177,12 @@
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
 
-                    HANABI_CONFIG.forEach(item => {
+                    TARGET_CONFIG.forEach(item => {
                         const idx = item.index;
                         let k = 0; 
                         let n = 0; 
                         let obsProb = "---";
 
-                        // インデックスがズレると、ここのマッピングが狂う
                         if (idx < countList.length && idx < probList.length) {
                             const cStr = countList[idx].match(/([\d,]+)\s*回/);
                             if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
@@ -166,6 +194,7 @@
                                 obsProb = `1/${obsDenom}`;
                             }
 
+                            // 試行回数計算
                             if (item.index >= 15 && obsDenom > 0) {
                                 n = Math.round(k * obsDenom);
                             } else {
@@ -176,7 +205,7 @@
 
                             if (item.active && n > 0 && item.weight > 0) {
                                 hasData = true;
-                                let debugStr = "   LogLik(加算値): ";
+                                let debugStr = "   LogLik: ";
                                 [1, 2, 5, 6].forEach(setting => {
                                     const denom = item.probs[setting];
                                     if (denom > 0) {
@@ -196,14 +225,11 @@
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // Log-Sum-Exp による正規化
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
-                    
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
                     const exp2 = Math.exp(logLikelihoods[2] - maxLog);
                     const exp5 = Math.exp(logLikelihoods[5] - maxLog);
                     const exp6 = Math.exp(logLikelihoods[6] - maxLog);
-                    
                     const sumExp = exp1 + exp2 + exp5 + exp6;
 
                     const p1 = (exp1 / sumExp * 100).toFixed(1);
