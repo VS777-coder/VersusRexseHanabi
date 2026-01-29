@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.14 (Debug Extraction)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.15 (Debug Filter)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -83,7 +83,7 @@
             }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING DEBUG EXTRACTION (Rev 1.0.14)...";
+            logBox.innerText = ">> STARTING DEBUG FILTER (Rev 1.0.15)...";
             addLog("画像読み込み中...");
             
             const reader = new FileReader(); reader.readAsDataURL(file);
@@ -109,11 +109,17 @@
                     if (!ann) return addLog("ERROR: 文字が見つかりませんでした。");
                     
                     const rawWords = ann.slice(1);
+                    addLog(`\n--- (1) API生データ (検出数: ${rawWords.length}) ---`);
+                    rawWords.forEach((w, i) => {
+                         const v = w.boundingPoly.vertices;
+                         const y = v && v[0] ? v[0].y : '?';
+                         addLog(`[Word ${i}] Y:${y} "${w.description}"`);
+                    });
 
                     // 1. 動的しきい値計算
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
                     const dynamicThreshold = avgH * 0.6;
-                    addLog(`[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
+                    addLog(`\n[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
 
                     // 2. 行結合
                     let rows = [];
@@ -126,11 +132,31 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    // 3. リスト抽出 (List P & List C)
-                    let probList = []; // 確率リスト
-                    let countList = []; // 回数リスト
+                    addLog(`\n--- (2) 結合データ (${sortedLines.length}行) ---`);
+                    sortedLines.forEach((r, idx) => {
+                        addLog(`[Row ${idx}] Y:${r.y} | ${r.text}`);
+                    });
+
+                    // 3. 開始位置フィルタリング
+                    let startY = 0;
+                    // "総 プレイ 数" を含む行を探す (正規表現でスペース柔軟対応)
+                    const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
+                    if (startRow) {
+                        startY = startRow.y;
+                        addLog(`\n[INFO] 開始位置特定: "総プレイ数" found at Y:${startY}`);
+                        addLog(`       -> Y:${startY} より上の行は無視します。`);
+                    } else {
+                        addLog(`\n[WARNING] "総プレイ数" が見つかりません。全行を対象にします。`);
+                    }
+
+                    // 4. リスト抽出 (List P & List C) with Filter
+                    let probList = [];
+                    let countList = [];
 
                     sortedLines.forEach(line => {
+                        // フィルタリング実行
+                        if (line.y < startY) return;
+
                         const text = line.text;
                         
                         // 確率行の検出 (1/数値 または 1/-)
@@ -146,9 +172,9 @@
                         }
                     });
 
-                    addLog(`\n--- 抽出結果 (P:${probList.length}行 / C:${countList.length}行) ---`);
+                    addLog(`\n--- (3) 抽出結果 (P:${probList.length}行 / C:${countList.length}行) ---`);
 
-                    // 4. マッピング出力
+                    // 5. マッピング出力
                     addLog("\n--- 今回の結果 (Index 0-18) ---");
                     
                     for (let i = 0; i <= 18; i++) {
