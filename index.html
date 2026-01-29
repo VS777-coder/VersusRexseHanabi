@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.25</title>
+    <title>ぷりんの解析 Rev 1.0.26</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.26</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -89,7 +89,7 @@
 
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
-            if (!key) return alert('API KEY');
+            if (!key) return alert('API KEY missing');
             document.getElementById('log').innerText = "READY...";
             await addLog(">> ANALYSIS STARTING...", 200);
             const reader = new FileReader(); reader.readAsDataURL(file);
@@ -99,9 +99,79 @@
                 });
                 const json = await res.json();
                 const raw = json.responses[0]?.textAnnotations;
-                if(!raw) return addLog("文字が見つかりませんでした。");
+                if(!raw) return addLog("OCR error: No text found.");
 
                 const rawWords = raw.slice(1);
                 let rows = [];
                 rawWords.forEach(w => {
-                    let y =
+                    let y = w.boundingPoly.vertices[0].y;
+                    let f = rows.find(r => Math.abs(r.y - y) < 10);
+                    if (f) f.words.push(w); else rows.push({ y, words: [w] });
+                });
+                const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
+                for(let i=0; i<sortedLines.length; i++) { await addLog(`Row ${i}: ${sortedLines[i]}`, 20); }
+
+                await addLog("\n--- (3) DATA MAPPING ---", 200);
+                let startParsing = false; let totalG = 0; let bbCount = 0; let extractedData = []; let configPtr = 0;
+
+                for (let i = 0; i < sortedLines.length; i++) {
+                    const line = sortedLines[i];
+                    if (!startParsing && line.replace(/\s/g, '').includes("総プレイ数")) {
+                        let gMatch = line.match(/([\d,]+)/);
+                        if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); startParsing = true; await addLog(`[INFO] TotalG: ${totalG}`, 100); }
+                        continue;
+                    }
+                    if (startParsing && line.includes("/") && configPtr < HANABI_CONFIG.length) {
+                        const item = HANABI_CONFIG[configPtr];
+                        let probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
+                        if (!probMatch) continue;
+                        let countIdx = (i >= 2 && sortedLines[i-2].includes("回")) ? i-2 : ((i >= 1 && sortedLines[i-1].includes("回")) ? i-1 : -1);
+                        let countVal = 0;
+                        if (countIdx !== -1) {
+                            let cMatch = sortedLines[countIdx].match(/([\d,]+)/);
+                            countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
+                        }
+                        if (item.id === "bb") bbCount = countVal;
+                        extractedData.push({ item, k: countVal });
+                        await addLog(`> [${item.name}] ${countVal}回`, 30);
+                        configPtr++;
+                    }
+                }
+
+                await addLog("\n--- (4) LIKELIHOOD CALC ---", 200);
+                let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
+                for (const d of extractedData) {
+                    if (d.item.active && totalG > 0) {
+                        // 貴方の指示した固定分母ロジック
+                        let n = totalG;
+                        if (d.item.id === 'vc') n = bbCount * 15;
+                        else if (d.item.id === 'vg') n = bbCount * 20;
+                        else if (['nf', 'bell_center'].includes(d.item.id)) n = bbCount * 25;
+
+                        [1,2,5,6].forEach(s => {
+                            let prob = 1 / d.item.probs[s];
+                            let L = (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
+                            logLikelihoods[s] += L;
+                        });
+                        await addLog(`- ${d.item.name} processed.`, 20);
+                    }
+                }
+
+                await addLog("\n--- (5) FINAL RESULT ---", 200);
+                await shuffleResults();
+                const max = Math.max(...Object.values(logLikelihoods));
+                const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - max)]));
+                const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
+                [1,2,5,6].forEach(s => {
+                    let pct = ((exps[s] / sum) * 100).toFixed(1);
+                    document.getElementById(`p${s}`).innerText = `${pct}%`;
+                    document.getElementById(`b${s}`).style.width = `${pct}%`;
+                });
+            };
+        }
+        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了'); };
+        document.getElementById('file-input').onchange = (e) => analyze(e.target.files[0]);
+    </script>
+</body>
+</html>
