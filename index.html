@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 2.0 (Dual Engine)</title>
+    <title>みおの解析 1.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -16,32 +16,13 @@
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
-        /* Toggle Switch */
-        .toggle-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .toggle-label { font-size: 12px; font-weight: bold; color: #ff758c; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 24px; border: 1px solid #ff758c; }
-        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #ff0080; }
-        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-xl font-black kawaii-title tracking-tighter">✨ みおの解析 2.0 ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">Production Build (Dual Engine)</p>
+        <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.0</p>
     </div>
-
-    <div class="toggle-container">
-        <span class="toggle-label">HANABI</span>
-        <label class="switch">
-            <input type="checkbox" id="machine-toggle">
-            <span class="slider"></span>
-        </label>
-        <span class="toggle-label">VERSUS</span>
-    </div>
-    <div id="machine-name" class="text-center text-xs font-bold text-cyan-400 mb-2">MODE: HANABI</div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行</label>
@@ -63,13 +44,6 @@
     </div>
 
     <script>
-        let CURRENT_MACHINE = 'HANABI';
-
-        // ==========================================
-        // 定義ファイル (修正不可領域)
-        // ==========================================
-
-        // 新ハナビ (風鈴A 1.2倍)
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -92,7 +66,6 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
-        // バーサスリヴァイズ (最新調整版)
         const VERSUS_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -115,26 +88,6 @@
             { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        // ==========================================
-        // ロジック部
-        // ==========================================
-
-        const toggle = document.getElementById('machine-toggle');
-        const machineLabel = document.getElementById('machine-name');
-        
-        toggle.addEventListener('change', (e) => {
-            if(e.target.checked) {
-                CURRENT_MACHINE = 'VERSUS';
-                machineLabel.innerText = "MODE: VERSUS REVISE";
-            } else {
-                CURRENT_MACHINE = 'HANABI';
-                machineLabel.innerText = "MODE: HANABI";
-            }
-            document.getElementById('log').innerText = `READY... (Mode: ${CURRENT_MACHINE})`;
-            ['p1','p2','p5','p6'].forEach(id => document.getElementById(id).innerText = '---');
-            ['b1','b2','b5','b6'].forEach(id => document.getElementById(id).style.width = '0%');
-        });
-
         function addLog(msg) {
             const log = document.getElementById('log');
             log.innerText += `\n${msg}`;
@@ -152,7 +105,7 @@
             if (!apiKey) { alert('API KEYを入力してください'); return; }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = `>> STARTING ANALYSIS (${CURRENT_MACHINE})...`;
+            logBox.innerText = `>> STARTING ANALYSIS...`;
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -168,7 +121,6 @@
                     const rawWords = json.responses[0]?.textAnnotations?.slice(1);
                     if (!rawWords) { addLog("文字が見つかりません"); return; }
 
-                    // --- (1) しきい値の行 ---
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
                     const dynamicThreshold = avgH * 0.6;
                     addLog(`\n--- (1) 行結合処理 ---`);
@@ -184,7 +136,14 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    // 総プレイ数の取得
+                    let detectedMachine = 'HANABI';
+                    const titleRow = sortedLines[0] ? sortedLines[0].text : "";
+                    
+                    if (titleRow.match(/バーサス|VERSUS/i)) {
+                        detectedMachine = 'VERSUS';
+                    }
+                    addLog(`\n[INFO] 機種判定: ${titleRow} → ${detectedMachine}`);
+
                     let totalGames = 0;
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
                     if (startRow) {
@@ -193,7 +152,6 @@
                     }
                     addLog(`[INFO] 総プレイ数: ${totalGames}G`);
 
-                    // --- 抽出ロジック ---
                     let probList = [];
                     let countList = [];
                     let startY = startRow ? startRow.y : 0;
@@ -208,7 +166,7 @@
                     
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
-                    const TARGET_CONFIG = (CURRENT_MACHINE === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
+                    const TARGET_CONFIG = (detectedMachine === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
 
                     TARGET_CONFIG.forEach(item => {
                         if (item.active) {
@@ -226,22 +184,20 @@
                                     if (pMatch) obsProb = `1/${pMatch[1]}`;
                                 }
 
-                                // 試行回数(n)の計算ロジック
                                 let obsDenom = 0;
                                 if (idx < probList.length) {
                                     const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
                                     if (pMatch) obsDenom = parseFloat(pMatch[1].replace(/,/g, ''));
                                 }
 
-                                const thresholdIdx = (CURRENT_MACHINE === 'VERSUS') ? 14 : 15;
+                                const thresholdIdx = (detectedMachine === 'VERSUS') ? 14 : 15;
                                 if (item.index >= thresholdIdx && obsDenom > 0) {
                                     n = Math.round(k * obsDenom);
                                 } else {
                                     n = totalGames;
                                 }
 
-                                // Versus特殊: チェリー+ベルの分母はIndex 16 (BB中ベル総数)
-                                if (CURRENT_MACHINE === 'VERSUS' && (item.index === 17 || item.index === 18)) {
+                                if (detectedMachine === 'VERSUS' && (item.index === 17 || item.index === 18)) {
                                     if (16 < countList.length) {
                                         const bbBellStr = countList[16].match(/([\d,]+)\s*回/);
                                         if (bbBellStr) n = parseInt(bbBellStr[1].replace(/,/g, ''));
@@ -250,7 +206,6 @@
 
                                 addLog(`[抽出] ${item.name}: ${k}回 (${obsProb}) | 母数(n): ${n}`);
 
-                                // --- (3) 尤度による解析 ---
                                 if (n > 0 && item.weight > 0) {
                                     hasData = true;
                                     let logStr = "   ↳ [尤度] ";
@@ -274,7 +229,6 @@
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // --- (4) 最終の設定予想 ---
                     addLog("\n--- (4) 最終の設定予想 ---");
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
