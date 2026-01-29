@@ -8,7 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.8</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.10 (Fix)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -36,7 +36,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY... (Waiting for Image)</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
@@ -45,12 +45,9 @@
 
     <script>
         // ▼▼▼ 開発用スイッチ ▼▼▼
-        // true: 文字読み取りテストモード（座標ログ出力・解析なし）
-        // false: ホール実戦モード（通常解析・Rev1.0.7ロジック）
         const DEBUG_MODE = true; 
         // ▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // Rev 1.0.7 根本解決版コンフィグ（誤読対応強化済み）
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
@@ -90,18 +87,13 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // --- デバッグ用関数: 閾値ごとの結合シミュレーション ---
+        // デバッグ: 閾値ごとの結合シミュレーション
         function runDebugSimulation(rawWords) {
             addLog("\n=== DEBUG MODE: RAW DATA & THRESHOLD TEST ===");
-            addLog("APIが生で返してきた単語データ(上位10件):");
-            rawWords.slice(0, 10).forEach(w => {
-                const y = w.boundingPoly.vertices[0].y;
-                addLog(`[RAW] Y:${y} "${w.description}"`);
-            });
+            addLog(`検出単語数: ${rawWords.length}個`);
 
-            // 閾値シミュレーション
             [10, 20, 30].forEach(threshold => {
-                addLog(`\n--- 結合しきい値: ${threshold} px ---`);
+                addLog(`\n--- しきい値: ${threshold} px ---`);
                 let rows = [];
                 rawWords.forEach(word => {
                     const y = word.boundingPoly.vertices[0].y;
@@ -109,22 +101,13 @@
                     if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                 });
                 
-                // Y順にソートして表示
                 const sorted = rows.sort((a, b) => a.y - b.y).map(r => {
-                    return { 
-                        y: Math.round(r.y), 
-                        text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x)
-                                     .map(w => w.description).join(" ") 
-                    };
+                    return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                 });
                 
-                sorted.forEach((r, i) => {
-                    addLog(`[Row ${i}] Y:${r.y} | ${r.text}`);
-                });
+                sorted.forEach((r, i) => addLog(`[Row ${i}] Y:${r.y} | ${r.text}`));
             });
-            
-            addLog("\n[INFO] デバッグ完了。解析ロジックは実行していません。");
-            addLog("[INFO] 本番解析を行う場合はソースコードの DEBUG_MODE を false にしてください。");
+            addLog("\n[INFO] デバッグ完了。解析はスキップしました。");
         }
 
         function runBayesian() {
@@ -170,33 +153,45 @@
         }
 
         async function analyze(file) {
+            const apiKeyInput = document.getElementById('api-key');
+            // コピペの空白対策：trim()を入れた
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (!apiKey) { 
+                alert('APIキーが入力されていません！下の入力欄に入れてSAVEボタンを押してください。'); 
+                return; 
+            }
+
             const logBox = document.getElementById('log');
-            logBox.innerText = DEBUG_MODE ? ">> STARTING DEBUG SIMULATION..." : ">> STARTING ANALYZE (Rev 1.0.8)...";
+            logBox.innerText = DEBUG_MODE ? ">> STARTING DEBUG SIMULATION..." : ">> STARTING ANALYZE (Rev 1.0.10)...";
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 try {
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
+                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
                         method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                         headers: { 'Content-Type': 'application/json' }
                     });
                     const json = await res.json();
+                    
+                    if (json.error) {
+                        addLog(`API ERROR: ${json.error.message} (Code: ${json.error.code})`);
+                        return;
+                    }
+                    
                     const ann = json.responses[0]?.textAnnotations;
-                    if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
+                    if (!ann) return addLog("ERROR: NO TEXT DETECTED. 画像が読み取れませんでした。");
                     
                     const rawWords = ann.slice(1);
 
-                    // ▼▼▼ デバッグモード分岐 ▼▼▼
                     if (DEBUG_MODE) {
                         runDebugSimulation(rawWords);
-                        return; // ここで強制終了
+                        return; 
                     }
-                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-                    // === 以下、本番用ロジック (Rev 1.0.7) ===
-                    // 行結合 (しきい値は自動計算)
+                    // === 本番用ロジック (Rev 1.0.7) ===
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const threshold = avgH * 2.3; // 動的しきい値
+                    const threshold = avgH * 2.3;
                     let rows = [];
                     rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
@@ -226,7 +221,6 @@
                             if (id !== "name" && item.key && new RegExp(item.key, 'i').test(line)) {
                                 if (session.extracted[id]) continue; 
                                 
-                                // 根本解決：下の2行まで結合して数値を拾う
                                 const targetText = line + " " + (sortedLines[i+1]?.text || "") + " " + (sortedLines[i+2]?.text || "");
                                 let prob = 0;
                                 if (!targetText.includes("1 / -")) {
@@ -249,9 +243,24 @@
                 } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
             };
         }
-        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('OK'); };
-        document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('v_key');
+            if (savedKey) document.getElementById('api-key').value = savedKey;
+        });
+
+        document.getElementById('save-key').onclick = () => { 
+            const val = document.getElementById('api-key').value.trim();
+            localStorage.setItem('v_key', val); 
+            // 見た目上も空白を除去した状態にする
+            document.getElementById('api-key').value = val;
+            alert('API KEY SAVED!'); 
+        };
+
+        // 重要修正：クリックするたびに値を空にして「同じファイル選択」でもイベント発火させる
+        const fileInput = document.getElementById('file-input');
+        fileInput.onclick = (e) => { e.target.value = null; };
+        fileInput.onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
 </html>
