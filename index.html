@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6 (Rev 1.0.27 - Versus)</title>
+    <title>みおの解析 2.0 (Dual Engine)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -16,13 +16,32 @@
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
+        /* Toggle Switch */
+        .toggle-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .toggle-label { font-size: 12px; font-weight: bold; color: #ff758c; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #30363d; transition: .4s; border-radius: 24px; border: 1px solid #ff758c; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #ff0080; }
+        input:checked + .slider:before { transform: translateX(26px); }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS REVISE ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.27 (Versus Mode)</p>
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ みおの解析 2.0 ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">Production Build (Dual Engine)</p>
     </div>
+
+    <div class="toggle-container">
+        <span class="toggle-label">HANABI</span>
+        <label class="switch">
+            <input type="checkbox" id="machine-toggle">
+            <span class="slider"></span>
+        </label>
+        <span class="toggle-label">VERSUS</span>
+    </div>
+    <div id="machine-name" class="text-center text-xs font-bold text-cyan-400 mb-2">MODE: HANABI</div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行</label>
@@ -36,7 +55,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY... (Mode: VERSUS)</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
@@ -44,10 +63,13 @@
     </div>
 
     <script>
-        // ★切り替えスイッチ ('HANABI' or 'VERSUS')
-        const CURRENT_MACHINE = 'VERSUS';
+        let CURRENT_MACHINE = 'HANABI';
 
-        // 新ハナビ用定義 (Rev 1.0.25維持)
+        // ==========================================
+        // 定義ファイル (修正不可領域)
+        // ==========================================
+
+        // 新ハナビ (風鈴A 1.2倍)
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -55,7 +77,7 @@
             { index: 3, id: "red_bb", name: "赤七ビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
             { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 277.7} },
             { index: 5, id: "bell_total", name: "風鈴合算", active: false, weight: 0.0, probs: {1: 7.72, 2: 7.55, 5: 7.45, 6: 7.16} },
-            { index: 6, id: "ba", name: "風鈴Ａ", active: true, weight: 1.0, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { index: 6, id: "ba", name: "風鈴Ａ", active: true, weight: 1.2, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { index: 7, id: "bb_b", name: "風鈴Ｂ", active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
             { index: 8, id: "ice_total", name: "氷合算", active: false, weight: 0.0, probs: {1: 52.9, 2: 57.5, 5: 49.7, 6: 52.8} },
             { index: 9, id: "ice", name: "氷Ａ", active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
@@ -70,32 +92,48 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
-        // バーサスリヴァイズ用定義 (新規)
+        // バーサスリヴァイズ (最新調整版)
         const VERSUS_CONFIG = [
-            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 160.6, 2: 153.1, 5: 141.2, 6: 135.7} },
-            { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 292.6, 2: 282.5, 5: 273.1, 6: 268.6} },
-            { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 565.0, 5: 546.1, 6: 537.2} },
-            { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 565.0, 5: 546.1, 6: 537.2} },
-            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 274.2} },
-            { index: 5, id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 12.5, 2: 12.3, 5: 12.0, 6: 11.8} },
-            { index: 6, id: "bell_a", name: "ベルＡ", active: true, weight: 1.0, probs: {1: 13.9, 2: 13.6, 5: 13.3, 6: 12.9} },
-            { index: 7, id: "bell_b", name: "ベルＢ", active: true, weight: 1.5, probs: {1: 136.5, 2: 128.0, 5: 120.0, 6: 113.8} },
-            { index: 8, id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 56.5, 2: 55.5, 5: 54.0, 6: 52.9} },
-            { index: 9, id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 61.2, 2: 59.9, 5: 58.0, 6: 56.7} },
-            { index: 10, id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 728.2, 2: 762.0, 5: 780.2, 6: 799.2} },
-            { index: 11, id: "cherry_total", name: "チェリー合算", active: true, weight: 1.0, probs: {1: 18.7, 2: 18.4, 5: 18.1, 6: 17.8} },
-            { index: 12, id: "dummy_1", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
-            { index: 13, id: "dummy_2", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
-            { index: 14, id: "dummy_3", name: "(予備)", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
-            { index: 15, id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 6.5, 2: 6.1, 5: 5.7, 6: 5.3} },
-            { index: 16, id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.9, 2: 10.1, 5: 9.3, 6: 8.5} },
-            { index: 17, id: "bb_bell_center", name: "チェリー＋ベル", active: false, weight: 0.0, probs: {1: 1, 2: 1, 5: 1, 6: 1} },
-            { index: 18, id: "bb_bell_cross", name: "チェリー＋ベルはずれ", active: true, weight: 1.0, probs: {1: 10.7, 2: 8.7, 5: 10.7, 6: 8.7} }
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
+            { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { index: 5, id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 7.2, 2: 7.1, 5: 6.9, 6: 6.8} },
+            { index: 6, id: "bell_a", name: "ベルＡ", active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { index: 7, id: "bell_b", name: "ベルＢ", active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { index: 8, id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
+            { index: 9, id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { index: 10, id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
+            { index: 12, id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
+            { index: 13, id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { index: 14, id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { index: 15, id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { index: 16, id: "bb_bell_total", name: "ビッグ中ベル", active: false, weight: 0.0, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { index: 17, id: "cb_hit", name: "チェリー＋ベル揃い", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        let TOTAL_GAMES = 0; 
-        // 選択中の設定を使う
-        const TARGET_CONFIG = (CURRENT_MACHINE === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
+        // ==========================================
+        // ロジック部
+        // ==========================================
+
+        const toggle = document.getElementById('machine-toggle');
+        const machineLabel = document.getElementById('machine-name');
+        
+        toggle.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                CURRENT_MACHINE = 'VERSUS';
+                machineLabel.innerText = "MODE: VERSUS REVISE";
+            } else {
+                CURRENT_MACHINE = 'HANABI';
+                machineLabel.innerText = "MODE: HANABI";
+            }
+            document.getElementById('log').innerText = `READY... (Mode: ${CURRENT_MACHINE})`;
+            ['p1','p2','p5','p6'].forEach(id => document.getElementById(id).innerText = '---');
+            ['b1','b2','b5','b6'].forEach(id => document.getElementById(id).style.width = '0%');
+        });
 
         function addLog(msg) {
             const log = document.getElementById('log');
@@ -103,7 +141,6 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // 対数尤度計算
         function calcLogLikelihood(k, n, p) {
             if (n <= 0 || p <= 0 || p >= 1) return 0;
             return k * Math.log(p) + (n - k) * Math.log(1 - p);
@@ -115,7 +152,7 @@
             if (!apiKey) { alert('API KEYを入力してください'); return; }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = `>> STARTING ANALYSIS (Rev 1.0.27 - ${CURRENT_MACHINE})...`;
+            logBox.innerText = `>> STARTING ANALYSIS (${CURRENT_MACHINE})...`;
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -131,11 +168,11 @@
                     const rawWords = json.responses[0]?.textAnnotations?.slice(1);
                     if (!rawWords) { addLog("文字が見つかりません"); return; }
 
-                    addLog("\n--- (1) 行データ (結合処理) ---");
-                    // しきい値計算 (動的)
+                    // --- (1) しきい値の行 ---
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const dynamicThreshold = avgH * 0.6; // PC版で約10px前後になる設定
-                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px (avgH:${avgH.toFixed(2)})`);
+                    const dynamicThreshold = avgH * 0.6;
+                    addLog(`\n--- (1) 行結合処理 ---`);
+                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px (基準: 10px前後)`);
 
                     let rows = [];
                     rawWords.forEach(word => {
@@ -147,84 +184,98 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    sortedLines.forEach((line, i) => {
-                        addLog(`Row ${i}: ${line.text}`);
-                    });
-
+                    // 総プレイ数の取得
+                    let totalGames = 0;
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
-                    let startY = startRow ? startRow.y : 0;
-                    
                     if (startRow) {
                         const gMatch = startRow.text.match(/([\d,]+)G/);
-                        if (gMatch) TOTAL_GAMES = parseInt(gMatch[1].replace(/,/g, ''));
-                        addLog(`\n[INFO] 総プレイ数: ${TOTAL_GAMES}G`);
+                        if (gMatch) totalGames = parseInt(gMatch[1].replace(/,/g, ''));
                     }
+                    addLog(`[INFO] 総プレイ数: ${totalGames}G`);
 
-                    // --- 抽出ロジック (Rev 1.0.25維持) ---
+                    // --- 抽出ロジック ---
                     let probList = [];
                     let countList = [];
+                    let startY = startRow ? startRow.y : 0;
 
                     sortedLines.forEach(line => {
                         if (line.y < startY) return;
-                        const text = line.text;
-                        if (/1\s*\/\s*([\d,.]+|[\-–—])/.test(text)) probList.push(text);
-                        // 「回」必須 (PC版ズレの原因となるが、指示によりこのまま)
-                        if (/([\d,]+)\s*回/.test(text)) countList.push(text);
+                        if (/1\s*\/\s*([\d,.]+|[\-–—])/.test(line.text)) probList.push(line.text);
+                        if (/([\d,]+)\s*回/.test(line.text)) countList.push(line.text);
                     });
 
-                    addLog("\n--- (2) 抽出データ & (3) 解析ログ ---");
+                    addLog("\n--- (2) 取得すべき項目とデータ ---");
                     
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
+                    const TARGET_CONFIG = (CURRENT_MACHINE === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
 
                     TARGET_CONFIG.forEach(item => {
-                        const idx = item.index;
-                        let k = 0; 
-                        let n = 0; 
-                        let obsProb = "---";
+                        if (item.active) {
+                            const idx = item.index;
+                            let k = 0; 
+                            let n = 0; 
+                            let obsProb = "---";
 
-                        if (idx < countList.length && idx < probList.length) {
-                            const cStr = countList[idx].match(/([\d,]+)\s*回/);
-                            if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
+                            if (idx < countList.length) {
+                                const cStr = countList[idx].match(/([\d,]+)\s*回/);
+                                if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
 
-                            const pStr = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
-                            let obsDenom = 0;
-                            if (pStr) {
-                                obsDenom = parseFloat(pStr[1].replace(/,/g, ''));
-                                obsProb = `1/${obsDenom}`;
-                            }
+                                if (idx < probList.length) {
+                                    const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
+                                    if (pMatch) obsProb = `1/${pMatch[1]}`;
+                                }
 
-                            // 試行回数計算
-                            if (item.index >= 15 && obsDenom > 0) {
-                                n = Math.round(k * obsDenom);
-                            } else {
-                                n = TOTAL_GAMES;
-                            }
+                                // 試行回数(n)の計算ロジック
+                                let obsDenom = 0;
+                                if (idx < probList.length) {
+                                    const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
+                                    if (pMatch) obsDenom = parseFloat(pMatch[1].replace(/,/g, ''));
+                                }
 
-                            addLog(`> [${item.name}] 回数:${k} / 確率:${obsProb}`);
+                                const thresholdIdx = (CURRENT_MACHINE === 'VERSUS') ? 14 : 15;
+                                if (item.index >= thresholdIdx && obsDenom > 0) {
+                                    n = Math.round(k * obsDenom);
+                                } else {
+                                    n = totalGames;
+                                }
 
-                            if (item.active && n > 0 && item.weight > 0) {
-                                hasData = true;
-                                let debugStr = "   LogLik: ";
-                                [1, 2, 5, 6].forEach(setting => {
-                                    const denom = item.probs[setting];
-                                    if (denom > 0) {
-                                        const p = 1.0 / denom;
-                                        const logL = calcLogLikelihood(k, n, p);
-                                        const weightedLogL = logL * item.weight;
-                                        logLikelihoods[setting] += weightedLogL;
-                                        debugStr += `S${setting}:${weightedLogL.toFixed(2)} `;
+                                // Versus特殊: チェリー+ベルの分母はIndex 16 (BB中ベル総数)
+                                if (CURRENT_MACHINE === 'VERSUS' && (item.index === 17 || item.index === 18)) {
+                                    if (16 < countList.length) {
+                                        const bbBellStr = countList[16].match(/([\d,]+)\s*回/);
+                                        if (bbBellStr) n = parseInt(bbBellStr[1].replace(/,/g, ''));
                                     }
-                                });
-                                addLog(debugStr);
+                                }
+
+                                addLog(`[抽出] ${item.name}: ${k}回 (${obsProb}) | 母数(n): ${n}`);
+
+                                // --- (3) 尤度による解析 ---
+                                if (n > 0 && item.weight > 0) {
+                                    hasData = true;
+                                    let logStr = "   ↳ [尤度] ";
+                                    [1, 2, 5, 6].forEach(setting => {
+                                        const denom = item.probs[setting];
+                                        if (denom > 0) {
+                                            const p = 1.0 / denom;
+                                            const logL = calcLogLikelihood(k, n, p);
+                                            const weightedLogL = logL * item.weight;
+                                            logLikelihoods[setting] += weightedLogL;
+                                            logStr += `S${setting}: ${weightedLogL.toFixed(2)}  `;
+                                        }
+                                    });
+                                    addLog(logStr);
+                                }
+                            } else {
+                                addLog(`[エラー] ${item.name} (Index ${idx}) のデータが見つかりません`);
                             }
-                        } else {
-                            addLog(`> [${item.name}] データなし (Index ${idx})`);
                         }
                     });
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
+                    // --- (4) 最終の設定予想 ---
+                    addLog("\n--- (4) 最終の設定予想 ---");
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
                     const exp2 = Math.exp(logLikelihoods[2] - maxLog);
@@ -246,7 +297,7 @@
                     document.getElementById('p6').innerText = `${p6}%`;
                     document.getElementById('b6').style.width = `${p6}%`;
 
-                    addLog(`\n[RESULT] S1:${p1}% S2:${p2}% S5:${p5}% S6:${p6}%`);
+                    addLog(`[判定] 設定1:${p1}%  設定2:${p2}%  設定5:${p5}%  設定6:${p6}%`);
 
                 } catch (e) {
                     addLog(`エラー発生: ${e.message}`);
