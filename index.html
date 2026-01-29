@@ -112,7 +112,7 @@
                 for(let i=0; i<sortedLines.length; i++) { await addLog(`Row ${i}: ${sortedLines[i]}`, 20); }
 
                 await addLog("\n--- (3) DATA MAPPING ---", 200);
-                let startParsing = false; let totalG = 0; let bbCount = 0; let extractedData = []; let configPtr = 0;
+                let startParsing = false; let totalG = 0; let extractedData = []; let configPtr = 0;
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
@@ -125,35 +125,33 @@
                         const item = HANABI_CONFIG[configPtr];
                         let probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
                         if (!probMatch) continue;
+                        let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
                         let countIdx = (i >= 2 && sortedLines[i-2].includes("回")) ? i-2 : ((i >= 1 && sortedLines[i-1].includes("回")) ? i-1 : -1);
                         let countVal = 0;
                         if (countIdx !== -1) {
                             let cMatch = sortedLines[countIdx].match(/([\d,]+)/);
                             countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
                         }
-                        if (item.id === "bb") bbCount = countVal;
-                        extractedData.push({ item, k: countVal });
-                        await addLog(`> [${item.name}] ${countVal}回`, 30);
+                        extractedData.push({ item, k: countVal, p_ocr: probVal });
+                        await addLog(`> [${item.name}] ${countVal}回 (1/${probVal})`, 30);
                         configPtr++;
                     }
                 }
 
                 await addLog("\n--- (4) LIKELIHOOD CALC ---", 200);
+                const rtBigIds = ['vc', 'vg', 'nf', 'bell_center'];
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 for (const d of extractedData) {
                     if (d.item.active && totalG > 0) {
-                        // 貴方の指示した固定分母ロジック
-                        let n = totalG;
-                        if (d.item.id === 'vc') n = bbCount * 15;
-                        else if (d.item.id === 'vg') n = bbCount * 20;
-                        else if (['nf', 'bell_center'].includes(d.item.id)) n = bbCount * 25;
-
+                        // 修正：指示通り「確率分母と回数からゲーム数(n)を割り出して」使用
+                        let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
+                        
                         [1,2,5,6].forEach(s => {
                             let prob = 1 / d.item.probs[s];
                             let L = (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
                             logLikelihoods[s] += L;
                         });
-                        await addLog(`- ${d.item.name} processed.`, 20);
+                        await addLog(`- ${d.item.name}: n=${n}`, 20);
                     }
                 }
 
