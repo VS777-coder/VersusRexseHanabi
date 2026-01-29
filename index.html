@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.33</title>
+    <title>ぷりんの解析 Rev 1.0.34b</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.33 [KEYWORD-SYNC MODE]</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.34b [SYMBOL FIX]</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto text-center">
@@ -82,7 +82,7 @@
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) return alert('API KEY missing');
-            document.getElementById('log').innerText = ">> DEEP ANALYSIS STARTING (Rev 1.0.33)...\n";
+            document.getElementById('log').innerText = ">> DEEP ANALYSIS STARTING (Rev 1.0.34b)...\n";
 
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -91,7 +91,7 @@
                 });
                 const json = await res.json();
                 const raw = json.responses[0]?.textAnnotations;
-                if(!raw) return addLog("[ERROR] OCR FAILED.");
+                if(!raw) return addLog("🆘 ERROR: OCR NO RESPONSE.");
 
                 const rawWords = raw.slice(1);
                 let rows = [];
@@ -106,7 +106,7 @@
                     return str;
                 });
 
-                await addLog("\n--- (2) DATA MAPPING [KEYWORD-LINKED] ---", 100);
+                await addLog("\n--- (2) DATA MAPPING [KEYWORD-SYNC] ---", 100);
                 let totalG = 0; let extractedData = [];
                 let isVersus = sortedLines.some(l => l.includes("バーサス"));
                 let currentConfig = isVersus ? VERSUS_CONFIG : HANABI_CONFIG;
@@ -117,35 +117,32 @@
                         if(match) totalG = parseInt(match[1].replace(/,/g, ''));
                     }
                 }
-                addLog(`[CONFIRMED] TotalG: ${totalG}`);
+                addLog(`🆗 SYSTEM: TotalG confirmed as ${totalG}`);
 
-                // 全Rowを走査し、確率行を見つけたら周辺の名前でConfig枠を特定
                 for(let i=0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
                     if(line.includes("/")) {
                         const probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
                         if(!probMatch) continue;
                         const pVal = parseFloat(probMatch[1].replace(/,/g, ''));
+                        const nameLine = (i >= 1) ? sortedLines[i-1] : "UNKNOWN";
+                        const countLine = (i >= 2) ? sortedLines[i-2] : "0";
 
-                        const nameLine = (i >= 1) ? sortedLines[i-1] : "";
-                        const countLine = (i >= 2) ? sortedLines[i-2] : "";
-
-                        // キーワード検索による名寄せ (順番は完全に無視)
                         const item = currentConfig.find(it => 
                             nameLine.includes(it.name) || (it.keywords && it.keywords.some(k => nameLine.includes(k)))
                         );
 
-                        if(!item) {
-                            addLog(`[🚫] 未定義につき無視: Row ${i-1} (${nameLine})`);
-                            continue;
-                        }
-
                         let cMatch = countLine.match(/([\d,]+)/);
                         let cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
-                        let status = countLine.includes("回") ? "🆗" : "⚠️";
 
-                        extractedData.push({ item, k: cVal, p_ocr: pVal });
-                        addLog(`[${status}] ${item.name.padEnd(10,' ')}: ${String(cVal).padStart(4,' ')}回 (1/${pVal})`);
+                        if(item) {
+                            let status = countLine.includes("回") ? "🆗 MATCH" : "⚠️ WARN";
+                            extractedData.push({ item, k: cVal, p_ocr: pVal });
+                            addLog(`${status}: ${item.name.padEnd(12,' ')} ➔ ${cVal}回 (1/${pVal})`);
+                        } else {
+                            // 参考値として▶️を表示
+                            addLog(`▶️ 参考値 : Row ${String(i-1).padStart(2,'0')} [ ${nameLine.padEnd(10,' ')} ] ➔ ${cVal}回 (1/${pVal})`);
+                        }
                     }
                 }
 
@@ -153,17 +150,21 @@
                 const rtBigIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 
-                for (const d of extractedData) {
-                    if (d.item.active && totalG > 0) {
-                        let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
-                        let lineLog = `[${d.item.name.padEnd(12,' ')}] n=${String(n).padStart(5,' ')} `;
-                        [1,2,5,6].forEach(s => {
-                            let p = 1 / d.item.probs[s];
-                            let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * d.item.weight;
-                            logLikelihoods[s] += L;
-                            lineLog += `S${s}:${L.toFixed(1)} `;
-                        });
-                        addLog(lineLog);
+                if (extractedData.length === 0) {
+                    addLog("🆘 ALERT: NO VALID DATA EXTRACTED.");
+                } else {
+                    for (const d of extractedData) {
+                        if (d.item.active && totalG > 0) {
+                            let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
+                            let lineLog = `[${d.item.name.padEnd(12,' ')}] n=${String(n).padStart(5,' ')} `;
+                            [1,2,5,6].forEach(s => {
+                                let p = 1 / d.item.probs[s];
+                                let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * d.item.weight;
+                                logLikelihoods[s] += L;
+                                lineLog += `S${s}:${L.toFixed(1)} `;
+                            });
+                            addLog(lineLog);
+                        }
                     }
                 }
 
@@ -172,7 +173,7 @@
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
                 let resultLog = "\n--- (4) FINAL RESULT ---\nRESULT: ";
                 [1,2,5,6].forEach(s => {
-                    let pct = ((exps[s] / sum) * 100).toFixed(1);
+                    let pct = sum > 0 ? ((exps[s] / sum) * 100).toFixed(1) : "0.0";
                     document.getElementById(`p${s}`).innerText = `${pct}%`;
                     document.getElementById(`b${s}`).style.width = `${pct}%`;
                     resultLog += `S${s}:${pct}% `;
