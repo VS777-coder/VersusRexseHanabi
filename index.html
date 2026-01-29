@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Final Fix)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Current Logic)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -75,7 +75,7 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // ★修正ポイント: 対数尤度計算 (アンダーフロー対策)
+        // 対数尤度計算 (アンダーフロー対策済)
         function calcLogLikelihood(k, n, p) {
             if (n <= 0 || p <= 0 || p >= 1) return 0;
             return k * Math.log(p) + (n - k) * Math.log(1 - p);
@@ -131,6 +131,7 @@
                         addLog(`\n[INFO] 総プレイ数: ${TOTAL_GAMES}G`);
                     }
 
+                    // --- ここが現状の抽出ロジック（PC版でズレの原因箇所） ---
                     let probList = [];
                     let countList = [];
 
@@ -138,12 +139,12 @@
                         if (line.y < startY) return;
                         const text = line.text;
                         if (/1\s*\/\s*([\d,.]+|[\-–—])/.test(text)) probList.push(text);
+                        // 「回」必須のため、PC版のRB(16)等はここで弾かれる
                         if (/([\d,]+)\s*回/.test(text)) countList.push(text);
                     });
 
                     addLog("\n--- (2) 抽出データ & (3) 解析ログ ---");
                     
-                    // ★修正ポイント: 対数尤度で初期化
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
 
@@ -153,6 +154,7 @@
                         let n = 0; 
                         let obsProb = "---";
 
+                        // インデックスがズレると、ここのマッピングが狂う
                         if (idx < countList.length && idx < probList.length) {
                             const cStr = countList[idx].match(/([\d,]+)\s*回/);
                             if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
@@ -179,7 +181,6 @@
                                     const denom = item.probs[setting];
                                     if (denom > 0) {
                                         const p = 1.0 / denom;
-                                        // ★修正ポイント: 対数尤度を計算して加算
                                         const logL = calcLogLikelihood(k, n, p);
                                         const weightedLogL = logL * item.weight;
                                         logLikelihoods[setting] += weightedLogL;
@@ -195,7 +196,7 @@
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // ★修正ポイント: Log-Sum-Exp による正規化
+                    // Log-Sum-Exp による正規化
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
                     
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
