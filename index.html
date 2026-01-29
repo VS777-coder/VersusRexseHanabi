@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.11 (Debug)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.13 (Debug Mapping)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,6 +44,42 @@
     </div>
 
     <script>
+        // 設定判別用コンフィグ（相対位置定義を追加）
+        const MASTER_CONFIG = {
+            "VERSUS": {
+                name: "バーサスリヴァイズ",
+                // バーサス用の相対位置は仮置き（ハナビと同様のロジックを想定）
+                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
+                bb:   { id: "bb", name: "ビックボーナス", anchor: "^BB", offset: 1, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", anchor: "^RB", offset: 1, type: "bonus" },
+                ba:   { id: "ba", name: "ベルA", anchor: "ベル\\s*合算", offset: 4, type: "small" },
+                bb_b: { id: "bb_b", name: "ベルB", anchor: "ベル\\s*合算", offset: 7, type: "small" },
+                sa:   { id: "sa", name: "スイカA", anchor: "スイカ\\s*A", offset: 1, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*B", offset: 1, type: "small" },
+                vc:   { id: "vc", name: "VC中ハズレ", anchor: "チャンス.*中.*はずれ", offset: 1, type: "rt_vc" },
+                vg:   { id: "vg", name: "VG中ハズレ", anchor: "GAME.*中.*はずれ", offset: 1, type: "rt_vg" },
+                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", anchor: "ベル.*揃い", offset: 1, type: "bb_detail" },
+                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", anchor: "ベル.*はずれ", offset: 1, type: "bb_detail" }
+            },
+            "HANABI": {
+                name: "新ハナビ",
+                // ハナビ用：ユーザー分析に基づいた相対位置定義
+                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
+                bb:   { id: "bb", name: "ビックボーナス", anchor: "^BB", offset: 1, type: "bonus" },
+                rb:   { id: "rb", name: "レギュラーボーナス", anchor: "^RB", offset: 1, type: "bonus" },
+                ba:   { id: "ba", name: "風鈴A", anchor: "風鈴\\s*合算", offset: 4, type: "small" },
+                bb_b: { id: "bb_b", name: "風鈴B", anchor: "風鈴\\s*合算", offset: 7, type: "small" },
+                ice:  { id: "ice", name: "氷A", anchor: "氷\\s*A", offset: 1, type: "small" },
+                // 氷Bは設定差特大だが頻度低いため、マッピングテスト用に追加
+                ice_b:{ id: "ice_b", name: "氷B", anchor: "氷\\s*B", offset: 1, type: "small" },
+                ca2:  { id: "ca2", name: "チェリーA2", anchor: "チェリー\\s*A2", offset: 1, type: "small" },
+                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*B", offset: 1, type: "small" },
+                vc:   { id: "vc", name: "HC中ハズレ", anchor: "チャレンジ.*中.*はずれ", offset: 1, type: "rt_vc" },
+                vg:   { id: "vg", name: "HG中ハズレ", anchor: "GAME.*中.*はずれ", offset: 1, type: "rt_vg" },
+                nf:   { id: "nf", name: "斜め風鈴", anchor: "斜め.*揃い", offset: 1, type: "bb_detail" }
+            }
+        };
+
         function addLog(msg) {
             const log = document.getElementById('log');
             log.innerText += `\n> ${msg}`;
@@ -51,42 +87,41 @@
         }
 
         async function analyze(file) {
-            const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING DEBUG (Rev 1.0.11)...";
-            addLog("画像読み込み完了。APIリクエスト準備中...");
+            const apiKeyInput = document.getElementById('api-key');
+            const apiKey = apiKeyInput.value.trim();
+            
+            if (!apiKey) { 
+                alert('APIキーが入力されていません！下の入力欄に入れてSAVEボタンを押してください。'); 
+                return; 
+            }
 
-            const reader = new FileReader(); 
-            reader.readAsDataURL(file);
+            const logBox = document.getElementById('log');
+            logBox.innerText = ">> STARTING DEBUG MAPPING (Rev 1.0.13)...";
+            addLog("画像読み込み中...");
+            
+            const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 try {
-                    const apiKey = document.getElementById('api-key').value;
-                    addLog("APIリクエスト送信開始...");
-                    
+                    addLog("APIリクエスト送信...");
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
-                        method: 'POST', 
-                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                        method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                         headers: { 'Content-Type': 'application/json' }
                     });
-
+                    
                     addLog(`レスポンス受信: Status ${res.status}`);
+                    
+                    if (res.status !== 200) {
+                        return;
+                    }
 
                     const json = await res.json();
-                    
                     if (json.error) {
-                        addLog(`API ERROR: ${json.error.message} (Code: ${json.error.code})`);
+                        addLog(`API ERROR: ${json.error.message}`);
                         return;
                     }
-
-                    if (!json.responses || !json.responses[0]) {
-                        addLog("API ERROR: レスポンス形式が不正です (responsesなし)");
-                        return;
-                    }
-
-                    const ann = json.responses[0].textAnnotations;
-                    if (!ann) {
-                        addLog("INFO: テキストが検出されませんでした。");
-                        return;
-                    }
+                    
+                    const ann = json.responses[0]?.textAnnotations;
+                    if (!ann) return addLog("ERROR: 文字が見つかりませんでした。");
                     
                     const rawWords = ann.slice(1);
                     addLog(`\n--- (1) API生データ (検出数: ${rawWords.length}) ---`);
@@ -96,48 +131,115 @@
                          addLog(`[Word ${i}] Y:${y} "${w.description}"`);
                     });
 
-                    [10, 20, 30].forEach(threshold => {
-                        addLog(`\n--- (2) 結合テスト (しきい値: ${threshold}px) ---`);
-                        let rows = [];
-                        rawWords.forEach(word => {
-                            const y = word.boundingPoly.vertices[0].y;
-                            let found = rows.find(r => Math.abs(r.y - y) < threshold);
-                            if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
-                        });
-                        
-                        // Y順ソート
-                        rows.sort((a, b) => a.y - b.y);
+                    // --- 動的しきい値計算 ---
+                    const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
+                    const dynamicThreshold = avgH * 0.6; // 文字高さの6割（厳しめ設定）
+                    addLog(`\n[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
 
-                        rows.forEach((r, idx) => {
-                            // X順ソート
-                            r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x);
-                            const text = r.words.map(w => w.description).join(" ");
-                            addLog(`[Row ${idx}] Y:${Math.round(r.y)} | ${text}`);
-                        });
+                    // --- 結合処理 ---
+                    let rows = [];
+                    rawWords.forEach(word => {
+                        const y = word.boundingPoly.vertices[0].y;
+                        let found = rows.find(r => Math.abs(r.y - y) < dynamicThreshold);
+                        if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                     });
 
-                    addLog("\n>> DEBUG SEQUENCE COMPLETE.");
+                    // Y順ソート & 行内X順ソート
+                    const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
+                        return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
+                    });
 
-                } catch (e) { 
-                    addLog("SYSTEM ERROR (catch): " + e.message); 
-                }
+                    addLog(`\n--- (2) 結合データ (${sortedLines.length}行) ---`);
+                    sortedLines.forEach((r, idx) => {
+                        addLog(`[Row ${idx}] Y:${r.y} | ${r.text}`);
+                    });
+
+                    // --- 機種判定 ---
+                    const rawContent = sortedLines.map(l => l.text).join("\n");
+                    const mode = (rawContent.includes("ハナビ") || rawContent.includes("花火")) ? "HANABI" : "VERSUS";
+                    addLog(`\nMODE: ${mode}`);
+                    const config = MASTER_CONFIG[mode];
+
+                    addLog("\n--- (3) 取り込み対象と取得データ ---");
+
+                    // 1. 総プレイ数（これは直接検索）
+                    const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
+                    if (totalM) {
+                        addLog(`[DATA] ${config.total.name} -> ${totalM[0]} -> 値: ${totalM[1]}`);
+                    } else {
+                        addLog(`[MISS] ${config.total.name} (Direct Match Failed)`);
+                    }
+
+                    // 2. 相対位置によるマッピング
+                    for (let id in config) {
+                        const item = config[id];
+                        if (id === "name" || item.type === "total") continue; // スキップ
+
+                        let foundAnchor = false;
+                        let targetRowIdx = -1;
+                        let anchorText = "";
+
+                        // アンカー行を探す
+                        for (let i = 0; i < sortedLines.length; i++) {
+                            if (new RegExp(item.anchor, 'i').test(sortedLines[i].text)) {
+                                foundAnchor = true;
+                                targetRowIdx = i + item.offset;
+                                anchorText = sortedLines[i].text;
+                                break;
+                            }
+                        }
+
+                        if (foundAnchor) {
+                            if (targetRowIdx < sortedLines.length) {
+                                const targetRow = sortedLines[targetRowIdx];
+                                const targetText = targetRow.text;
+                                
+                                // 数値抽出 (1/XX.X 形式)
+                                let extractedVal = "なし";
+                                const nums = targetText.match(/[\d,.]+/g);
+                                if (nums) {
+                                    // 小数点を含む、または1より大きい数字を探す（確率分母）
+                                    const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
+                                    if (decimal) extractedVal = decimal;
+                                    else {
+                                        // 1 / XXX の形式から抽出
+                                        const explicit = targetText.match(/1\s*\/\s*([\d,.]+)/);
+                                        if (explicit) extractedVal = explicit[1];
+                                    }
+                                }
+
+                                addLog(`[DATA] ${item.name} (Anchor: "${anchorText}" +${item.offset}行)`);
+                                addLog(`       -> Target [Row ${targetRowIdx}]: "${targetText}"`);
+                                addLog(`       -> 取得データ: 1/${extractedVal}`);
+                            } else {
+                                addLog(`[MISS] ${item.name} (Target Row Out of Bounds)`);
+                            }
+                        } else {
+                            addLog(`[MISS] ${item.name} (Anchor "${item.anchor}" Not Found)`);
+                        }
+                    }
+
+                    addLog("\n>> DEBUG MAPPING COMPLETE.");
+                
+                } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
             };
         }
 
-        // 初期化処理（既存維持）
-        window.onload = () => {
+        window.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem('v_key');
             if (savedKey) document.getElementById('api-key').value = savedKey;
+        });
+
+        document.getElementById('save-key').onclick = () => { 
+            const val = document.getElementById('api-key').value.trim();
+            localStorage.setItem('v_key', val); 
+            document.getElementById('api-key').value = val;
+            alert('API KEY SAVED!'); 
         };
 
-        document.getElementById('save-key').onclick = () => {
-            localStorage.setItem('v_key', document.getElementById('api-key').value);
-            alert('API KEY SAVED!');
-        };
-
-        document.getElementById('file-input').onchange = (e) => {
-            if (e.target.files[0]) analyze(e.target.files[0]);
-        };
+        const fileInput = document.getElementById('file-input');
+        fileInput.onclick = (e) => { e.target.value = null; };
+        fileInput.onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
 </html>
