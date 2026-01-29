@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.32</title>
+    <title>ぷりんの解析 Rev 1.0.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,11 +21,11 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.32 [2-ROW SYNC]</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.33 [KEYWORD-SYNC MODE]</p>
     </div>
 
-    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行</label>
+    <div class="w-full shrink-0 mb-4 max-w-md mx-auto text-center">
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer">ユニメモ解析<br>実行</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -45,28 +45,28 @@
 
     <script>
         const HANABI_CONFIG = [
-            { id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-            { id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-            { id: "ba", name: "風鈴Ａ", active: true, weight: 1.2, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "ice", name: "氷Ａ", active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ca2", name: "チェリーＡ２", active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ１", active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "ハナビチャレンジ中はずれ", active: true, weight: 1.2, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中はずれ", active: true, weight: 1.6, probs: {1: 11.7, 10.8, 10.0, 9.4} },
-            { id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+            { id: "bb", name: "ビックボーナス", keywords: ["ビックボーナス", "#BB"], active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "rb", name: "レギュラーボーナス", keywords: ["レギュラーボーナス", "RB"], active: true, weight: 1.6, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "ba", name: "風鈴Ａ", keywords: ["風鈴Ａ", "風鈴 A"], active: true, weight: 1.2, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", keywords: ["風鈴Ｂ", "風鈴 B"], active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "ice", name: "氷Ａ", keywords: ["氷Ａ", "氷 A"], active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ca2", name: "チェリーＡ２", keywords: ["チェリーＡ２", "チェリー A2"], active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ１", keywords: ["チェリーＢ１", "チェリー B1"], active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中はずれ", keywords: ["チャレンジ", "はずれ"], active: true, weight: 1.2, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中はずれ", keywords: ["ゲーム", "はずれ"], active: true, weight: 1.6, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "nf", name: "斜め風鈴", keywords: ["斜め風鈴"], active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
         const VERSUS_CONFIG = [
             { id: "bb", name: "ビックボーナス合算", keywords: ["#BB", "ビック"], active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
             { id: "rb", name: "レギュラーボーナス", keywords: ["RB", "レギュラー"], active: true, weight: 1.6, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "bell_a", name: "ベルＡ", keywords: ["ベル A"], active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-            { id: "bell_b", name: "ベルＢ", keywords: ["ベル B"], active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "suika_a", name: "スイカＡ", keywords: ["スイカ A"], active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "suika_b", name: "スイカＢ", keywords: ["スイカ B"], active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
-            { id: "cherry_b", name: "チェリーＢ", keywords: ["チェリー B"], active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-            { id: "vc_miss", name: "バーサスチャンスはずれ", keywords: ["VS チャンス 中 はずれ", "VSチャンス"], active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-            { id: "vg_miss", name: "バーサスゲームはずれ", keywords: ["VSGAME 中 はずれ", "VSGAME"], active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "bell_a", name: "ベルＡ", keywords: ["ベル A", "ベルA"], active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bell_b", name: "ベルＢ", keywords: ["ベル B", "ベルB"], active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "suika_a", name: "スイカＡ", keywords: ["スイカ A", "スイカA"], active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "suika_b", name: "スイカＢ", keywords: ["スイカ B", "スイカB"], active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
+            { id: "cherry_b", name: "チェリーＢ", keywords: ["チェリー B", "チェリーB"], active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc_miss", name: "バーサスチャンスはずれ", keywords: ["VS チャンス", "チャンス 中 はずれ"], active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg_miss", name: "バーサスゲームはずれ", keywords: ["VSGAME", "VSGAME 中 はずれ"], active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
             { id: "cb_hit", name: "チェリー＋ベル揃い", keywords: ["チェリー + ベル 揃い"], active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
             { id: "cb_miss", name: "チェリー＋ベルはずれ", keywords: ["チェリー + ベル はずれ"], active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
@@ -82,7 +82,7 @@
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) return alert('API KEY missing');
-            document.getElementById('log').innerText = ">> DEEP ANALYSIS STARTING (Rev 1.0.32)...\n";
+            document.getElementById('log').innerText = ">> DEEP ANALYSIS STARTING (Rev 1.0.33)...\n";
 
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -106,12 +106,11 @@
                     return str;
                 });
 
-                await addLog("\n--- (2) DATA MAPPING [2-ROW SYNC] ---", 100);
+                await addLog("\n--- (2) DATA MAPPING [KEYWORD-LINKED] ---", 100);
                 let totalG = 0; let extractedData = [];
                 let isVersus = sortedLines.some(l => l.includes("バーサス"));
                 let currentConfig = isVersus ? VERSUS_CONFIG : HANABI_CONFIG;
 
-                // 総プレイ数取得
                 for(let line of sortedLines) {
                     if(line.includes("総 プレイ 数")) {
                         let match = line.match(/([\d,]+)/);
@@ -120,7 +119,7 @@
                 }
                 addLog(`[CONFIRMED] TotalG: ${totalG}`);
 
-                // 2方向整合性チェックによるマッピング
+                // 全Rowを走査し、確率行を見つけたら周辺の名前でConfig枠を特定
                 for(let i=0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
                     if(line.includes("/")) {
@@ -128,18 +127,16 @@
                         if(!probMatch) continue;
                         const pVal = parseFloat(probMatch[1].replace(/,/g, ''));
 
-                        // 2行上の回数を確認
-                        const countLine = (i >= 2) ? sortedLines[i-2] : "";
-                        // 1行上の項目名を確認
                         const nameLine = (i >= 1) ? sortedLines[i-1] : "";
+                        const countLine = (i >= 2) ? sortedLines[i-2] : "";
 
-                        // Config項目との照合（ドミノ防止）
+                        // キーワード検索による名寄せ (順番は完全に無視)
                         const item = currentConfig.find(it => 
                             nameLine.includes(it.name) || (it.keywords && it.keywords.some(k => nameLine.includes(k)))
                         );
 
                         if(!item) {
-                            addLog(`[🚫] 非対象項目につき無視: Row ${i-1} (${nameLine})`);
+                            addLog(`[🚫] 未定義につき無視: Row ${i-1} (${nameLine})`);
                             continue;
                         }
 
