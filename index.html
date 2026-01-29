@@ -13,7 +13,7 @@
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.1s linear; /* アニメーション用に調整 */ }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
@@ -44,9 +44,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // 定義ファイル
-        // ==========================================
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -97,6 +94,11 @@
             log.scrollTop = log.scrollHeight;
         }
 
+        // 演出用のスリープ関数
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
         function calcLogLikelihood(k, n, p) {
             if (n <= 0 || p <= 0 || p >= 1) return 0;
             return k * Math.log(p) + (n - k) * Math.log(1 - p);
@@ -127,9 +129,10 @@
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
                     const dynamicThreshold = avgH * 0.6;
                     
-                    // --- (1) 行結合処理 (すべての行を表示) ---
+                    // --- (1) 行結合処理 ---
                     addLog(`\n----------------------------------------\n(1) 抽出された行データ (閾値:${dynamicThreshold.toFixed(1)}px)\n----------------------------------------`);
-                    
+                    await wait(600); // 演出ウェイト
+
                     let rows = [];
                     rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
@@ -140,19 +143,20 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    sortedLines.forEach((line, i) => {
-                        addLog(`Row ${i}: ${line.text}`);
-                    });
+                    // 1行ずつそれっぽく表示
+                    for(let i=0; i<sortedLines.length; i++) {
+                        addLog(`Row ${i}: ${sortedLines[i].text}`);
+                        if(i % 5 === 0) await wait(10); // 軽く流す
+                    }
 
-                    // 機種判定
                     let detectedMachine = 'HANABI';
                     const titleRow = sortedLines[0] ? sortedLines[0].text : "";
                     if (titleRow.match(/バーサス|VERSUS/i)) {
                         detectedMachine = 'VERSUS';
                     }
+                    await wait(500);
                     addLog(`\n[INFO] 機種判定: ${titleRow} → ${detectedMachine}`);
 
-                    // 総プレイ数の取得
                     let totalGames = 0;
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
                     if (startRow) {
@@ -172,10 +176,11 @@
                     });
 
                     // --- (2) 定義上の全データ表示 ---
+                    await wait(800); // 演出ウェイト
                     addLog(`\n----------------------------------------\n(2) 全定義データの抽出状況\n----------------------------------------`);
                     const TARGET_CONFIG = (detectedMachine === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
 
-                    TARGET_CONFIG.forEach(item => {
+                    for (const item of TARGET_CONFIG) {
                         const idx = item.index;
                         let k = 0;
                         let obsProb = "---";
@@ -194,15 +199,17 @@
                         }
                         const activeMark = item.active ? "【判別対象】" : "　　　　　　";
                         addLog(`${activeMark} ${item.name}: ${status} (確率表記: ${obsProb})`);
-                    });
+                        await wait(50); // パラパラ表示
+                    }
 
                     // --- (3) & (4) 判別データと尤度 ---
+                    await wait(800); // 演出ウェイト
                     addLog(`\n----------------------------------------\n(3) 判別に使用したデータ\n(4) 尤度加算詳細 (Weight適用後)\n----------------------------------------`);
                     
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
 
-                    TARGET_CONFIG.forEach(item => {
+                    for (const item of TARGET_CONFIG) {
                         if (item.active) {
                             const idx = item.index;
                             if (idx < countList.length) {
@@ -210,7 +217,6 @@
                                 if (cStr) {
                                     const k = parseInt(cStr[1].replace(/,/g, ''));
                                     
-                                    // 母数(n)計算
                                     let n = totalGames;
                                     let obsDenom = 0;
                                     if (idx < probList.length) {
@@ -223,7 +229,6 @@
                                         n = Math.round(k * obsDenom);
                                     }
 
-                                    // Versus特殊ロジック(BB中ベル分母)
                                     if (detectedMachine === 'VERSUS' && (item.index === 17 || item.index === 18)) {
                                         if (16 < countList.length) {
                                             const bbBellStr = countList[16].match(/([\d,]+)\s*回/);
@@ -249,15 +254,20 @@
                                         });
                                         addLog(logStr);
                                     }
+                                    await wait(200); // じっくり計算している感
                                 }
                             }
                         }
-                    });
+                    }
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // --- (5) 最終予想 ---
+                    // --- (5) 最終予想 (アニメーション付き) ---
+                    await wait(1000); // 溜める
                     addLog(`\n----------------------------------------\n(5) 最終の設定予想\n----------------------------------------`);
+                    addLog("解析結果を集計中...");
+                    await wait(1000);
+
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
                     const exp2 = Math.exp(logLikelihoods[2] - maxLog);
@@ -265,24 +275,40 @@
                     const exp6 = Math.exp(logLikelihoods[6] - maxLog);
                     const sumExp = exp1 + exp2 + exp5 + exp6;
 
-                    const p1 = (exp1 / sumExp * 100).toFixed(1);
-                    const p2 = (exp2 / sumExp * 100).toFixed(1);
-                    const p5 = (exp5 / sumExp * 100).toFixed(1);
-                    const p6 = (exp6 / sumExp * 100).toFixed(1);
+                    // 最終値を計算
+                    const finalP1 = parseFloat((exp1 / sumExp * 100).toFixed(1));
+                    const finalP2 = parseFloat((exp2 / sumExp * 100).toFixed(1));
+                    const finalP5 = parseFloat((exp5 / sumExp * 100).toFixed(1));
+                    const finalP6 = parseFloat((exp6 / sumExp * 100).toFixed(1));
 
-                    document.getElementById('p1').innerText = `${p1}%`;
-                    document.getElementById('b1').style.width = `${p1}%`;
-                    document.getElementById('p2').innerText = `${p2}%`;
-                    document.getElementById('b2').style.width = `${p2}%`;
-                    document.getElementById('p5').innerText = `${p5}%`;
-                    document.getElementById('b5').style.width = `${p5}%`;
-                    document.getElementById('p6').innerText = `${p6}%`;
-                    document.getElementById('b6').style.width = `${p6}%`;
+                    // アニメーションループ (0% -> Final%)
+                    const steps = 30; // 30段階
+                    const duration = 2000; // 2秒かけて表示
+                    const interval = duration / steps;
 
-                    addLog(`設定1: ${p1}%`);
-                    addLog(`設定2: ${p2}%`);
-                    addLog(`設定5: ${p5}%`);
-                    addLog(`設定6: ${p6}%`);
+                    for(let i=1; i<=steps; i++) {
+                        const ratio = i / steps;
+                        document.getElementById('b1').style.width = `${finalP1 * ratio}%`;
+                        document.getElementById('p1').innerText = `${(finalP1 * ratio).toFixed(1)}%`;
+                        
+                        document.getElementById('b2').style.width = `${finalP2 * ratio}%`;
+                        document.getElementById('p2').innerText = `${(finalP2 * ratio).toFixed(1)}%`;
+                        
+                        document.getElementById('b5').style.width = `${finalP5 * ratio}%`;
+                        document.getElementById('p5').innerText = `${(finalP5 * ratio).toFixed(1)}%`;
+                        
+                        document.getElementById('b6').style.width = `${finalP6 * ratio}%`;
+                        document.getElementById('p6').innerText = `${(finalP6 * ratio).toFixed(1)}%`;
+
+                        await wait(interval);
+                    }
+
+                    // 最終確定表示
+                    addLog(`設定1: ${finalP1}%`);
+                    addLog(`設定2: ${finalP2}%`);
+                    addLog(`設定5: ${finalP5}%`);
+                    addLog(`設定6: ${finalP6}%`);
+                    addLog("\n>> ANALYSIS COMPLETED.");
 
                 } catch (e) {
                     addLog(`エラー発生: ${e.message}`);
