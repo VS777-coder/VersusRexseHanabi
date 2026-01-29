@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.26</title>
+    <title>ぷりんの解析 Rev 1.0.30</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.26</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.30</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -66,25 +66,34 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
+        const VERSUS_CONFIG = [
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
+            { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { index: 5, id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 7.2, 2: 7.1, 5: 6.9, 6: 6.8} },
+            { index: 6, id: "bell_a", name: "ベルＡ", active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { index: 7, id: "bell_b", name: "ベルＢ", active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { index: 8, id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
+            { index: 9, id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { index: 10, id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
+            { index: 12, id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
+            { index: 13, id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { index: 14, id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { index: 15, id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { index: 16, id: "bb_bell_total", name: "ビッグ中ベル", active: false, weight: 0.0, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { index: 17, id: "cb_hit", name: "チェリー＋ベル揃い", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
+
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         async function addLog(msg, delay = 0) {
             const l = document.getElementById('log');
             l.innerText += `\n${msg}`;
             l.scrollTop = l.scrollHeight;
             if (delay > 0) await sleep(delay);
-        }
-
-        async function shuffleResults() {
-            const ids = ['p1', 'p2', 'p5', 'p6'];
-            const bars = ['b1', 'b2', 'b5', 'b6'];
-            for (let i = 0; i < 20; i++) {
-                ids.forEach((id, idx) => {
-                    const val = (Math.random() * 100).toFixed(1);
-                    document.getElementById(id).innerText = `${val}%`;
-                    document.getElementById(bars[idx]).style.width = `${val}%`;
-                });
-                await sleep(50);
-            }
         }
 
         async function analyze(file) {
@@ -99,7 +108,7 @@
                 });
                 const json = await res.json();
                 const raw = json.responses[0]?.textAnnotations;
-                if(!raw) return addLog("OCR error: No text found.");
+                if(!raw) return addLog("OCR error.");
 
                 const rawWords = raw.slice(1);
                 let rows = [];
@@ -109,10 +118,10 @@
                     if (f) f.words.push(w); else rows.push({ y, words: [w] });
                 });
                 const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
-                for(let i=0; i<sortedLines.length; i++) { await addLog(`Row ${i}: ${sortedLines[i]}`, 20); }
-
+                
                 await addLog("\n--- (3) DATA MAPPING ---", 200);
                 let startParsing = false; let totalG = 0; let extractedData = []; let configPtr = 0;
+                let currentConfig = sortedLines.some(l => l.includes("バーサス")) ? VERSUS_CONFIG : HANABI_CONFIG;
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
@@ -121,50 +130,52 @@
                         if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); startParsing = true; await addLog(`[INFO] TotalG: ${totalG}`, 100); }
                         continue;
                     }
-                    if (startParsing && line.includes("/") && configPtr < HANABI_CONFIG.length) {
-                        const item = HANABI_CONFIG[configPtr];
+                    if (startParsing && line.includes("/") && configPtr < currentConfig.length) {
+                        const item = currentConfig[configPtr];
                         let probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
                         if (!probMatch) continue;
-                        let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
+                        let pVal = parseFloat(probMatch[1].replace(/,/g, ''));
                         let countIdx = (i >= 2 && sortedLines[i-2].includes("回")) ? i-2 : ((i >= 1 && sortedLines[i-1].includes("回")) ? i-1 : -1);
-                        let countVal = 0;
+                        let cVal = 0;
                         if (countIdx !== -1) {
                             let cMatch = sortedLines[countIdx].match(/([\d,]+)/);
-                            countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
+                            cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
                         }
-                        extractedData.push({ item, k: countVal, p_ocr: probVal });
-                        await addLog(`> [${item.name}] ${countVal}回 (1/${probVal})`, 30);
+                        extractedData.push({ item, k: cVal, p_ocr: pVal });
+                        await addLog(`> [${item.name}] ${cVal}回 (1/${pVal})`, 30);
                         configPtr++;
                     }
                 }
 
                 await addLog("\n--- (4) LIKELIHOOD CALC ---", 200);
-                const rtBigIds = ['vc', 'vg', 'nf', 'bell_center'];
+                const rtBigIds = ['vc', 'vg', 'nf', 'bell_center', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 for (const d of extractedData) {
                     if (d.item.active && totalG > 0) {
-                        // 修正：指示通り「確率分母と回数からゲーム数(n)を割り出して」使用
                         let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
-                        
+                        let lineLog = `[${d.item.name.padEnd(6,' ')}] n=${String(n).padEnd(5,' ')} `;
                         [1,2,5,6].forEach(s => {
-                            let prob = 1 / d.item.probs[s];
-                            let L = (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
+                            let p = 1 / d.item.probs[s];
+                            let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * d.item.weight;
                             logLikelihoods[s] += L;
+                            lineLog += `S${s}:${L.toFixed(1)} `;
                         });
-                        await addLog(`- ${d.item.name}: n=${n}`, 20);
+                        await addLog(lineLog, 30);
                     }
                 }
 
                 await addLog("\n--- (5) FINAL RESULT ---", 200);
-                await shuffleResults();
                 const max = Math.max(...Object.values(logLikelihoods));
                 const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - max)]));
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
+                let resultLog = "RESULT: ";
                 [1,2,5,6].forEach(s => {
                     let pct = ((exps[s] / sum) * 100).toFixed(1);
                     document.getElementById(`p${s}`).innerText = `${pct}%`;
                     document.getElementById(`b${s}`).style.width = `${pct}%`;
+                    resultLog += `S${s}:${pct}% `;
                 });
+                await addLog(resultLog);
             };
         }
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
