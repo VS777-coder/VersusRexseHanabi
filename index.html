@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 Rev 1.0.35 (Double Check)</title>
+    <title>みおの解析 1.1.6 (Rev 1.0.25)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; box-shadow: 0 4px 15px rgba(255,0,128,0.3); }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
+        .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 350px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
+        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-xl font-black kawaii-title tracking-tighter">✨ DOUBLE CHECK SCANNER ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.35</p>
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Final Fix)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -28,16 +30,16 @@
     </div>
 
     <div class="w-full max-w-md mx-auto result-card">
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>S1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>S2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-xs font-bold text-green-400"><span>S5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>S6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
     <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="bg-[#161b22] text-white rounded-full px-4 text-xs flex-grow" placeholder="VISION API KEY">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
         <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
     </div>
 
@@ -94,9 +96,10 @@
 
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
-            if (!key) return alert('API KEY');
+            if (!key) return alert('API KEYを入力してください');
 
-            addLog(">> ANALYSIS START (Double Verification Mode)");
+            addLog("READY...");
+            addLog(">> ANALYSIS STARTING...");
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
@@ -105,12 +108,10 @@
                 const json = await res.json();
                 const raw = json.responses[0]?.textAnnotations;
                 
-                // (1) 生データ出力
                 addLog("\n--- (1) API RAW DATA ---");
                 addLog(raw[0].description.substring(0, 300) + "...");
 
-                // (2) 列データの生成
-                addLog("\n--- (2) DYNAMIC ROW (10px) ---");
+                addLog("\n--- (2) DYNAMIC ROW (10.0px) ---");
                 const rawWords = raw.slice(1);
                 let rows = [];
                 rawWords.forEach(w => {
@@ -121,55 +122,63 @@
                 const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
                 sortedLines.forEach((l, i) => addLog(`Row ${i}: ${l}`));
 
-                // (3) データ抽出 & 双方向検証
                 addLog("\n--- (3) DATA MAPPING & VERIFICATION ---");
-                let config = sortedLines[0].match(/バーサス|VERSUS/i) ? VERSUS_CONFIG : HANABI_CONFIG;
-                let gLine = sortedLines.find(l => l.includes("総プレイ数"));
-                let totalG = gLine ? parseInt(gLine.match(/([\d,]+)/)[1].replace(/,/g,'')) : 0;
-                addLog(`[INFO] 総プレイ数: ${totalG}G`);
+                let currentConfig = sortedLines[0].match(/バーサス|VERSUS/i) ? VERSUS_CONFIG : HANABI_CONFIG;
 
+                let startParsing = false;
+                let totalG = 0;
                 let extractedData = [];
                 let configPtr = 0;
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
                     
-                    // 「1/」を含む行（確率行）をトリガーにする
-                    if (line.includes("/") && configPtr < config.length) {
-                        const item = config[configPtr];
+                    // 防波堤：総プレイ数を見つけるまでゴミ扱い
+                    if (!startParsing && line.replace(/\s/g, '').includes("総プレイ数")) {
+                        let gMatch = line.match(/([\d,]+)/);
+                        if (gMatch) {
+                            totalG = parseInt(gMatch[1].replace(/,/g, ''));
+                            startParsing = true;
+                            addLog(`[INFO] 総プレイ数: ${totalG}G (Row ${i} でゲート開放)`);
+                        }
+                        continue;
+                    }
+
+                    // 開始地点以降のみ「/」をトリガーに双方向スキャン
+                    if (startParsing && line.includes("/") && configPtr < currentConfig.length) {
+                        const item = currentConfig[configPtr];
                         
-                        // 【矛】確率起点で2個上を見る
-                        let probVal = parseFloat(line.match(/1\s*\/\s*([\d,.]+)/)?.[1].replace(/,/g,'') || 0);
+                        // 確率行（矛）
+                        let probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
+                        if (!probMatch) continue;
+                        let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
+
+                        // 2行上（回数候補）
                         let countIdx = i - 2;
                         let countLine = sortedLines[countIdx] || "";
-                        let countVal = parseInt(countLine.match(/([\d,]+)/)?.[1].replace(/,/g,'') || 0);
+                        let countMatch = countLine.match(/([\d,]+)/);
+                        let countVal = countMatch ? parseInt(countMatch[1].replace(/,/g, '')) : 0;
                         let hasKai = countLine.includes("回");
 
-                        // 【盾】回数起点で2個下を見る
-                        let reverseCheck = false;
-                        if (countIdx >= 0) {
-                            // 2個上の行に数字と「回」があるか確認し、かつその2個下がこの行「/」である
-                            if (sortedLines[countIdx].includes("回") && line.includes("/")) {
-                                reverseCheck = true;
-                            }
-                        }
+                        // 盾（双方向チェック）：2行上が回数文字を含み、かつ現在の行が/を含むか
+                        let reverseCheck = (countIdx >= 0 && sortedLines[countIdx].includes("回") && sortedLines[countIdx+2].includes("/"));
 
                         extractedData.push({ item, k: countVal, p: probVal, hasKai, reverseCheck });
                         
-                        let status = reverseCheck ? "✅ OK" : (hasKai ? "⚠️ POS" : "❌ ERR");
-                        addLog(`> [${item.name}] ${status} | 1/${probVal} | ${countVal}回 (双方向:${reverseCheck?'一致':'不一致'})`);
-                        
-                        if (!hasKai) addLog(`  └ ⚠️ Row ${countIdx} に「回」が見つかりませんでした。`);
+                        let status = reverseCheck ? "✅一致" : (hasKai ? "⚠️位置" : "❌欠損");
+                        addLog(`> [${item.name}] ${status} | 1/${probVal} | ${countVal}回`);
+                        if (!hasKai) addLog(`  └ ⚠️ Row ${countIdx} に「回」なし`);
                         
                         configPtr++;
                     }
                 }
 
-                // (4) 尤度計算
+                if (!startParsing) addLog("\n[ERROR] 総プレイ数が見つからず解析を中断しました。");
+
                 addLog("\n--- (4) CALCULATION LOG ---");
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 extractedData.forEach(d => {
-                    if (d.item.active && d.p > 0) {
+                    if (d.item.active && d.p > 0 && totalG > 0) {
                         let n = (d.item.id.includes("v") && !d.item.id.includes("seven")) ? Math.round(d.k * d.p) : totalG;
                         let lineLog = `[${d.item.name.padEnd(6,' ')}] `;
                         [1,2,5,6].forEach(s => {
@@ -182,7 +191,6 @@
                     }
                 });
 
-                // (5) 結果
                 const max = Math.max(...Object.values(logLikelihoods));
                 const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - max)]));
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
@@ -197,7 +205,7 @@
         }
 
         if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('SAVE'); };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('認証完了'); };
         document.getElementById('file-input').onchange = (e) => analyze(e.target.files[0]);
     </script>
 </body>
