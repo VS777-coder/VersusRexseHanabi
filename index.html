@@ -8,7 +8,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
         .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; box-shadow: 0 10px 20px rgba(255,0,128,0.4); border: 2px solid #ffffff; transition: transform 0.1s; text-shadow: 0 2px 4px rgba(0,0,0,0.3); line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.10 (Fix)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.11 (Debug)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -36,7 +36,7 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY... (Waiting for Image)</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
@@ -44,223 +44,100 @@
     </div>
 
     <script>
-        // ▼▼▼ 開発用スイッチ ▼▼▼
-        const DEBUG_MODE = true; 
-        // ▲▲▲▲▲▲▲▲▲▲▲▲
-
-        const MASTER_CONFIG = {
-            "VERSUS": {
-                name: "バーサスリヴァイズ",
-                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*|术|术一|术 一 十)BB|総\\s*BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus", remark: "基本" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", remark: "重要" },
-                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A(\\s*1|\\b)", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small", remark: "高低" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B(\\s*1|\\b)", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8, type: "small", remark: "偶奇" },
-                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small", remark: "偶数優遇" },
-                cb:   { id: "cb", name: "チェリーB", key: "(チェリー|手工|手エ|チエリ)\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small", remark: "高設定UP" },
-                vc:   { id: "vc", name: "バーサスチャンス中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(チャンス|チャン入|チャレ).*中.*(はずれ|机|术)", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 1.2, type: "rt_vc", remark: "高低" },
-                vg:   { id: "vg", name: "バーサスゲーム中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(GAME|ゲーム).*中.*(はずれ|机|术)", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 1.6, type: "rt_vg", remark: "設定6" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", anchor: "BB\\s*中\\s*(詳細|鲜|導)", key: "(チェリー|手工|手エ).*ベル.*揃い", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, w: 1.0, type: "bb_detail", remark: "偶数" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", anchor: "BB\\s*中\\s*(詳細|鲜|導)", key: "(チェリー|手工|手エ).*ベル.*(はずれ|机|术)", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 1.0, type: "bb_detail", remark: "2/6炙り" }
-            },
-            "HANABI": {
-                name: "新ハナビ",
-                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "BB|术一|术 一 十|総\\s*BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus", remark: "基本" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus", remark: "重要" },
-                ba:   { id: "ba", name: "風鈴A", key: "(風鈴|風|同)?\\s*A(\\s*1|\\b)", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 2.0, type: "small", remark: "共通" },
-                bb_b: { id: "bb_b", name: "風鈴B", key: "(風鈴|風|同)?\\s*B(\\s*1|\\b)", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8, type: "small", remark: "偶奇" },
-                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", remark: "高設定" },
-                ca2:  { id: "ca2", name: "チェリーA2", key: "(チェリー|手工|手エ).*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", remark: "偶数" },
-                cb:   { id: "cb", name: "チェリーB", key: "(チェリー|手工|手エ).*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", remark: "高設定" },
-                vc:   { id: "vc", name: "ハナビチャンス中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(チャレンジ|チャンス|チャレ).*中.*(はずれ|机|术)", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 1.2, type: "rt_vc", remark: "高低" },
-                vg:   { id: "vg", name: "ハナビゲーム中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(GAME|ゲーム).*中.*(はずれ|机|术)", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 1.6, type: "rt_vg", remark: "設定6" },
-                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0, type: "bb_detail", remark: "偶数" }
-            }
-        };
-
-        let session = { mode: null, n: 0, extracted: {} };
-
         function addLog(msg) {
             const log = document.getElementById('log');
             log.innerText += `\n> ${msg}`;
             log.scrollTop = log.scrollHeight;
         }
 
-        // デバッグ: 閾値ごとの結合シミュレーション
-        function runDebugSimulation(rawWords) {
-            addLog("\n=== DEBUG MODE: RAW DATA & THRESHOLD TEST ===");
-            addLog(`検出単語数: ${rawWords.length}個`);
-
-            [10, 20, 30].forEach(threshold => {
-                addLog(`\n--- しきい値: ${threshold} px ---`);
-                let rows = [];
-                rawWords.forEach(word => {
-                    const y = word.boundingPoly.vertices[0].y;
-                    let found = rows.find(r => Math.abs(r.y - y) < threshold);
-                    if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
-                });
-                
-                const sorted = rows.sort((a, b) => a.y - b.y).map(r => {
-                    return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
-                });
-                
-                sorted.forEach((r, i) => addLog(`[Row ${i}] Y:${r.y} | ${r.text}`));
-            });
-            addLog("\n[INFO] デバッグ完了。解析はスキップしました。");
-        }
-
-        function runBayesian() {
-            addLog("\n--- (3) BAYESIAN ANALYSIS ---");
-            const config = MASTER_CONFIG[session.mode];
-            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-            const bbData = session.extracted['bb'] || { prob: 0 };
-            const k_bb = (bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
-
-            for (let id in config) {
-                const item = config[id];
-                if (id === "name" || item.type === "total") continue;
-                const data = session.extracted[id] || { prob: 0 };
-                if (data.prob <= 0) continue;
-
-                let n_trial = session.n; 
-                if (item.type === "rt_vc") n_trial = k_bb * (session.mode === "VERSUS" ? 15 : 19);
-                if (item.type === "rt_vg") n_trial = k_bb * 20;
-                if (item.type === "bb_detail") n_trial = k_bb * 25;
-
-                let k_event = n_trial / data.prob;
-                let weight = item.w || 1.0;
-                
-                addLog(`[CALC] ${item.name}: n=${n_trial.toFixed(0)}, k=${k_event.toFixed(1)}, w=${weight}`);
-                
-                [1, 2, 5, 6].forEach(s => {
-                    const pExp = 1 / item.vals[s];
-                    const lVal = weight * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
-                    logL[s] += lVal;
-                });
-            }
-
-            const maxLog = Math.max(...Object.values(logL));
-            const sumExp = Object.values(logL).reduce((a, v) => a + Math.exp(v - maxLog), 0);
-            
-            addLog("\n--- (4) FINAL RESULT ---");
-            [1, 2, 5, 6].forEach(s => {
-                const p = (Math.exp(logL[s] - maxLog) / sumExp * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = p + "%";
-                document.getElementById(`b${s}`).style.width = p + "%";
-                addLog(`設定${s}: ${p}%`);
-            });
-        }
-
         async function analyze(file) {
-            const apiKeyInput = document.getElementById('api-key');
-            // コピペの空白対策：trim()を入れた
-            const apiKey = apiKeyInput.value.trim();
-            
-            if (!apiKey) { 
-                alert('APIキーが入力されていません！下の入力欄に入れてSAVEボタンを押してください。'); 
-                return; 
-            }
-
             const logBox = document.getElementById('log');
-            logBox.innerText = DEBUG_MODE ? ">> STARTING DEBUG SIMULATION..." : ">> STARTING ANALYZE (Rev 1.0.10)...";
-            
-            const reader = new FileReader(); reader.readAsDataURL(file);
+            logBox.innerText = ">> STARTING DEBUG (Rev 1.0.11)...";
+            addLog("画像読み込み完了。APIリクエスト準備中...");
+
+            const reader = new FileReader(); 
+            reader.readAsDataURL(file);
             reader.onload = async () => {
                 try {
+                    const apiKey = document.getElementById('api-key').value;
+                    addLog("APIリクエスト送信開始...");
+                    
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
-                        method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
+                        method: 'POST', 
+                        body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                         headers: { 'Content-Type': 'application/json' }
                     });
+
+                    addLog(`レスポンス受信: Status ${res.status}`);
+
                     const json = await res.json();
                     
                     if (json.error) {
                         addLog(`API ERROR: ${json.error.message} (Code: ${json.error.code})`);
                         return;
                     }
-                    
-                    const ann = json.responses[0]?.textAnnotations;
-                    if (!ann) return addLog("ERROR: NO TEXT DETECTED. 画像が読み取れませんでした。");
-                    
-                    const rawWords = ann.slice(1);
 
-                    if (DEBUG_MODE) {
-                        runDebugSimulation(rawWords);
-                        return; 
+                    if (!json.responses || !json.responses[0]) {
+                        addLog("API ERROR: レスポンス形式が不正です (responsesなし)");
+                        return;
                     }
 
-                    // === 本番用ロジック (Rev 1.0.7) ===
-                    const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const threshold = avgH * 2.3;
-                    let rows = [];
-                    rawWords.forEach(word => {
-                        const y = word.boundingPoly.vertices[0].y;
-                        let found = rows.find(r => Math.abs(r.y - y) < threshold);
-                        if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
-                    });
-
-                    const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
-                        return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
-                    });
-
-                    const rawContent = sortedLines.map(l => l.text).join("\n");
-                    session.mode = (rawContent.includes("ハナビ") || rawContent.includes("花火")) ? "HANABI" : "VERSUS";
-                    addLog(`MODE: ${session.mode}`);
+                    const ann = json.responses[0].textAnnotations;
+                    if (!ann) {
+                        addLog("INFO: テキストが検出されませんでした。");
+                        return;
+                    }
                     
-                    const config = MASTER_CONFIG[session.mode];
-                    session.extracted = {};
-
-                    const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
-                    if (totalM) { session.n = parseFloat(totalM[1].replace(/[,G]/g, '')); addLog(`[TOTAL] ${session.n}G`); }
-
-                    addLog("\n--- (2) DATA MAPPING ---");
-                    sortedLines.forEach((lineObj, i) => {
-                        const line = lineObj.text;
-                        for (let id in config) {
-                            const item = config[id];
-                            if (id !== "name" && item.key && new RegExp(item.key, 'i').test(line)) {
-                                if (session.extracted[id]) continue; 
-                                
-                                const targetText = line + " " + (sortedLines[i+1]?.text || "") + " " + (sortedLines[i+2]?.text || "");
-                                let prob = 0;
-                                if (!targetText.includes("1 / -")) {
-                                    const nums = targetText.match(/[\d,.]+/g);
-                                    if (nums) {
-                                        const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
-                                        if (decimal) prob = parseFloat(decimal.replace(/,/g, ''));
-                                        else { const explicit = targetText.match(/1\\s*\\/\\s*([\\d,.]+)/); if (explicit) prob = parseFloat(explicit[1].replace(/,/g, '')); }
-                                    }
-                                }
-                                if (prob > 0) {
-                                    session.extracted[id] = { prob };
-                                    addLog(`[MATCH] ${item.name}: 1/${prob.toFixed(1)}`);
-                                }
-                            }
-                        }
+                    const rawWords = ann.slice(1);
+                    addLog(`\n--- (1) API生データ (検出数: ${rawWords.length}) ---`);
+                    rawWords.forEach((w, i) => {
+                         const v = w.boundingPoly.vertices;
+                         const y = v && v[0] ? v[0].y : '?';
+                         addLog(`[Word ${i}] Y:${y} "${w.description}"`);
                     });
-                    runBayesian();
-                
-                } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
+
+                    [10, 20, 30].forEach(threshold => {
+                        addLog(`\n--- (2) 結合テスト (しきい値: ${threshold}px) ---`);
+                        let rows = [];
+                        rawWords.forEach(word => {
+                            const y = word.boundingPoly.vertices[0].y;
+                            let found = rows.find(r => Math.abs(r.y - y) < threshold);
+                            if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
+                        });
+                        
+                        // Y順ソート
+                        rows.sort((a, b) => a.y - b.y);
+
+                        rows.forEach((r, idx) => {
+                            // X順ソート
+                            r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x);
+                            const text = r.words.map(w => w.description).join(" ");
+                            addLog(`[Row ${idx}] Y:${Math.round(r.y)} | ${text}`);
+                        });
+                    });
+
+                    addLog("\n>> DEBUG SEQUENCE COMPLETE.");
+
+                } catch (e) { 
+                    addLog("SYSTEM ERROR (catch): " + e.message); 
+                }
             };
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        // 初期化処理（既存維持）
+        window.onload = () => {
             const savedKey = localStorage.getItem('v_key');
             if (savedKey) document.getElementById('api-key').value = savedKey;
-        });
-
-        document.getElementById('save-key').onclick = () => { 
-            const val = document.getElementById('api-key').value.trim();
-            localStorage.setItem('v_key', val); 
-            // 見た目上も空白を除去した状態にする
-            document.getElementById('api-key').value = val;
-            alert('API KEY SAVED!'); 
         };
 
-        // 重要修正：クリックするたびに値を空にして「同じファイル選択」でもイベント発火させる
-        const fileInput = document.getElementById('file-input');
-        fileInput.onclick = (e) => { e.target.value = null; };
-        fileInput.onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
+        document.getElementById('save-key').onclick = () => {
+            localStorage.setItem('v_key', document.getElementById('api-key').value);
+            alert('API KEY SAVED!');
+        };
+
+        document.getElementById('file-input').onchange = (e) => {
+            if (e.target.files[0]) analyze(e.target.files[0]);
+        };
     </script>
 </body>
 </html>
