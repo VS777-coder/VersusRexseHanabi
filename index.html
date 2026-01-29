@@ -89,7 +89,6 @@
         ];
 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
-
         async function addLog(msg, delay = 0) {
             const l = document.getElementById('log');
             l.innerText += `\n${msg}`;
@@ -114,8 +113,7 @@
             const key = document.getElementById('api-key').value.trim();
             if (!key) return alert('API KEY');
 
-            const logBox = document.getElementById('log');
-            logBox.innerText = "READY...";
+            document.getElementById('log').innerText = "READY...";
             await addLog(">> ANALYSIS STARTING...", 200);
 
             const reader = new FileReader(); reader.readAsDataURL(file);
@@ -146,16 +144,13 @@
                 let totalG = 0;
                 let extractedData = [];
                 let configPtr = 0;
+                let bbCount = 0; // BB回数取得用
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
                     if (!startParsing && line.replace(/\s/g, '').includes("総プレイ数")) {
                         let gMatch = line.match(/([\d,]+)/);
-                        if (gMatch) {
-                            totalG = parseInt(gMatch[1].replace(/,/g, ''));
-                            startParsing = true;
-                            await addLog(`[INFO] 総プレイ数: ${totalG}G (Row ${i} ゲート開放)`, 300);
-                        }
+                        if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); startParsing = true; await addLog(`[INFO] 総プレイ数: ${totalG}G`, 300); }
                         continue;
                     }
 
@@ -165,45 +160,37 @@
                         if (!probMatch) continue;
                         let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
 
-                        // 可変スキャン: まずi-2、次にi-1
-                        let countIdx = -1;
-                        let distance = 0;
-                        if (i >= 2 && sortedLines[i-2].includes("回")) {
-                            countIdx = i - 2;
-                            distance = 2;
-                        } else if (i >= 1 && sortedLines[i-1].includes("回")) {
-                            countIdx = i - 1;
-                            distance = 1;
-                        }
+                        let countIdx = -1; let dist = 0;
+                        if (i >= 2 && sortedLines[i-2].includes("回")) { countIdx = i - 2; dist = 2; }
+                        else if (i >= 1 && sortedLines[i-1].includes("回")) { countIdx = i - 1; dist = 1; }
 
                         let countVal = 0;
-                        let hasKai = false;
                         if (countIdx !== -1) {
                             let cMatch = sortedLines[countIdx].match(/([\d,]+)/);
                             countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
-                            hasKai = sortedLines[countIdx].includes("回");
                         }
 
-                        // 動的逆方向チェック
-                        let reverseCheck = (countIdx !== -1 && hasKai && sortedLines[countIdx + distance].includes("/"));
+                        // BB回数を保存
+                        if (item.id === "bb") bbCount = countVal;
 
-                        extractedData.push({ item, k: countVal, p: probVal, hasKai, reverseCheck });
-                        
-                        let status = reverseCheck ? "✅一致" : (countVal > 0 ? "⚠️警告" : "❌不明");
-                        await addLog(`> [${item.name}] ${status} (dist:${distance}) | 1/${probVal} | ${countVal}回`, 50);
+                        extractedData.push({ item, k: countVal, p: probVal, dist });
+                        await addLog(`> [${item.name}] ✅ (dist:${dist}) | 1/${probVal} | ${countVal}回`, 50);
                         configPtr++;
                     }
                 }
 
-                if (!startParsing) return addLog("\n[ERROR] GATE NOT FOUND");
-
-                // (4) 計算
+                // (4) 尤度計算 (復元: 固定分母ロジック)
                 await addLog("\n--- (4) CALCULATION LOG ---", 200);
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 for (const d of extractedData) {
                     if (d.item.active && d.p > 0 && totalG > 0) {
-                        let isRT = d.item.id.includes("v") && (d.item.id.includes("c") || d.item.id.includes("g"));
-                        let n = isRT ? Math.round(d.k * d.p) : totalG;
+                        let n = totalG; // 基本は総プレイ数
+                        const id = d.item.id;
+                        // 貴方の指示した固定分母ロジック
+                        if (id === 'vc' || id === 'vc_miss') n = bbCount * 15;
+                        else if (id === 'vg' || id === 'vg_miss') n = bbCount * 20;
+                        else if (['nf', 'bell_center', 'cb_hit', 'cb_miss'].includes(id)) n = bbCount * 25;
+
                         let lineLog = `[${d.item.name.padEnd(6,' ')}] `;
                         [1,2,5,6].forEach(s => {
                             let prob = 1 / d.item.probs[s];
@@ -215,7 +202,6 @@
                     }
                 }
 
-                // (5) 結果
                 await addLog("\n--- (5) FINAL RESULT ---", 200);
                 await shuffleResults();
                 const max = Math.max(...Object.values(logLikelihoods));
