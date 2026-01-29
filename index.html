@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.5</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.8</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,34 +44,41 @@
     </div>
 
     <script>
+        // ▼▼▼ 開発用スイッチ ▼▼▼
+        // true: 文字読み取りテストモード（座標ログ出力・解析なし）
+        // false: ホール実戦モード（通常解析・Rev1.0.7ロジック）
+        const DEBUG_MODE = true; 
+        // ▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // Rev 1.0.7 根本解決版コンフィグ（誤読対応強化済み）
         const MASTER_CONFIG = {
             "VERSUS": {
                 name: "バーサスリヴァイズ",
                 total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*)BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus", remark: "すべての基本" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", remark: "高低推測の重要指標" },
-                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w_steps: [{ limit: 1000, w: 0.5 }, { limit: 2000, w: 0.8 }, { limit: 3000, w: 1.0 }, { limit: 4000, w: 1.3 }, { limit: 5000, w: 1.8 }, { limit: Infinity, w: 2.0 }], type: "small", remark: "回数判定必須。高低の要" },
-                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8, type: "small", remark: "偶奇で僅かな設定差" },
-                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small", remark: "偶数設定が優遇" },
-                cb:   { id: "cb", name: "チェリーB", key: "チェリー\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small", remark: "高設定で出現率UP" },
-                vc:   { id: "vc", name: "バーサスチャンス中はずれ", anchor: "RT\\s*詳細", key: "チャンス\\s*中.*はずれ", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 1.2, type: "rt_vc", remark: "RT中の高低判別" },
-                vg:   { id: "vg", name: "バーサスゲーム中はずれ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 1.6, type: "rt_vg", remark: "設定6の決め手" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", anchor: "BB\\s*中\\s*詳細", key: "チェリー\\s*\\+\\s*ベル\\s*揃い", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, w: 1.0, type: "bb_detail", remark: "偶数判別の生命線" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", anchor: "BB\\s*中\\s*詳細", key: "チェリー\\s*\\+\\s*ベル\\s*はずれ", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 1.0, type: "bb_detail", remark: "設定2/6を炙り出す" }
+                bb:   { id: "bb", name: "ビックボーナス", key: "(?:#|#\\s*|术|术一|术 一 十)BB|総\\s*BB", vals: {1: 273.1, 2: 268.6, 5: 264.3, 6: 256.0}, w: 1.0, type: "bonus", remark: "基本" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6}, w: 1.6, type: "bonus", remark: "重要" },
+                ba:   { id: "ba", name: "ベルA", key: "ベル\\s*A(\\s*1|\\b)", vals: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2}, w: 1.0, type: "small", remark: "高低" },
+                bb_b: { id: "bb_b", name: "ベルB", key: "ベル\\s*B(\\s*1|\\b)", vals: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, w: 0.8, type: "small", remark: "偶奇" },
+                sa:   { id: "sa", name: "スイカA", key: "スイカ\\s*A", vals: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, w: 1.0, type: "small", remark: "偶数優遇" },
+                cb:   { id: "cb", name: "チェリーB", key: "(チェリー|手工|手エ|チエリ)\\s*B", vals: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, w: 1.0, type: "small", remark: "高設定UP" },
+                vc:   { id: "vc", name: "バーサスチャンス中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(チャンス|チャン入|チャレ).*中.*(はずれ|机|术)", vals: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, w: 1.2, type: "rt_vc", remark: "高低" },
+                vg:   { id: "vg", name: "バーサスゲーム中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(GAME|ゲーム).*中.*(はずれ|机|术)", vals: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, w: 1.6, type: "rt_vg", remark: "設定6" },
+                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", anchor: "BB\\s*中\\s*(詳細|鲜|導)", key: "(チェリー|手工|手エ).*ベル.*揃い", vals: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, w: 1.0, type: "bb_detail", remark: "偶数" },
+                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", anchor: "BB\\s*中\\s*(詳細|鲜|導)", key: "(チェリー|手工|手エ).*ベル.*(はずれ|机|术)", vals: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0}, w: 1.0, type: "bb_detail", remark: "2/6炙り" }
             },
             "HANABI": {
                 name: "新ハナビ",
                 total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", key: "BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus", remark: "確率以上にヒキ重要" },
-                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus", remark: "高設定の証" },
-                ba:   { id: "ba", name: "風鈴A", anchor: "小\\s*役", key: "\\bA\\s+1", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w_steps: [{ limit: 1000, w: 0.5 }, { limit: 2000, w: 0.8 }, { limit: 3000, w: 1.0 }, { limit: 4000, w: 1.3 }, { limit: 5000, w: 1.8 }, { limit: Infinity, w: 2.0 }], type: "small", remark: "回数判定。全設定共通で優遇" },
-                bb_b: { id: "bb_b", name: "風鈴B", anchor: "小\\s*役", key: "(?:風鈴|風)\\s*B\\s+1", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8, type: "small", remark: "差がないため抑制" },
-                ice:  { id: "ice", name: "氷A", anchor: "小\\s*役", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", remark: "高設定炙り出し" },
-                ca2:  { id: "ca2", name: "チェリーA2", anchor: "チェリー\\s*合算", key: "チェリー\\s*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", remark: "偶数設定UP" },
-                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*合算", key: "チェリー\\s*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", remark: "高設定で優遇" },
-                vc:   { id: "vc", name: "ハナビチャンス中はずれ", anchor: "RT\\s*詳細", key: "チャレンジ\\s*中.*はずれ", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 1.2, type: "rt_vc", remark: "RT高低（最重要）" },
-                vg:   { id: "vg", name: "ハナビゲーム中はずれ", anchor: "RT\\s*詳細", key: "GAME\\s*中.*はずれ", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 1.6, type: "rt_vg", remark: "高設定判別用" },
-                nf:   { id: "nf", name: "斜め風鈴", anchor: "BB\\s*中\\s*詳細", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0, type: "bb_detail", remark: "偶数設定で大幅UP" }
+                bb:   { id: "bb", name: "ビックボーナス", key: "BB|术一|术 一 十|総\\s*BB", vals: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2}, w: 1.0, type: "bonus", remark: "基本" },
+                rb:   { id: "rb", name: "レギュラーボーナス", key: "RB", vals: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1}, w: 1.6, type: "bonus", remark: "重要" },
+                ba:   { id: "ba", name: "風鈴A", key: "(風鈴|風|同)?\\s*A(\\s*1|\\b)", vals: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1}, w: 2.0, type: "small", remark: "共通" },
+                bb_b: { id: "bb_b", name: "風鈴B", key: "(風鈴|風|同)?\\s*B(\\s*1|\\b)", vals: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1}, w: 0.8, type: "small", remark: "偶奇" },
+                ice:  { id: "ice", name: "氷A", key: "氷\\s*A", vals: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8}, w: 1.0, type: "small", remark: "高設定" },
+                ca2:  { id: "ca2", name: "チェリーA2", key: "(チェリー|手工|手エ).*A2", vals: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9}, w: 1.0, type: "small", remark: "偶数" },
+                cb:   { id: "cb", name: "チェリーB", key: "(チェリー|手工|手エ).*B", vals: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2}, w: 1.0, type: "small", remark: "高設定" },
+                vc:   { id: "vc", name: "ハナビチャンス中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(チャレンジ|チャンス|チャレ).*中.*(はずれ|机|术)", vals: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1}, w: 1.2, type: "rt_vc", remark: "高低" },
+                vg:   { id: "vg", name: "ハナビゲーム中はずれ", anchor: "RT\\s*(詳細|鲜|導)", key: "(GAME|ゲーム).*中.*(はずれ|机|术)", vals: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5}, w: 1.6, type: "rt_vg", remark: "設定6" },
+                nf:   { id: "nf", name: "斜め風鈴", key: "斜め", vals: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0}, w: 1.0, type: "bb_detail", remark: "偶数" }
             }
         };
 
@@ -83,142 +90,168 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        function runBayesian() {
-            try {
-                addLog("\n--- (3) BAYESIAN ANALYSIS PROCESS ---");
-                const config = MASTER_CONFIG[session.mode];
-                let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
-                const bbData = session.extracted['bb'] || { prob: 0 };
-                const k_bb = (bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
+        // --- デバッグ用関数: 閾値ごとの結合シミュレーション ---
+        function runDebugSimulation(rawWords) {
+            addLog("\n=== DEBUG MODE: RAW DATA & THRESHOLD TEST ===");
+            addLog("APIが生で返してきた単語データ(上位10件):");
+            rawWords.slice(0, 10).forEach(w => {
+                const y = w.boundingPoly.vertices[0].y;
+                addLog(`[RAW] Y:${y} "${w.description}"`);
+            });
 
-                for (let id in config) {
-                    const item = config[id];
-                    if (id === "name" || item.type === "total") continue;
-                    const data = session.extracted[id] || { prob: 0 };
-                    if (data.prob <= 0) continue;
-
-                    let n_t = session.n; 
-                    if (item.type === "rt_vc") n_t = k_bb * (session.mode === "VERSUS" ? 15 : 19);
-                    else if (item.type === "rt_vg") n_t = k_bb * 20;
-                    else if (item.type === "bb_detail") n_t = k_bb * 25;
-
-                    if (n_t <= 0) continue;
-
-                    let k_e = n_t / data.prob;
-                    let w = item.w || 1.0;
-                    if (item.w_steps) {
-                        for (let step of item.w_steps) { if (session.n < step.limit) { w = step.w; break; } }
-                    }
-
-                    addLog(`[ANALYSIS] ${item.name} | n=${Math.round(n_t)}, k=${k_e.toFixed(2)}, w=${w.toFixed(1)}`);
-                    const q = Math.max(0.0001, Math.min(0.9999, k_e / n_t));
-                    [1, 2, 5, 6].forEach(s => {
-                        const pE = 1 / item.vals[s];
-                        const val = w * (k_e * Math.log(pE / q) + (n_t - k_e) * Math.log((1 - pE) / (1 - q)));
-                        logL[s] += (isNaN(val) ? 0 : val);
-                    });
-                }
-
-                const maxL = Math.max(...Object.values(logL));
-                const sumE = Object.values(logL).reduce((a, v) => a + Math.exp(v - maxL), 0);
-                addLog("\n--- (4) FINAL DETERMINATION SUMMARY ---");
-                [1, 2, 5, 6].forEach(s => {
-                    const p = (sumE === 0) ? 25.0 : (Math.exp(logL[s] - maxL) / sumE * 100);
-                    document.getElementById(`p${s}`).innerText = p.toFixed(1) + "%";
-                    document.getElementById(`b${s}`).style.width = p.toFixed(1) + "%";
-                    addLog(`設定${s}: ${p.toFixed(1)}%`);
+            // 閾値シミュレーション
+            [10, 20, 30].forEach(threshold => {
+                addLog(`\n--- 結合しきい値: ${threshold} px ---`);
+                let rows = [];
+                rawWords.forEach(word => {
+                    const y = word.boundingPoly.vertices[0].y;
+                    let found = rows.find(r => Math.abs(r.y - y) < threshold);
+                    if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                 });
-            } catch (e) { addLog("CALC ERROR: " + e.message); }
+                
+                // Y順にソートして表示
+                const sorted = rows.sort((a, b) => a.y - b.y).map(r => {
+                    return { 
+                        y: Math.round(r.y), 
+                        text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x)
+                                     .map(w => w.description).join(" ") 
+                    };
+                });
+                
+                sorted.forEach((r, i) => {
+                    addLog(`[Row ${i}] Y:${r.y} | ${r.text}`);
+                });
+            });
+            
+            addLog("\n[INFO] デバッグ完了。解析ロジックは実行していません。");
+            addLog("[INFO] 本番解析を行う場合はソースコードの DEBUG_MODE を false にしてください。");
+        }
+
+        function runBayesian() {
+            addLog("\n--- (3) BAYESIAN ANALYSIS ---");
+            const config = MASTER_CONFIG[session.mode];
+            let logL = { 1: 0, 2: 0, 5: 0, 6: 0 };
+            const bbData = session.extracted['bb'] || { prob: 0 };
+            const k_bb = (bbData.prob > 0) ? Math.round(session.n / bbData.prob) : 0;
+
+            for (let id in config) {
+                const item = config[id];
+                if (id === "name" || item.type === "total") continue;
+                const data = session.extracted[id] || { prob: 0 };
+                if (data.prob <= 0) continue;
+
+                let n_trial = session.n; 
+                if (item.type === "rt_vc") n_trial = k_bb * (session.mode === "VERSUS" ? 15 : 19);
+                if (item.type === "rt_vg") n_trial = k_bb * 20;
+                if (item.type === "bb_detail") n_trial = k_bb * 25;
+
+                let k_event = n_trial / data.prob;
+                let weight = item.w || 1.0;
+                
+                addLog(`[CALC] ${item.name}: n=${n_trial.toFixed(0)}, k=${k_event.toFixed(1)}, w=${weight}`);
+                
+                [1, 2, 5, 6].forEach(s => {
+                    const pExp = 1 / item.vals[s];
+                    const lVal = weight * (k_event * Math.log(pExp / (k_event/n_trial || 0.0001)) + (n_trial - k_event) * Math.log((1 - pExp) / (1 - (k_event/n_trial || 0.0001))));
+                    logL[s] += lVal;
+                });
+            }
+
+            const maxLog = Math.max(...Object.values(logL));
+            const sumExp = Object.values(logL).reduce((a, v) => a + Math.exp(v - maxLog), 0);
+            
+            addLog("\n--- (4) FINAL RESULT ---");
+            [1, 2, 5, 6].forEach(s => {
+                const p = (Math.exp(logL[s] - maxLog) / sumExp * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = p + "%";
+                document.getElementById(`b${s}`).style.width = p + "%";
+                addLog(`設定${s}: ${p}%`);
+            });
         }
 
         async function analyze(file) {
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING ANALYZE (Rev 1.0.5)...";
-            try {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    const apiKey = document.getElementById('api-key').value;
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+            logBox.innerText = DEBUG_MODE ? ">> STARTING DEBUG SIMULATION..." : ">> STARTING ANALYZE (Rev 1.0.8)...";
+            
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = async () => {
+                try {
+                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${document.getElementById('api-key').value}`, {
                         method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }),
                         headers: { 'Content-Type': 'application/json' }
                     });
                     const json = await res.json();
-                    if (json.error) throw new Error(json.error.message);
                     const ann = json.responses[0]?.textAnnotations;
                     if (!ann) return addLog("ERROR: NO TEXT DETECTED.");
                     
-                    const words = ann.slice(1);
-                    const avgH = words.reduce((sum, w) => sum + Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y), 0) / (words.length || 1);
-                    const threshold = avgH * 2.3;
+                    const rawWords = ann.slice(1);
+
+                    // ▼▼▼ デバッグモード分岐 ▼▼▼
+                    if (DEBUG_MODE) {
+                        runDebugSimulation(rawWords);
+                        return; // ここで強制終了
+                    }
+                    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+                    // === 以下、本番用ロジック (Rev 1.0.7) ===
+                    // 行結合 (しきい値は自動計算)
+                    const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
+                    const threshold = avgH * 2.3; // 動的しきい値
                     let rows = [];
-                    words.forEach(word => {
+                    rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
                         let found = rows.find(r => Math.abs(r.y - y) < threshold);
                         if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                     });
 
-                    const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => ({
-                        y: Math.round(r.y),
-                        text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ")
-                    }));
-
-                    addLog("\n--- (1) PHYSICAL ROWS DATA (Y-COORD) ---");
-                    sortedLines.forEach((r, idx) => addLog(`[Row ${idx}][Y:${r.y}] ${r.text}`));
+                    const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
+                        return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
+                    });
 
                     const rawContent = sortedLines.map(l => l.text).join("\n");
-                    session.mode = (rawContent.includes("ハナビ") || rawContent.includes("新ハナビ")) ? "HANABI" : "VERSUS";
-                    addLog(`\nMODE: ${session.mode}`);
+                    session.mode = (rawContent.includes("ハナビ") || rawContent.includes("花火")) ? "HANABI" : "VERSUS";
+                    addLog(`MODE: ${session.mode}`);
                     
                     const config = MASTER_CONFIG[session.mode];
                     session.extracted = {};
+
                     const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
-                    if (totalM) session.n = parseFloat(totalM[1].replace(/[,G]/g, ''));
-                    addLog(`[TOTAL] ${session.n}G`);
+                    if (totalM) { session.n = parseFloat(totalM[1].replace(/[,G]/g, '')); addLog(`[TOTAL] ${session.n}G`); }
 
                     addLog("\n--- (2) DATA MAPPING ---");
                     sortedLines.forEach((lineObj, i) => {
                         const line = lineObj.text;
                         for (let id in config) {
-                            if (id === "name" || !config[id].key || session.extracted[id]) continue;
-                            if (new RegExp(config[id].key, 'i').test(line)) {
-                                const targetText = line + " " + (sortedLines[i+1]?.text || "");
+                            const item = config[id];
+                            if (id !== "name" && item.key && new RegExp(item.key, 'i').test(line)) {
+                                if (session.extracted[id]) continue; 
+                                
+                                // 根本解決：下の2行まで結合して数値を拾う
+                                const targetText = line + " " + (sortedLines[i+1]?.text || "") + " " + (sortedLines[i+2]?.text || "");
                                 let prob = 0;
                                 if (!targetText.includes("1 / -")) {
                                     const nums = targetText.match(/[\d,.]+/g);
                                     if (nums) {
                                         const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
                                         if (decimal) prob = parseFloat(decimal.replace(/,/g, ''));
-                                        else {
-                                            const explicit = targetText.match(/1\s*\/\s*([\d,.]+)/);
-                                            if (explicit) prob = parseFloat(explicit[1].replace(/,/g, ''));
-                                        }
+                                        else { const explicit = targetText.match(/1\\s*\\/\\s*([\\d,.]+)/); if (explicit) prob = parseFloat(explicit[1].replace(/,/g, '')); }
                                     }
                                 }
-                                session.extracted[id] = { prob: parseFloat(prob) || 0 };
-                                addLog(`[DATA-SET] ${config[id].name}: 1/${session.extracted[id].prob.toFixed(1)}`);
+                                if (prob > 0) {
+                                    session.extracted[id] = { prob };
+                                    addLog(`[MATCH] ${item.name}: 1/${prob.toFixed(1)}`);
+                                }
                             }
                         }
                     });
                     runBayesian();
-                };
-            } catch (e) { addLog("API ERROR: " + e.message); }
+                
+                } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
+            };
         }
-
-        // 初期化
-        window.onload = () => {
-            const savedKey = localStorage.getItem('v_key');
-            if (savedKey) document.getElementById('api-key').value = savedKey;
-        };
-
-        document.getElementById('save-key').onclick = () => {
-            localStorage.setItem('v_key', document.getElementById('api-key').value);
-            alert('API KEY SAVED!');
-        };
-
-        document.getElementById('file-input').onchange = (e) => {
-            if (e.target.files[0]) analyze(e.target.files[0]);
-        };
+        if(localStorage.getItem('v_key')) document.getElementById('api-key').value = localStorage.getItem('v_key');
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('OK'); };
+        document.getElementById('file-input').onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
     </script>
 </body>
 </html>
