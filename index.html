@@ -116,7 +116,7 @@
 
             const logBox = document.getElementById('log');
             logBox.innerText = "READY...";
-            await addLog(">> ANALYSIS STARTING...", 300);
+            await addLog(">> ANALYSIS STARTING...", 200);
 
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -127,6 +127,7 @@
                 const raw = json.responses[0]?.textAnnotations;
                 if(!raw) return addLog("文字が見つかりませんでした。");
 
+                // (2) 動的行取得
                 await addLog("\n--- (2) DYNAMIC ROW (10.0px) ---", 200);
                 const rawWords = raw.slice(1);
                 let rows = [];
@@ -136,11 +137,9 @@
                     if (f) f.words.push(w); else rows.push({ y, words: [w] });
                 });
                 const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
-                
-                for(let i=0; i<sortedLines.length; i++) {
-                    await addLog(`Row ${i}: ${sortedLines[i]}`, 20);
-                }
+                for(let i=0; i<sortedLines.length; i++) { await addLog(`Row ${i}: ${sortedLines[i]}`, 20); }
 
+                // (3) マッピング (距離1 or 2 対応)
                 await addLog("\n--- (3) DATA MAPPING & VERIFICATION ---", 200);
                 let currentConfig = sortedLines[0].match(/バーサス|VERSUS/i) ? VERSUS_CONFIG : HANABI_CONFIG;
                 let startParsing = false;
@@ -166,23 +165,39 @@
                         if (!probMatch) continue;
                         let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
 
-                        let countIdx = i - 2;
-                        let countLine = sortedLines[countIdx] || "";
-                        let countMatch = countLine.match(/([\d,]+)/);
-                        let countVal = countMatch ? parseInt(countMatch[1].replace(/,/g, '')) : 0;
-                        let hasKai = countLine.includes("回");
+                        // 可変スキャン: まずi-2、次にi-1
+                        let countIdx = -1;
+                        let distance = 0;
+                        if (i >= 2 && sortedLines[i-2].includes("回")) {
+                            countIdx = i - 2;
+                            distance = 2;
+                        } else if (i >= 1 && sortedLines[i-1].includes("回")) {
+                            countIdx = i - 1;
+                            distance = 1;
+                        }
 
-                        let reverseCheck = (countIdx >= 0 && sortedLines[countIdx].includes("回") && sortedLines[countIdx+2].includes("/"));
+                        let countVal = 0;
+                        let hasKai = false;
+                        if (countIdx !== -1) {
+                            let cMatch = sortedLines[countIdx].match(/([\d,]+)/);
+                            countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
+                            hasKai = sortedLines[countIdx].includes("回");
+                        }
+
+                        // 動的逆方向チェック
+                        let reverseCheck = (countIdx !== -1 && hasKai && sortedLines[countIdx + distance].includes("/"));
+
                         extractedData.push({ item, k: countVal, p: probVal, hasKai, reverseCheck });
                         
                         let status = reverseCheck ? "✅一致" : (countVal > 0 ? "⚠️警告" : "❌不明");
-                        await addLog(`> [${item.name}] ${status} | 1/${probVal} | ${countVal}回`, 50);
+                        await addLog(`> [${item.name}] ${status} (dist:${distance}) | 1/${probVal} | ${countVal}回`, 50);
                         configPtr++;
                     }
                 }
 
                 if (!startParsing) return addLog("\n[ERROR] GATE NOT FOUND");
 
+                // (4) 計算
                 await addLog("\n--- (4) CALCULATION LOG ---", 200);
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 for (const d of extractedData) {
@@ -200,9 +215,9 @@
                     }
                 }
 
+                // (5) 結果
                 await addLog("\n--- (5) FINAL RESULT ---", 200);
                 await shuffleResults();
-
                 const max = Math.max(...Object.values(logLikelihoods));
                 const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - max)]));
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
