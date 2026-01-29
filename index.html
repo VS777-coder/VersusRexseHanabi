@@ -144,7 +144,6 @@
                 let totalG = 0;
                 let extractedData = [];
                 let configPtr = 0;
-                let bbCount = 0; // BB回数取得用
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
@@ -170,27 +169,21 @@
                             countVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
                         }
 
-                        // BB回数を保存
-                        if (item.id === "bb") bbCount = countVal;
-
-                        extractedData.push({ item, k: countVal, p: probVal, dist });
+                        extractedData.push({ item, k: countVal, p_ocr: probVal, dist });
                         await addLog(`> [${item.name}] ✅ (dist:${dist}) | 1/${probVal} | ${countVal}回`, 50);
                         configPtr++;
                     }
                 }
 
-                // (4) 尤度計算 (復元: 固定分母ロジック)
+                // (4) 尤度計算 (修正: 画面上の確率から真の分母を算出)
                 await addLog("\n--- (4) CALCULATION LOG ---", 200);
+                const rtBigIds = ['vc', 'vg', 'nf', 'bell_center', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 for (const d of extractedData) {
-                    if (d.item.active && d.p > 0 && totalG > 0) {
-                        let n = totalG; // 基本は総プレイ数
-                        const id = d.item.id;
-                        // 貴方の指示した固定分母ロジック
-                        if (id === 'vc' || id === 'vc_miss') n = bbCount * 15;
-                        else if (id === 'vg' || id === 'vg_miss') n = bbCount * 20;
-                        else if (['nf', 'bell_center', 'cb_hit', 'cb_miss'].includes(id)) n = bbCount * 25;
-
+                    if (d.item.active && d.p_ocr > 0 && totalG > 0) {
+                        // RT中/BIG中の項目は 回数×画面確率 で分母を出す。それ以外は総プレイ数。
+                        let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
+                        
                         let lineLog = `[${d.item.name.padEnd(6,' ')}] `;
                         [1,2,5,6].forEach(s => {
                             let prob = 1 / d.item.probs[s];
