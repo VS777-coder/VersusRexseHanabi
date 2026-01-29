@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6 (Rev 1.0.23)</title>
+    <title>みおの解析 1.1.6 (Rev 1.0.25)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.23 (Final Release)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Final Fix)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,7 +44,7 @@
     </div>
 
     <script>
-        // Rev 1.0.22 定義表 (完全準拠)
+        // Rev 1.0.22 定義表 (完全維持)
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -67,7 +67,7 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
-        let TOTAL_GAMES = 0; // 解析された総プレイ数
+        let TOTAL_GAMES = 0; 
 
         function addLog(msg) {
             const log = document.getElementById('log');
@@ -75,11 +75,10 @@
             log.scrollTop = log.scrollHeight;
         }
 
-        // ベイズ推定計算 (確率密度)
-        function calcLikelihood(k, n, p) {
-            if (n <= 0 || p <= 0 || p >= 1) return 1.0;
-            const logL = k * Math.log(p) + (n - k) * Math.log(1 - p);
-            return Math.exp(logL);
+        // ★修正ポイント: 対数尤度計算 (アンダーフロー対策)
+        function calcLogLikelihood(k, n, p) {
+            if (n <= 0 || p <= 0 || p >= 1) return 0;
+            return k * Math.log(p) + (n - k) * Math.log(1 - p);
         }
 
         async function analyze(file) {
@@ -88,7 +87,7 @@
             if (!apiKey) { alert('API KEYを入力してください'); return; }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING ANALYSIS (Rev 1.0.23)...";
+            logBox.innerText = ">> STARTING ANALYSIS (Rev 1.0.25)...";
             
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
@@ -104,11 +103,9 @@
                     const rawWords = json.responses[0]?.textAnnotations?.slice(1);
                     if (!rawWords) { addLog("文字が見つかりません"); return; }
 
-                    // --- (1) 行結合 (しきい値処理) ---
                     addLog("\n--- (1) 行データ (結合処理) ---");
-                    // Rev 1.0.15 Logic: 動的しきい値を使用 (デグレード防止のため固定値10ではなく文字高比率を採用)
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const dynamicThreshold = avgH * 0.6; // 概ね6~10px程度になります
+                    const dynamicThreshold = avgH * 0.6;
                     addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px`);
 
                     let rows = [];
@@ -121,12 +118,10 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    // 結合データのログ出力 (要望1)
                     sortedLines.forEach((line, i) => {
                         addLog(`Row ${i}: ${line.text}`);
                     });
 
-                    // 開始位置特定
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
                     let startY = startRow ? startRow.y : 0;
                     
@@ -136,7 +131,6 @@
                         addLog(`\n[INFO] 総プレイ数: ${TOTAL_GAMES}G`);
                     }
 
-                    // 2. データ抽出 (PLE-C法)
                     let probList = [];
                     let countList = [];
 
@@ -147,20 +141,18 @@
                         if (/([\d,]+)\s*回/.test(text)) countList.push(text);
                     });
 
-                    // --- (2) & (3) データマッピングと尤度解析 ---
                     addLog("\n--- (2) 抽出データ & (3) 解析ログ ---");
                     
-                    let likelihoods = { 1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0 };
+                    // ★修正ポイント: 対数尤度で初期化
+                    let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
 
                     HANABI_CONFIG.forEach(item => {
-                        // 判定OFFでもログには出す場合もあるが、ここでは計算対象のみ詳細ログを出す
                         const idx = item.index;
                         let k = 0; 
                         let n = 0; 
                         let obsProb = "---";
 
-                        // マッピング
                         if (idx < countList.length && idx < probList.length) {
                             const cStr = countList[idx].match(/([\d,]+)\s*回/);
                             if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
@@ -172,31 +164,26 @@
                                 obsProb = `1/${obsDenom}`;
                             }
 
-                            // 試行回数 n 決定
                             if (item.index >= 15 && obsDenom > 0) {
                                 n = Math.round(k * obsDenom);
                             } else {
                                 n = TOTAL_GAMES;
                             }
 
-                            // ログ出力 (要望2: 「ログ用名称」：「データ」)
                             addLog(`> [${item.name}] 回数:${k} / 確率:${obsProb}`);
 
-                            if (item.active && n > 0) {
+                            if (item.active && n > 0 && item.weight > 0) {
                                 hasData = true;
-                                
-                                // 尤度計算
-                                let debugStr = "   LIK(倍率): ";
+                                let debugStr = "   LogLik(加算値): ";
                                 [1, 2, 5, 6].forEach(setting => {
                                     const denom = item.probs[setting];
                                     if (denom > 0) {
                                         const p = 1.0 / denom;
-                                        const lik = calcLikelihood(k, n, p);
-                                        const weightedLik = Math.pow(lik, item.weight);
-                                        likelihoods[setting] *= weightedLik;
-                                        
-                                        // デバッグ用表示 (要望3)
-                                        debugStr += `S${setting}:${weightedLik.toExponential(2)} `;
+                                        // ★修正ポイント: 対数尤度を計算して加算
+                                        const logL = calcLogLikelihood(k, n, p);
+                                        const weightedLogL = logL * item.weight;
+                                        logLikelihoods[setting] += weightedLogL;
+                                        debugStr += `S${setting}:${weightedLogL.toFixed(2)} `;
                                     }
                                 });
                                 addLog(debugStr);
@@ -208,14 +195,20 @@
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    // 正規化
-                    const totalLikelihood = likelihoods[1] + likelihoods[2] + likelihoods[5] + likelihoods[6];
-                    if (totalLikelihood === 0) { addLog("計算不能"); return; }
+                    // ★修正ポイント: Log-Sum-Exp による正規化
+                    const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
+                    
+                    const exp1 = Math.exp(logLikelihoods[1] - maxLog);
+                    const exp2 = Math.exp(logLikelihoods[2] - maxLog);
+                    const exp5 = Math.exp(logLikelihoods[5] - maxLog);
+                    const exp6 = Math.exp(logLikelihoods[6] - maxLog);
+                    
+                    const sumExp = exp1 + exp2 + exp5 + exp6;
 
-                    const p1 = (likelihoods[1] / totalLikelihood * 100).toFixed(1);
-                    const p2 = (likelihoods[2] / totalLikelihood * 100).toFixed(1);
-                    const p5 = (likelihoods[5] / totalLikelihood * 100).toFixed(1);
-                    const p6 = (likelihoods[6] / totalLikelihood * 100).toFixed(1);
+                    const p1 = (exp1 / sumExp * 100).toFixed(1);
+                    const p2 = (exp2 / sumExp * 100).toFixed(1);
+                    const p5 = (exp5 / sumExp * 100).toFixed(1);
+                    const p6 = (exp6 / sumExp * 100).toFixed(1);
 
                     document.getElementById('p1').innerText = `${p1}%`;
                     document.getElementById('b1').style.width = `${p1}%`;
