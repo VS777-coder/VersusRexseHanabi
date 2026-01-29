@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.13 (Debug Mapping)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.14 (Debug Extraction)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,41 +44,28 @@
     </div>
 
     <script>
-        // 設定判別用コンフィグ（相対位置定義を追加）
-        const MASTER_CONFIG = {
-            "VERSUS": {
-                name: "バーサスリヴァイズ",
-                // バーサス用の相対位置は仮置き（ハナビと同様のロジックを想定）
-                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", anchor: "^BB", offset: 1, type: "bonus" },
-                rb:   { id: "rb", name: "レギュラーボーナス", anchor: "^RB", offset: 1, type: "bonus" },
-                ba:   { id: "ba", name: "ベルA", anchor: "ベル\\s*合算", offset: 4, type: "small" },
-                bb_b: { id: "bb_b", name: "ベルB", anchor: "ベル\\s*合算", offset: 7, type: "small" },
-                sa:   { id: "sa", name: "スイカA", anchor: "スイカ\\s*A", offset: 1, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*B", offset: 1, type: "small" },
-                vc:   { id: "vc", name: "VC中ハズレ", anchor: "チャンス.*中.*はずれ", offset: 1, type: "rt_vc" },
-                vg:   { id: "vg", name: "VG中ハズレ", anchor: "GAME.*中.*はずれ", offset: 1, type: "rt_vg" },
-                cbs:  { id: "cbs", name: "チェリー＋ベル揃い", anchor: "ベル.*揃い", offset: 1, type: "bb_detail" },
-                cbh:  { id: "cbh", name: "チェリー＋ベルはずれ", anchor: "ベル.*はずれ", offset: 1, type: "bb_detail" }
-            },
-            "HANABI": {
-                name: "新ハナビ",
-                // ハナビ用：ユーザー分析に基づいた相対位置定義
-                total: { name: "総プレイ数", key: "総\\s*プレイ\\s*数", type: "total" },
-                bb:   { id: "bb", name: "ビックボーナス", anchor: "^BB", offset: 1, type: "bonus" },
-                rb:   { id: "rb", name: "レギュラーボーナス", anchor: "^RB", offset: 1, type: "bonus" },
-                ba:   { id: "ba", name: "風鈴A", anchor: "風鈴\\s*合算", offset: 4, type: "small" },
-                bb_b: { id: "bb_b", name: "風鈴B", anchor: "風鈴\\s*合算", offset: 7, type: "small" },
-                ice:  { id: "ice", name: "氷A", anchor: "氷\\s*A", offset: 1, type: "small" },
-                // 氷Bは設定差特大だが頻度低いため、マッピングテスト用に追加
-                ice_b:{ id: "ice_b", name: "氷B", anchor: "氷\\s*B", offset: 1, type: "small" },
-                ca2:  { id: "ca2", name: "チェリーA2", anchor: "チェリー\\s*A2", offset: 1, type: "small" },
-                cb:   { id: "cb", name: "チェリーB", anchor: "チェリー\\s*B", offset: 1, type: "small" },
-                vc:   { id: "vc", name: "HC中ハズレ", anchor: "チャレンジ.*中.*はずれ", offset: 1, type: "rt_vc" },
-                vg:   { id: "vg", name: "HG中ハズレ", anchor: "GAME.*中.*はずれ", offset: 1, type: "rt_vg" },
-                nf:   { id: "nf", name: "斜め風鈴", anchor: "斜め.*揃い", offset: 1, type: "bb_detail" }
-            }
-        };
+        // 定義されたインデックスマップ
+        const INDEX_MAP = [
+            { name: "総ボーナス合算" }, // 0
+            { name: "BIG合算" },       // 1
+            { name: "ドンBB" },        // 2
+            { name: "赤七BB" },        // 3
+            { name: "RB" },            // 4
+            { name: "風鈴合算" },      // 5
+            { name: "風鈴A" },         // 6
+            { name: "風鈴B" },         // 7
+            { name: "氷合算" },        // 8
+            { name: "氷A" },           // 9
+            { name: "氷B" },           // 10
+            { name: "チェリー合算" },   // 11
+            { name: "チェリーA1" },     // 12
+            { name: "チェリーA2" },     // 13
+            { name: "チェリーB" },      // 14
+            { name: "HC中ハズレ" },     // 15
+            { name: "HG中ハズレ" },     // 16
+            { name: "風鈴中段揃い" },   // 17
+            { name: "斜め風鈴" }        // 18
+        ];
 
         function addLog(msg) {
             const log = document.getElementById('log');
@@ -96,7 +83,7 @@
             }
 
             const logBox = document.getElementById('log');
-            logBox.innerText = ">> STARTING DEBUG MAPPING (Rev 1.0.13)...";
+            logBox.innerText = ">> STARTING DEBUG EXTRACTION (Rev 1.0.14)...";
             addLog("画像読み込み中...");
             
             const reader = new FileReader(); reader.readAsDataURL(file);
@@ -110,9 +97,7 @@
                     
                     addLog(`レスポンス受信: Status ${res.status}`);
                     
-                    if (res.status !== 200) {
-                        return;
-                    }
+                    if (res.status !== 200) return;
 
                     const json = await res.json();
                     if (json.error) {
@@ -124,103 +109,70 @@
                     if (!ann) return addLog("ERROR: 文字が見つかりませんでした。");
                     
                     const rawWords = ann.slice(1);
-                    addLog(`\n--- (1) API生データ (検出数: ${rawWords.length}) ---`);
-                    rawWords.forEach((w, i) => {
-                         const v = w.boundingPoly.vertices;
-                         const y = v && v[0] ? v[0].y : '?';
-                         addLog(`[Word ${i}] Y:${y} "${w.description}"`);
-                    });
 
-                    // --- 動的しきい値計算 ---
+                    // 1. 動的しきい値計算
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
-                    const dynamicThreshold = avgH * 0.6; // 文字高さの6割（厳しめ設定）
-                    addLog(`\n[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
+                    const dynamicThreshold = avgH * 0.6;
+                    addLog(`[INFO] 動的しきい値: ${dynamicThreshold.toFixed(2)}px (文字平均高: ${avgH.toFixed(1)}px)`);
 
-                    // --- 結合処理 ---
+                    // 2. 行結合
                     let rows = [];
                     rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
                         let found = rows.find(r => Math.abs(r.y - y) < dynamicThreshold);
                         if (found) found.words.push(word); else rows.push({ y: y, words: [word] });
                     });
-
-                    // Y順ソート & 行内X順ソート
                     const sortedLines = rows.sort((a, b) => a.y - b.y).map(r => {
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
-                    addLog(`\n--- (2) 結合データ (${sortedLines.length}行) ---`);
-                    sortedLines.forEach((r, idx) => {
-                        addLog(`[Row ${idx}] Y:${r.y} | ${r.text}`);
+                    // 3. リスト抽出 (List P & List C)
+                    let probList = []; // 確率リスト
+                    let countList = []; // 回数リスト
+
+                    sortedLines.forEach(line => {
+                        const text = line.text;
+                        
+                        // 確率行の検出 (1/数値 または 1/-)
+                        const probMatch = text.match(/1\s*\/\s*([\d,.]+|[\-–—])/);
+                        if (probMatch) {
+                            probList.push(text);
+                        }
+
+                        // 回数行の検出 (数値 回)
+                        const countMatch = text.match(/([\d,]+)\s*回/);
+                        if (countMatch) {
+                            countList.push(text);
+                        }
                     });
 
-                    // --- 機種判定 ---
-                    const rawContent = sortedLines.map(l => l.text).join("\n");
-                    const mode = (rawContent.includes("ハナビ") || rawContent.includes("花火")) ? "HANABI" : "VERSUS";
-                    addLog(`\nMODE: ${mode}`);
-                    const config = MASTER_CONFIG[mode];
+                    addLog(`\n--- 抽出結果 (P:${probList.length}行 / C:${countList.length}行) ---`);
 
-                    addLog("\n--- (3) 取り込み対象と取得データ ---");
-
-                    // 1. 総プレイ数（これは直接検索）
-                    const totalM = rawContent.match(new RegExp(`${config.total.key}[\\s\\S]{0,100}?([\\d,.]+)\\s*G`, 'i'));
-                    if (totalM) {
-                        addLog(`[DATA] ${config.total.name} -> ${totalM[0]} -> 値: ${totalM[1]}`);
-                    } else {
-                        addLog(`[MISS] ${config.total.name} (Direct Match Failed)`);
-                    }
-
-                    // 2. 相対位置によるマッピング
-                    for (let id in config) {
-                        const item = config[id];
-                        if (id === "name" || item.type === "total") continue; // スキップ
-
-                        let foundAnchor = false;
-                        let targetRowIdx = -1;
-                        let anchorText = "";
-
-                        // アンカー行を探す
-                        for (let i = 0; i < sortedLines.length; i++) {
-                            if (new RegExp(item.anchor, 'i').test(sortedLines[i].text)) {
-                                foundAnchor = true;
-                                targetRowIdx = i + item.offset;
-                                anchorText = sortedLines[i].text;
-                                break;
-                            }
+                    // 4. マッピング出力
+                    addLog("\n--- 今回の結果 (Index 0-18) ---");
+                    
+                    for (let i = 0; i <= 18; i++) {
+                        const item = INDEX_MAP[i];
+                        
+                        // 確率の抽出
+                        let probVal = "取得失敗";
+                        if (i < probList.length) {
+                            const pText = probList[i];
+                            const pMatch = pText.match(/1\s*\/\s*([\d,.]+|[\-–—])/);
+                            if (pMatch) probVal = `1/${pMatch[1]}`;
                         }
 
-                        if (foundAnchor) {
-                            if (targetRowIdx < sortedLines.length) {
-                                const targetRow = sortedLines[targetRowIdx];
-                                const targetText = targetRow.text;
-                                
-                                // 数値抽出 (1/XX.X 形式)
-                                let extractedVal = "なし";
-                                const nums = targetText.match(/[\d,.]+/g);
-                                if (nums) {
-                                    // 小数点を含む、または1より大きい数字を探す（確率分母）
-                                    const decimal = nums.find(n => n.includes('.') && parseFloat(n.replace(/,/g, '')) > 1.1);
-                                    if (decimal) extractedVal = decimal;
-                                    else {
-                                        // 1 / XXX の形式から抽出
-                                        const explicit = targetText.match(/1\s*\/\s*([\d,.]+)/);
-                                        if (explicit) extractedVal = explicit[1];
-                                    }
-                                }
-
-                                addLog(`[DATA] ${item.name} (Anchor: "${anchorText}" +${item.offset}行)`);
-                                addLog(`       -> Target [Row ${targetRowIdx}]: "${targetText}"`);
-                                addLog(`       -> 取得データ: 1/${extractedVal}`);
-                            } else {
-                                addLog(`[MISS] ${item.name} (Target Row Out of Bounds)`);
-                            }
-                        } else {
-                            addLog(`[MISS] ${item.name} (Anchor "${item.anchor}" Not Found)`);
+                        // 回数の抽出
+                        let countVal = "取得失敗";
+                        if (i < countList.length) {
+                            const cText = countList[i];
+                            const cMatch = cText.match(/([\d,]+)\s*回/);
+                            if (cMatch) countVal = `${cMatch[1]}回`;
                         }
+
+                        addLog(`[${i}] ${item.name} | 回数: ${countVal} | 確率: ${probVal}`);
                     }
 
-                    addLog("\n>> DEBUG MAPPING COMPLETE.");
-                
                 } catch(e) { addLog("SYSTEM ERROR: " + e.message); }
             };
         }
@@ -229,14 +181,12 @@
             const savedKey = localStorage.getItem('v_key');
             if (savedKey) document.getElementById('api-key').value = savedKey;
         });
-
         document.getElementById('save-key').onclick = () => { 
             const val = document.getElementById('api-key').value.trim();
             localStorage.setItem('v_key', val); 
             document.getElementById('api-key').value = val;
             alert('API KEY SAVED!'); 
         };
-
         const fileInput = document.getElementById('file-input');
         fileInput.onclick = (e) => { e.target.value = null; };
         fileInput.onchange = (e) => { if(e.target.files[0]) analyze(e.target.files[0]); };
