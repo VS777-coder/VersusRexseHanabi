@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.0.0</title>
+    <title>ぷりんの解析</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
-        <div class="text-2xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
+        <div class="text-xl font-black kawaii-title tracking-tighter">✨ バーサスリヴァイズ ＆ 新ハナビ ✨</div>
         <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.0</p>
     </div>
 
@@ -44,6 +44,9 @@
     </div>
 
     <script>
+        // ==========================================
+        // 定義ファイル
+        // ==========================================
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
@@ -123,9 +126,10 @@
 
                     const avgH = rawWords.map(w => Math.abs(w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y)).reduce((a,b)=>a+b,0) / rawWords.length;
                     const dynamicThreshold = avgH * 0.6;
-                    addLog(`\n--- (1) 行結合処理 ---`);
-                    addLog(`[INFO] しきい値: ${dynamicThreshold.toFixed(2)}px (基準: 10px前後)`);
-
+                    
+                    // --- (1) 行結合処理 (すべての行を表示) ---
+                    addLog(`\n----------------------------------------\n(1) 抽出された行データ (閾値:${dynamicThreshold.toFixed(1)}px)\n----------------------------------------`);
+                    
                     let rows = [];
                     rawWords.forEach(word => {
                         const y = word.boundingPoly.vertices[0].y;
@@ -136,14 +140,19 @@
                         return { y: Math.round(r.y), text: r.words.sort((a, b) => a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w => w.description).join(" ") };
                     });
 
+                    sortedLines.forEach((line, i) => {
+                        addLog(`Row ${i}: ${line.text}`);
+                    });
+
+                    // 機種判定
                     let detectedMachine = 'HANABI';
                     const titleRow = sortedLines[0] ? sortedLines[0].text : "";
-                    
                     if (titleRow.match(/バーサス|VERSUS/i)) {
                         detectedMachine = 'VERSUS';
                     }
                     addLog(`\n[INFO] 機種判定: ${titleRow} → ${detectedMachine}`);
 
+                    // 総プレイ数の取得
                     let totalGames = 0;
                     const startRow = sortedLines.find(r => /総\s*プレイ\s*数/.test(r.text));
                     if (startRow) {
@@ -162,74 +171,93 @@
                         if (/([\d,]+)\s*回/.test(line.text)) countList.push(line.text);
                     });
 
-                    addLog("\n--- (2) 取得すべき項目とデータ ---");
+                    // --- (2) 定義上の全データ表示 ---
+                    addLog(`\n----------------------------------------\n(2) 全定義データの抽出状況\n----------------------------------------`);
+                    const TARGET_CONFIG = (detectedMachine === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
+
+                    TARGET_CONFIG.forEach(item => {
+                        const idx = item.index;
+                        let k = 0;
+                        let obsProb = "---";
+                        let status = "データなし";
+
+                        if (idx < countList.length) {
+                            const cStr = countList[idx].match(/([\d,]+)\s*回/);
+                            if (cStr) {
+                                k = parseInt(cStr[1].replace(/,/g, ''));
+                                status = `${k}回`;
+                            }
+                            if (idx < probList.length) {
+                                const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
+                                if (pMatch) obsProb = `1/${pMatch[1]}`;
+                            }
+                        }
+                        const activeMark = item.active ? "【判別対象】" : "　　　　　　";
+                        addLog(`${activeMark} ${item.name}: ${status} (確率表記: ${obsProb})`);
+                    });
+
+                    // --- (3) & (4) 判別データと尤度 ---
+                    addLog(`\n----------------------------------------\n(3) 判別に使用したデータ\n(4) 尤度加算詳細 (Weight適用後)\n----------------------------------------`);
                     
                     let logLikelihoods = { 1: 0.0, 2: 0.0, 5: 0.0, 6: 0.0 };
                     let hasData = false;
-                    const TARGET_CONFIG = (detectedMachine === 'VERSUS') ? VERSUS_CONFIG : HANABI_CONFIG;
 
                     TARGET_CONFIG.forEach(item => {
                         if (item.active) {
                             const idx = item.index;
-                            let k = 0; 
-                            let n = 0; 
-                            let obsProb = "---";
-
                             if (idx < countList.length) {
                                 const cStr = countList[idx].match(/([\d,]+)\s*回/);
-                                if (cStr) k = parseInt(cStr[1].replace(/,/g, ''));
+                                if (cStr) {
+                                    const k = parseInt(cStr[1].replace(/,/g, ''));
+                                    
+                                    // 母数(n)計算
+                                    let n = totalGames;
+                                    let obsDenom = 0;
+                                    if (idx < probList.length) {
+                                        const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
+                                        if (pMatch) obsDenom = parseFloat(pMatch[1].replace(/,/g, ''));
+                                    }
 
-                                if (idx < probList.length) {
-                                    const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
-                                    if (pMatch) obsProb = `1/${pMatch[1]}`;
-                                }
+                                    const thresholdIdx = (detectedMachine === 'VERSUS') ? 14 : 15;
+                                    if (item.index >= thresholdIdx && obsDenom > 0) {
+                                        n = Math.round(k * obsDenom);
+                                    }
 
-                                let obsDenom = 0;
-                                if (idx < probList.length) {
-                                    const pMatch = probList[idx].match(/1\s*\/\s*([\d,.]+)/);
-                                    if (pMatch) obsDenom = parseFloat(pMatch[1].replace(/,/g, ''));
-                                }
+                                    // Versus特殊ロジック(BB中ベル分母)
+                                    if (detectedMachine === 'VERSUS' && (item.index === 17 || item.index === 18)) {
+                                        if (16 < countList.length) {
+                                            const bbBellStr = countList[16].match(/([\d,]+)\s*回/);
+                                            if (bbBellStr) n = parseInt(bbBellStr[1].replace(/,/g, ''));
+                                        }
+                                    }
 
-                                const thresholdIdx = (detectedMachine === 'VERSUS') ? 14 : 15;
-                                if (item.index >= thresholdIdx && obsDenom > 0) {
-                                    n = Math.round(k * obsDenom);
-                                } else {
-                                    n = totalGames;
-                                }
+                                    addLog(`■ ${item.name}`);
+                                    addLog(`   実測: ${k}回 / ${n}G (確率: 1/${(n/k).toFixed(1)})`);
 
-                                if (detectedMachine === 'VERSUS' && (item.index === 17 || item.index === 18)) {
-                                    if (16 < countList.length) {
-                                        const bbBellStr = countList[16].match(/([\d,]+)\s*回/);
-                                        if (bbBellStr) n = parseInt(bbBellStr[1].replace(/,/g, ''));
+                                    if (n > 0 && item.weight > 0) {
+                                        hasData = true;
+                                        let logStr = "   尤度: ";
+                                        [1, 2, 5, 6].forEach(setting => {
+                                            const denom = item.probs[setting];
+                                            if (denom > 0) {
+                                                const p = 1.0 / denom;
+                                                const logL = calcLogLikelihood(k, n, p);
+                                                const weightedLogL = logL * item.weight;
+                                                logLikelihoods[setting] += weightedLogL;
+                                                logStr += `S${setting}[${weightedLogL.toFixed(2)}] `;
+                                            }
+                                        });
+                                        addLog(logStr);
                                     }
                                 }
-
-                                addLog(`[抽出] ${item.name}: ${k}回 (${obsProb}) | 母数(n): ${n}`);
-
-                                if (n > 0 && item.weight > 0) {
-                                    hasData = true;
-                                    let logStr = "   ↳ [尤度] ";
-                                    [1, 2, 5, 6].forEach(setting => {
-                                        const denom = item.probs[setting];
-                                        if (denom > 0) {
-                                            const p = 1.0 / denom;
-                                            const logL = calcLogLikelihood(k, n, p);
-                                            const weightedLogL = logL * item.weight;
-                                            logLikelihoods[setting] += weightedLogL;
-                                            logStr += `S${setting}: ${weightedLogL.toFixed(2)}  `;
-                                        }
-                                    });
-                                    addLog(logStr);
-                                }
-                            } else {
-                                addLog(`[エラー] ${item.name} (Index ${idx}) のデータが見つかりません`);
                             }
                         }
                     });
 
                     if (!hasData) { addLog("\n[WARN] 有効なデータがありません"); return; }
 
-                    addLog("\n--- (4) 最終の設定予想 ---");
+                    // --- (5) 最終予想 ---
+                    addLog(`\n----------------------------------------\n(5) 最終の設定予想\n----------------------------------------`);
                     const maxLog = Math.max(logLikelihoods[1], logLikelihoods[2], logLikelihoods[5], logLikelihoods[6]);
                     const exp1 = Math.exp(logLikelihoods[1] - maxLog);
                     const exp2 = Math.exp(logLikelihoods[2] - maxLog);
@@ -251,7 +279,10 @@
                     document.getElementById('p6').innerText = `${p6}%`;
                     document.getElementById('b6').style.width = `${p6}%`;
 
-                    addLog(`[判定] 設定1:${p1}%  設定2:${p2}%  設定5:${p5}%  設定6:${p6}%`);
+                    addLog(`設定1: ${p1}%`);
+                    addLog(`設定2: ${p2}%`);
+                    addLog(`設定5: ${p5}%`);
+                    addLog(`設定6: ${p6}%`);
 
                 } catch (e) {
                     addLog(`エラー発生: ${e.message}`);
