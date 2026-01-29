@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>みおの解析 1.1.6 (Rev 1.0.25)</title>
+    <title>ぷりんの解析 Rev 1.0.25</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25 (Final Fix)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.25</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -45,61 +45,79 @@
 
     <script>
         const HANABI_CONFIG = [
-            { id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
-            { id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
-            { id: "don_bb", name: "ドンビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
-            { id: "red_bb", name: "赤七ビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
-            { id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 277.7} },
-            { id: "bell_total", name: "風鈴合算", active: false, weight: 0.0, probs: {1: 7.72, 2: 7.55, 5: 7.45, 6: 7.16} },
-            { id: "ba", name: "風鈴Ａ", active: true, weight: 1.2, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "ice_total", name: "氷合算", active: false, weight: 0.0, probs: {1: 52.9, 2: 57.5, 5: 49.7, 6: 52.8} },
-            { id: "ice", name: "氷Ａ", active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ice_b", name: "氷Ｂ", active: false, weight: 0.0, probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
-            { id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 16.3, 2: 15.3, 5: 16.1, 6: 15.6} },
-            { id: "cherry_a1", name: "チェリーＡ１", active: false, weight: 0.0, probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
-            { id: "ca2", name: "チェリーＡ２", active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ１", active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "HC中はずれ", active: true, weight: 1.2, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "HG中はずれ", active: true, weight: 1.6, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
-            { id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
-            { id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 132.5, 2: 129.8, 5: 126.0, 6: 123.7} },
+            { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 258.0, 6: 252.1} },
+            { index: 2, id: "don_bb", name: "ドンビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 3, id: "red_bb", name: "赤七ビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 356.2, 2: 334.4, 5: 292.6, 6: 277.7} },
+            { index: 5, id: "bell_total", name: "風鈴合算", active: false, weight: 0.0, probs: {1: 7.72, 2: 7.55, 5: 7.45, 6: 7.16} },
+            { index: 6, id: "ba", name: "風鈴Ａ", active: true, weight: 1.2, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { index: 7, id: "bb_b", name: "風鈴Ｂ", active: true, weight: 0.8, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { index: 8, id: "ice_total", name: "氷合算", active: false, weight: 0.0, probs: {1: 52.9, 2: 57.5, 5: 49.7, 6: 52.8} },
+            { index: 9, id: "ice", name: "氷Ａ", active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { index: 10, id: "ice_b", name: "氷Ｂ", active: false, weight: 0.0, probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 16.3, 2: 15.3, 5: 16.1, 6: 15.6} },
+            { index: 12, id: "cherry_a1", name: "チェリーＡ１", active: false, weight: 0.0, probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
+            { index: 13, id: "ca2", name: "チェリーＡ２", active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { index: 14, id: "cb", name: "チェリーＢ１", active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { index: 15, id: "vc", name: "ハナビチャレンジ中はずれ", active: true, weight: 1.2, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { index: 16, id: "vg", name: "ハナビゲーム中はずれ", active: true, weight: 1.6, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { index: 17, id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
+            { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
         const VERSUS_CONFIG = [
-            { id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
-            { id: "bb", name: "ＢＢ合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-            { id: "x_bb", name: "ＸＢＢ", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
-            { id: "seven_bb", name: "７ＢＢ", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
-            { id: "rb", name: "ＲＢ", active: true, weight: 1.6, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 7.2, 2: 7.1, 5: 6.9, 6: 6.8} },
-            { id: "bell_a", name: "ベルＡ", active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-            { id: "bell_b", name: "ベルＢ", active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
-            { id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
-            { id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-            { id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
-            { id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-            { id: "vc_miss", name: "VC中はずれ", active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-            { id: "vg_miss", name: "VG中はずれ", active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-            { id: "bb_bell_total", name: "ＢＢ中ベル", active: false, weight: 0.0, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
-            { id: "cb_hit", name: "チェリ＋ベル揃", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-            { id: "cb_miss", name: "チェリ＋ベルは", active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+            { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
+            { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", active: true, weight: 1.6, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { index: 5, id: "bell_total", name: "ベル合算", active: false, weight: 0.0, probs: {1: 7.2, 2: 7.1, 5: 6.9, 6: 6.8} },
+            { index: 6, id: "bell_a", name: "ベルＡ", active: true, weight: 1.2, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { index: 7, id: "bell_b", name: "ベルＢ", active: true, weight: 0.8, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { index: 8, id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
+            { index: 9, id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { index: 10, id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
+            { index: 12, id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
+            { index: 13, id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { index: 14, id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { index: 15, id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { index: 16, id: "bb_bell_total", name: "ビッグ中ベル", active: false, weight: 0.0, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { index: 17, id: "cb_hit", name: "チェリー＋ベル揃い", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 0.8, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        function addLog(msg) {
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        async function addLog(msg, delay = 0) {
             const l = document.getElementById('log');
             l.innerText += `\n${msg}`;
             l.scrollTop = l.scrollHeight;
+            if (delay > 0) await sleep(delay);
+        }
+
+        async function shuffleResults() {
+            const ids = ['p1', 'p2', 'p5', 'p6'];
+            const bars = ['b1', 'b2', 'b5', 'b6'];
+            for (let i = 0; i < 15; i++) {
+                ids.forEach((id, idx) => {
+                    const val = Math.floor(Math.random() * 100);
+                    document.getElementById(id).innerText = `${val}.0%`;
+                    document.getElementById(bars[idx]).style.width = `${val}%`;
+                });
+                await sleep(60);
+            }
         }
 
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) return alert('API KEYを入力してください');
 
-            addLog("READY...");
-            addLog(">> ANALYSIS STARTING...");
+            const logBox = document.getElementById('log');
+            logBox.innerText = "READY...";
+            await addLog(">> ANALYSIS STARTING...", 300);
+
             const reader = new FileReader(); reader.readAsDataURL(file);
             reader.onload = async () => {
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
@@ -107,11 +125,9 @@
                 });
                 const json = await res.json();
                 const raw = json.responses[0]?.textAnnotations;
-                
-                addLog("\n--- (1) API RAW DATA ---");
-                addLog(raw[0].description.substring(0, 300) + "...");
+                if(!raw) return addLog("文字が見つかりませんでした。");
 
-                addLog("\n--- (2) DYNAMIC ROW (10.0px) ---");
+                await addLog("--- (1) OCR DATA RECOVERY ---", 200);
                 const rawWords = raw.slice(1);
                 let rows = [];
                 rawWords.forEach(w => {
@@ -120,11 +136,14 @@
                     if (f) f.words.push(w); else rows.push({ y, words: [w] });
                 });
                 const sortedLines = rows.sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "));
-                sortedLines.forEach((l, i) => addLog(`Row ${i}: ${l}`));
+                
+                for(let i=0; i<Math.min(sortedLines.length, 10); i++) {
+                    await addLog(`Row ${i}: ${sortedLines[i]}`, 50);
+                }
+                await addLog("...", 100);
 
-                addLog("\n--- (3) DATA MAPPING & VERIFICATION ---");
+                await addLog("\n--- (2) SCANNING GATE ---", 200);
                 let currentConfig = sortedLines[0].match(/バーサス|VERSUS/i) ? VERSUS_CONFIG : HANABI_CONFIG;
-
                 let startParsing = false;
                 let totalG = 0;
                 let extractedData = [];
@@ -132,75 +151,63 @@
 
                 for (let i = 0; i < sortedLines.length; i++) {
                     const line = sortedLines[i];
-                    
-                    // 防波堤：総プレイ数を見つけるまでゴミ扱い
                     if (!startParsing && line.replace(/\s/g, '').includes("総プレイ数")) {
                         let gMatch = line.match(/([\d,]+)/);
                         if (gMatch) {
                             totalG = parseInt(gMatch[1].replace(/,/g, ''));
                             startParsing = true;
-                            addLog(`[INFO] 総プレイ数: ${totalG}G (Row ${i} でゲート開放)`);
+                            await addLog(`[OPEN] 総プレイ数: ${totalG}G (Row ${i})`, 300);
                         }
                         continue;
                     }
 
-                    // 開始地点以降のみ「/」をトリガーに双方向スキャン
                     if (startParsing && line.includes("/") && configPtr < currentConfig.length) {
                         const item = currentConfig[configPtr];
-                        
-                        // 確率行（矛）
                         let probMatch = line.match(/1\s*\/\s*([\d,.]+)/);
                         if (!probMatch) continue;
                         let probVal = parseFloat(probMatch[1].replace(/,/g, ''));
 
-                        // 2行上（回数候補）
                         let countIdx = i - 2;
                         let countLine = sortedLines[countIdx] || "";
                         let countMatch = countLine.match(/([\d,]+)/);
                         let countVal = countMatch ? parseInt(countMatch[1].replace(/,/g, '')) : 0;
                         let hasKai = countLine.includes("回");
 
-                        // 盾（双方向チェック）：2行上が回数文字を含み、かつ現在の行が/を含むか
                         let reverseCheck = (countIdx >= 0 && sortedLines[countIdx].includes("回") && sortedLines[countIdx+2].includes("/"));
-
                         extractedData.push({ item, k: countVal, p: probVal, hasKai, reverseCheck });
                         
-                        let status = reverseCheck ? "✅一致" : (hasKai ? "⚠️位置" : "❌欠損");
-                        addLog(`> [${item.name}] ${status} | 1/${probVal} | ${countVal}回`);
-                        if (!hasKai) addLog(`  └ ⚠️ Row ${countIdx} に「回」なし`);
-                        
+                        let status = reverseCheck ? "✅" : (countVal > 0 ? "⚠️" : "❌");
+                        await addLog(`> [${item.name}] ${status} 1/${probVal} | ${countVal}回`, 100);
                         configPtr++;
                     }
                 }
 
-                if (!startParsing) addLog("\n[ERROR] 総プレイ数が見つからず解析を中断しました。");
+                if (!startParsing) return addLog("\n[ERROR] GATE NOT FOUND");
 
-                addLog("\n--- (4) CALCULATION LOG ---");
+                await addLog("\n--- (3) CALCULATING LIKELIHOOD ---", 400);
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 extractedData.forEach(d => {
                     if (d.item.active && d.p > 0 && totalG > 0) {
-                        let n = (d.item.id.includes("v") && !d.item.id.includes("seven")) ? Math.round(d.k * d.p) : totalG;
-                        let lineLog = `[${d.item.name.padEnd(6,' ')}] `;
+                        let isRT = d.item.id.includes("v") && (d.item.id.includes("c") || d.item.id.includes("g"));
+                        let n = isRT ? Math.round(d.k * d.p) : totalG;
                         [1,2,5,6].forEach(s => {
                             let prob = 1 / d.item.probs[s];
-                            let L = (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
-                            logLikelihoods[s] += L;
-                            lineLog += `S${s}:${L.toFixed(1)} `;
+                            logLikelihoods[s] += (d.k * Math.log(prob) + (n - d.k) * Math.log(1 - prob)) * d.item.weight;
                         });
-                        addLog(lineLog);
                     }
                 });
+
+                await shuffleResults();
 
                 const max = Math.max(...Object.values(logLikelihoods));
                 const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - max)]));
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0);
                 [1,2,5,6].forEach(s => {
                     let pct = ((exps[s] / sum) * 100).toFixed(1);
-                    document.getElementById(`p${s}`).innerText = pct + "%";
-                    document.getElementById(`b${s}`).style.width = pct + "%";
+                    document.getElementById(`p${s}`).innerText = `${pct}%`;
+                    document.getElementById(`b${s}`).style.width = `${pct}%`;
                 });
-                addLog("\n--- (5) FINAL RESULT ---");
-                addLog(`RESULT: S1:${document.getElementById('p1').innerText} S2:${document.getElementById('p2').innerText} S5:${document.getElementById('p5').innerText} S6:${document.getElementById('p6').innerText}`);
+                await addLog("\n--- (4) FINAL RESULT COMPLETE ---");
             };
         }
 
