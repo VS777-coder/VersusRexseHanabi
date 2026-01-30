@@ -222,20 +222,32 @@
                         }
                     }
 
-                    await addLog(`<br><span class="text-red-500">--- (3) LIKELIHOOD CALC ---</span>`, true, 100);
+                    // --- (3) 尤度計算 & 設定別ログ出力 ---
+                    await addLog(`<br><span class="text-white">--- (3) LIKELIHOOD CALC ---</span>`, true, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
-                    for (const d of extractedData) {
-                        if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
-                            let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
-                            [1,2,5,6].forEach(s => {
-                                let p = 1 / d.item.probs[s];
-                                logLikelihoods[s] += (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
-                            });
-                            // --- 日本語表記（設定1, 2, 5, 6）に改修 ---
-                            let detail = `設定1:${logLikelihoods[1].toFixed(1)} 設定2:${logLikelihoods[2].toFixed(1)} 設定5:${logLikelihoods[5].toFixed(1)} 設定6:${logLikelihoods[6].toFixed(1)}`;
-                            await addLog(`<span class="text-red-500 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | ${detail}</span>`, true, 100);
-                            await updateBars(logLikelihoods);
+                    
+                    const settings = [
+                        { s: 1, label: "設定１", col: "text-cyan-400" },
+                        { s: 2, label: "設定２", col: "text-yellow-400" },
+                        { s: 5, label: "設定５", col: "text-green-400" },
+                        { s: 6, label: "設定６", col: "text-red-500" }
+                    ];
+
+                    for (const setInfo of settings) {
+                        await addLog(`<br><span class="${setInfo.col}">${setInfo.label}を計算中...</span>`, true, 50);
+                        let currentSum = 0;
+                        for (const d of extractedData) {
+                            if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
+                                let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
+                                let p = 1 / d.item.probs[setInfo.s];
+                                let stepLL = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
+                                currentSum += stepLL;
+                                // 指定の日本語形式で出力
+                                await addLog(`<span class="${setInfo.col}">[CALC] ${d.item.name.padEnd(8,' ')} | ΣL(${setInfo.label}): ${currentSum.toFixed(2)}</span>`, true, 20);
+                            }
                         }
+                        logLikelihoods[setInfo.s] = currentSum;
+                        await updateBars(logLikelihoods);
                     }
 
                     await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
