@@ -44,7 +44,6 @@
     </div>
 
     <script>
-        // 定義表は一切変更なし
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -90,6 +89,7 @@
         ];
 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
+        
         async function addLog(msg, delay = 0) {
             const l = document.getElementById('log');
             l.innerText += `\n${msg}`;
@@ -103,15 +103,16 @@
             document.getElementById('log').innerText = "READY...";
             await addLog(">> ANALYSIS STARTING...", 200);
 
-            const reader = new FileReader(); reader.readAsDataURL(file);
+            const reader = new FileReader(); 
+            reader.readAsDataURL(file);
             reader.onload = async () => {
                 const img = new Image();
                 img.src = reader.result;
                 await new Promise(res => img.onload = res);
 
-                // 動的しきい値の計算 (画像の高さの約1%)
-                const dynamicThreshold = Math.max(8, Math.round(img.height * 0.01));
-                await addLog(`[INFO] Dynamic Threshold: ${dynamicThreshold}px (Height:${img.height})`, 100);
+                // 統合しきい値を10pxに固定
+                const dynamicThreshold = 10;
+                await addLog(`[INFO] Threshold: ${dynamicThreshold}px (Fixed)`, 100);
 
                 const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                     method: 'POST', body: JSON.stringify({ requests: [{ image: { content: reader.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -127,8 +128,6 @@
                     let f = rows.find(r => Math.abs(r.y - y) < dynamicThreshold);
                     if (f) {
                         f.words.push(w);
-                        // [LOG] 統合の可視化
-                        // console.debug(`[JOIN] ${w.description} (Y:${y}) -> Row(Y:${f.y})`);
                     } else {
                         rows.push({ y, words: [w] });
                     }
@@ -163,7 +162,6 @@
                         let statusP = "🆗";
                         let posDetail = "pos:ERR";
 
-                        // 双方向チェック (±1行のバッファ = 1〜3行上を走査)
                         for (let offset = 1; offset <= 3; offset++) {
                             const targetIdx = i - offset;
                             if (targetIdx >= 0 && sortedLines[targetIdx].includes("回")) {
@@ -178,20 +176,18 @@
                         }
 
                         extractedData.push({ item, k: cVal, p_ocr: pVal });
-                        // ご指定の全角「：」区切り1行ログ
                         await addLog(`> [${item.name}]：回数: ${cVal}回 (${posDetail}) ${statusK}：確率: 1/${pVal} ${statusP}`, 30);
                         configPtr++;
                     }
                 }
 
                 await addLog("\n--- (4) LIKELIHOOD CALC ---", 200);
-                const rtBigIds = ['vc', 'vg', 'nf', 'bell_center', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
+                const rtIds = ['vc', 'vg', 'nf', 'bell_center', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 
                 for (const d of extractedData) {
                     if (d.item.active && totalG > 0) {
-                        // ❌であっても計算を強行
-                        let n = rtBigIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
+                        let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
                         let lineLog = `[L-CALC] ${d.item.name.padEnd(8,' ')} | n=${String(n).padEnd(5,' ')} `;
                         
                         [1,2,5,6].forEach(s => {
