@@ -63,9 +63,9 @@
             { name: "レギュラーボーナス", id: "rb", active: true, calc: true, weight: 1.0, probs: {1:356.2,2:331,5:306.2,6:280.1} },
             { name: "風鈴合算", id: "bell_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
             { name: "風鈴Ａ", id: "ba", active: true, calc: true, weight: 1.0, probs: {1:15.6,2:15.3,5:15.1,6:14.9} },
-            { name: "風鈴Ｂ", id: "bb_b", active: true, calc: true, weight: 1.0, probs: {1:15.3,2:14.9,5:14.7,6:13.8} },
+            { name: "風鈴Ｂ", id: "bb_b", active: true, calc: true, weight: 1.0, probs: {1:15.3,2:14.9,5:14.7,6:14.3} },
             { name: "氷合算", id: "ice_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
-            { name: "氷Ａ", id: "ice", active: true, calc: true, weight: 1.0, probs: {1:54.6,2:59.6,5:51.2,6:54.6} },
+            { name: "氷Ａ", id: "ice", active: true, calc: true, weight: 1.0, probs: {1:52.9,2:53.5,5:49.6,6:50.8} },
             { name: "氷Ｂ", id: "ice_b", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
             { name: "チェリー合算", id: "cherry_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
             { name: "チェリーＡ１", id: "ca1", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
@@ -88,7 +88,7 @@
             { id: "bell_b", name: "ベルＢ", active: true, weight: 1.0, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, calc: true },
             { id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3}, calc: false },
             { id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, calc: true },
-            { id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1}, calc: true },
+            { id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5}, calc: true },
             { id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3}, calc: false },
             { id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9}, calc: false },
             { id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, calc: true },
@@ -157,7 +157,6 @@
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
 
-                    // (1) THRESHOLD DATA 復活
                     await addLog(`<span class="text-green-500">--- (1) THRESHOLD DATA (Y-POS) ---</span>`, true, 50);
                     for (const [idx, obj] of sortedLines.entries()) {
                         await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
@@ -184,7 +183,6 @@
                     }
                     if (!startParsing) throw new Error("G NOT FOUND");
 
-                    // (2) DATA MAPPING 復活
                     await addLog(`<br><span class="text-pink-400">--- (2) DATA MAPPING (STRICT) ---</span>`, true, 50);
                     let configPtr = 0; let extractedData = [];
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
@@ -193,21 +191,17 @@
                         if (configPtr >= currentConfig.length) break;
                         const line = sortedLines[i].text;
                         const hasProb = line.includes("/") || (line.includes(".") && line.match(/\d/));
-                        
                         if (hasProb) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
-                            
                             if (probMatch) {
                                 let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
                                 let cVal = 0;
                                 let cIdx = -1;
                                 let warning = "";
-
                                 if (i >= 2 && sortedLines[i-2].text.includes("回")) cIdx = i - 2;
                                 else if (i >= 3 && sortedLines[i-3].text.includes("回")) cIdx = i - 3;
                                 else if (i >= 2) { cIdx = i - 2; warning = "⚠️"; }
-
                                 if (cIdx !== -1) {
                                     let cMatch = sortedLines[cIdx].text.match(/([\d,]+)/);
                                     cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
@@ -221,7 +215,6 @@
                         }
                     }
 
-                    // (3) 尤度解析詳細（個別定義表形式）
                     await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) 項目別 尤度解析詳細 ---</span>`, true, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     for (const d of extractedData) {
@@ -246,7 +239,6 @@
                         }
                     }
 
-                    // (4) FINAL RESULT
                     await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
