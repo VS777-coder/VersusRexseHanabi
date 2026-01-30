@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.7</title>
+    <title>ぷりんの解析 Rev 1.2.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.1.7 (FINALE)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.2.7 (HYPHEN FIXED)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -139,8 +139,8 @@
 
                     let currentConfig = null;
                     const fullText = sortedLines.join("");
-                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; await addLog("\n>> TARGET: HANABI 🎆", false, 200); }
-                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; await addLog("\n>> TARGET: VERSUS ⚡", false, 200); }
+                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; await addLog("\n>> MODE: HANABI 🎆", false, 200); }
+                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; await addLog("\n>> MODE: VERSUS ⚡", false, 200); }
                     if (!currentConfig) return await addLog("❌ ERROR: TARGET UNKNOWN.");
 
                     let totalG = 0; let startParsing = false; let startIndex = 0;
@@ -163,11 +163,13 @@
                     let configPtr = 0; let extractedData = [];
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         const line = sortedLines[i];
-                        const hasProb = line.includes("/") || line.includes(".");
+                        // 指示通り：小数点 or 1/- を探す
+                        const hasProb = line.includes("/") || line.includes(".") || line.includes("-");
                         
                         if (hasProb && configPtr < currentConfig.length) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
+                            
                             if (!probMatch) {
                                 await addLog(`<span class="text-red-500 font-bold">❌️ [${item.name}] FAIL: "${line}"</span>`, true, 50);
                                 configPtr++; continue;
@@ -185,6 +187,7 @@
 
                             let kaiLabel = hasKai ? "" : " <span class='text-yellow-400 font-bold'>⚠️「回」欠落</span>";
                             const colorClass = item.calc ? "text-pink-400" : "text-gray-500 opacity-60";
+                            // 閉じタグ </span> を徹底
                             await addLog(`<span class="${colorClass}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回${kaiLabel}`, true, randTime(30, 80));
                             extractedData.push({ item, k: cVal, p_ocr: pVal });
                             configPtr++;
@@ -206,12 +209,12 @@
                                 let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                                 logLikelihoods[s] += L;
                             });
-                            await addLog(lineLog, true, randTime(120, 350));
-                            await updateBars(logLikelihoods); // グラフをヌルヌル動かす
+                            await addLog(lineLog, true, randTime(100, 300));
+                            await updateBars(logLikelihoods);
                         }
                     }
 
-                    // (4) FINAL RESULT (1行集約 & デカ文字)
+                    // (4) FINAL RESULT (1行集約)
                     await addLog("\n--- (4) FINAL RESULT ---", false, 400);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
@@ -222,10 +225,8 @@
                         6: ((finalExps[6]/sumFinal)*100).toFixed(1)
                     };
 
-                    // 1行テキストログ
                     await addLog(`設定1: ${res[1]}% | 設定2: ${res[2]}% | 設定5: ${res[5]}% | 設定6: ${res[6]}%`, false, 100);
 
-                    // デカ文字パネル
                     let resultHtml = `
                     <div class="flex justify-around items-center bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-[14px] text-white my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
                         <div class="text-center"><span class="text-[9px] block text-cyan-400">S1</span>${res[1]}%</div>
