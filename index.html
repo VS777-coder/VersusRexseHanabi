@@ -218,44 +218,4 @@
                     await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) 項目別 尤度解析詳細 ---</span>`, true, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     for (const d of extractedData) {
-                        if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
-                            let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
-                            let itemContribs = { 1:0, 2:0, 5:0, 6:0 };
-                            [1,2,5,6].forEach(s => {
-                                let p = 1 / d.item.probs[s];
-                                let contrib = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
-                                logLikelihoods[s] += contrib;
-                                itemContribs[s] = contrib;
-                            });
-
-                            await addLog(`<div class="mt-2 text-pink-300 font-black bg-pink-900/30 px-2">■解析項目: ${d.item.name}</div>`, true);
-                            await addLog(`<span class="text-cyan-400 ml-2">設定１の尤度計算結果: ${itemContribs[1].toFixed(4)}</span>`, true);
-                            await addLog(`<span class="text-yellow-400 ml-2">設定２の尤度計算結果: ${itemContribs[2].toFixed(4)}</span>`, true);
-                            await addLog(`<span class="text-green-400 ml-2">設定５の尤度計算結果: ${itemContribs[5].toFixed(4)}</span>`, true);
-                            await addLog(`<span class="text-red-500 ml-2">設定６の尤度計算結果: ${itemContribs[6].toFixed(4)}</span>`, true);
-                            
-                            await updateBars(logLikelihoods);
-                            await sleep(20);
-                        }
-                    }
-
-                    await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
-                    const finalExps = await updateBars(logLikelihoods);
-                    const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
-                    let panel = `<div class="flex justify-around bg-slate-900 p-2 border border-red-900 rounded-lg font-black text-sm">`;
-                    [1,2,5,6].forEach(s => {
-                        let pct = ((finalExps[s] / sumFinal) * 100).toFixed(1);
-                        panel += `<div class="text-center"><span class="block text-[10px] opacity-70">設定${s}</span><span class="text-white">${pct}%</span></div>`;
-                    });
-                    panel += `</div>`;
-                    await addLog(panel, true, 100);
-                    await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
-
-                } catch (err) { await addLog(`<span class="text-red-500 font-bold">❌ FATAL ERROR: ${err.message}</span>`, true); }
-            };
-            reader.readAsDataURL(file);
-        }
-        document.getElementById('file-input').onchange = (e) => { if (e.target.files.length > 0) analyze(e.target.files[0]); };
-    </script>
-</body>
-</html>
+                        // ガード条件: 解析フラグがONかつ総回転数があること (p
