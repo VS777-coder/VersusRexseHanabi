@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.2</title>
+    <title>ぷりんの解析 Rev 1.1.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -13,7 +13,7 @@
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.5s ease-out; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.1.2 (PRO ANALYZER)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.1.7 (FINALE)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -105,8 +105,8 @@
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) return alert('API KEY missing');
-            document.getElementById('log').innerText = ">> BOOTING ANALYZER...";
-            await sleep(500);
+            document.getElementById('log').innerText = ">> INITIALIZING...";
+            await sleep(300);
 
             const reader = new FileReader(); 
             reader.readAsDataURL(file);
@@ -134,13 +134,13 @@
                     // (1) THRESHOLD DATA (緑)
                     await addLog("\n--- (1) THRESHOLD DATA (10px) ---", false, 100);
                     for (const [idx, line] of sortedLines.entries()) {
-                        await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}] ${line}</span>`, true, randTime(5, 15));
+                        await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}] ${line}</span>`, true, 10);
                     }
 
                     let currentConfig = null;
                     const fullText = sortedLines.join("");
-                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; await addLog("\n>> MODE: HANABI 🎆", false, 300); }
-                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; await addLog("\n>> MODE: VERSUS ⚡", false, 300); }
+                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; await addLog("\n>> TARGET: HANABI 🎆", false, 200); }
+                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; await addLog("\n>> TARGET: VERSUS ⚡", false, 200); }
                     if (!currentConfig) return await addLog("❌ ERROR: TARGET UNKNOWN.");
 
                     let totalG = 0; let startParsing = false; let startIndex = 0;
@@ -151,12 +151,12 @@
                             if (gMatch) {
                                 totalG = parseInt(gMatch[1].replace(/,/g, ''));
                                 startParsing = true; startIndex = i;
-                                await addLog(`[INIT] BASE: ${totalG}G 🆗`, false, 200);
+                                await addLog(`[START] TotalG: ${totalG}G 🆗`, false, 200);
                                 break;
                             }
                         }
                     }
-                    if (!startParsing) return await addLog("❌ ERROR: BASE_COUNT NOT FOUND.");
+                    if (!startParsing) return await addLog("❌ ERROR: BASE_COUNT NOT DETECTED.");
 
                     // (2) DATA MAPPING (ピンク/水色)
                     await addLog("\n--- (2) DATA MAPPING ---", false, 100);
@@ -168,7 +168,6 @@
                         if (hasProb && configPtr < currentConfig.length) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
-                            
                             if (!probMatch) {
                                 await addLog(`<span class="text-red-500 font-bold">❌️ [${item.name}] FAIL: "${line}"</span>`, true, 50);
                                 configPtr++; continue;
@@ -176,57 +175,65 @@
 
                             let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
                             let cVal = 0; let hasKai = false;
-
                             for (let offset = 1; offset <= 3; offset++) {
-                                const targetIdxLine = i - offset;
-                                if (targetIdxLine >= 0 && sortedLines[targetIdxLine].includes("回")) {
-                                    let cMatch = sortedLines[targetIdxLine].match(/([\d,]+)/);
+                                const tIdx = i - offset;
+                                if (tIdx >= 0 && sortedLines[tIdx].includes("回")) {
+                                    let cMatch = sortedLines[tIdx].match(/([\d,]+)/);
                                     if (cMatch) { cVal = parseInt(cMatch[1].replace(/,/g, '')); hasKai = true; break; }
                                 }
                             }
 
                             let kaiLabel = hasKai ? "" : " <span class='text-yellow-400 font-bold'>⚠️「回」欠落</span>";
-                            const colorClass = item.calc ? "text-pink-400" : "text-gray-500 opacity-70";
-                            
-                            await addLog(`<span class="${colorClass}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回${kaiLabel}`, true, randTime(40, 90));
+                            const colorClass = item.calc ? "text-pink-400" : "text-gray-500 opacity-60";
+                            await addLog(`<span class="${colorClass}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回${kaiLabel}`, true, randTime(30, 80));
                             extractedData.push({ item, k: cVal, p_ocr: pVal });
                             configPtr++;
                         } else if (!hasProb && !line.includes("回")) {
-                            await addLog(`<span class="text-gray-500 opacity-40">[SKIP] ${line}</span>`, true, 5);
+                            await addLog(`<span class="text-gray-500 opacity-30">[SKIP] ${line}</span>`, true, 5);
                         }
                     }
 
-                    // (3) LIKELIHOOD CALC (赤太字)
+                    // (3) LIKELIHOOD CALC (赤太字) & リアルタイム更新
                     await addLog("\n--- (3) LIKELIHOOD CALC ---", false, 200);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                     for (const d of extractedData) {
                         if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
                             let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
-                            let lineLog = `<span class="text-red-600 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | n=${String(n).padEnd(5,' ')} </span>`;
+                            let lineLog = `<span class="text-red-600 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | n=${String(n).padEnd(5,' ')}</span>`;
                             [1,2,5,6].forEach(s => {
                                 let p = 1 / d.item.probs[s];
                                 let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                                 logLikelihoods[s] += L;
                             });
-                            await addLog(lineLog, true, randTime(150, 400));
-                            await updateBars(logLikelihoods);
+                            await addLog(lineLog, true, randTime(120, 350));
+                            await updateBars(logLikelihoods); // グラフをヌルヌル動かす
                         }
                     }
 
-                    // (4) FINAL RESULT (横並び)
-                    await addLog("\n--- (4) FINAL RESULT ---", false, 500);
+                    // (4) FINAL RESULT (1行集約 & デカ文字)
+                    await addLog("\n--- (4) FINAL RESULT ---", false, 400);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
-                    
-                    let resultLine = `<div class="flex justify-around bg-slate-900 p-2 border border-red-900 rounded-lg font-black text-sm">`;
-                    [1,2,5,6].forEach(s => {
-                        let pct = ((finalExps[s] / sumFinal) * 100).toFixed(1);
-                        resultLine += `<div class="text-center"><span class="block text-[10px] opacity-70">S${s}</span><span class="text-white">${pct}%</span></div>`;
-                        addLog(`設定${s}: ${pct}%`);
-                    });
-                    resultLine += `</div>`;
-                    await addLog(resultLine, true, 100);
+                    const res = {
+                        1: ((finalExps[1]/sumFinal)*100).toFixed(1),
+                        2: ((finalExps[2]/sumFinal)*100).toFixed(1),
+                        5: ((finalExps[5]/sumFinal)*100).toFixed(1),
+                        6: ((finalExps[6]/sumFinal)*100).toFixed(1)
+                    };
+
+                    // 1行テキストログ
+                    await addLog(`設定1: ${res[1]}% | 設定2: ${res[2]}% | 設定5: ${res[5]}% | 設定6: ${res[6]}%`, false, 100);
+
+                    // デカ文字パネル
+                    let resultHtml = `
+                    <div class="flex justify-around items-center bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-[14px] text-white my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+                        <div class="text-center"><span class="text-[9px] block text-cyan-400">S1</span>${res[1]}%</div>
+                        <div class="text-center"><span class="text-[9px] block text-yellow-400">S2</span>${res[2]}%</div>
+                        <div class="text-center"><span class="text-[9px] block text-green-400">S5</span>${res[5]}%</div>
+                        <div class="text-center"><span class="text-[9px] block text-red-500">S6</span>${res[6]}%</div>
+                    </div>`;
+                    await addLog(resultHtml, true, 200);
                     await addLog("\n>> ANALYSIS COMPLETE.", false, 100);
 
                 } catch (e) { await addLog(`❌ FATAL ERROR: ${e.message}`); }
