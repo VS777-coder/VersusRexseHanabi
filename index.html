@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.2</title>
+    <title>ぷりんの解析 Rev 1.5.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.2 (PERFECT FIX)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.4 (NUMERIC FIRST)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,7 +44,6 @@
     </div>
 
     <script>
-        // CONFIG定義 (省略なし)
         const HANABI_CONFIG = [
             { name: "ボーナス合算", id: "total_b", active: true, calc: false, weight: 0.0, probs: {1:156,2:148.3,5:139.4,6:131.6} },
             { name: "ビックボーナス", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:277.7,2:268.6,5:256,6:248.2} },
@@ -82,9 +81,7 @@
         ];
 
         const sleep = ms => new Promise(res => setTimeout(res, ms));
-        const randTime = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-        // APIキー永続化
         window.onload = () => {
             const saved = localStorage.getItem('MIO_STABLE_KEY');
             if (saved) document.getElementById('api-key').value = saved;
@@ -94,7 +91,6 @@
             alert('KEY SAVED');
         };
 
-        // ログ出力 (色漏れを確実に防ぐため一行ごとにdivで包む)
         async function addLog(msg, isHtml = false, delay = 0) {
             const l = document.getElementById('log');
             const entry = document.createElement('div');
@@ -126,7 +122,7 @@
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    await addLog(">> IMAGE DATA FETCHING...", false, 100);
+                    await addLog(">> IMAGE FETCHING...", false, 100);
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
                         body: JSON.stringify({ requests: [{ image: { content: e.target.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -146,7 +142,6 @@
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
 
-                    // (1) 生データ出力 (座標復活)
                     await addLog("\n--- (1) THRESHOLD DATA (Y-POS) ---", false, 100);
                     for (const [idx, obj] of sortedLines.entries()) {
                         await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
@@ -170,7 +165,6 @@
                     if (totalG === 0) throw new Error("G NOT DETECTED");
                     await addLog(`>> TotalG: ${totalG}G`, false, 100);
 
-                    // (2) MAPPING (物理同期・警告)
                     await addLog("\n--- (2) DATA MAPPING ---", false, 50);
                     let configPtr = 0; let extractedData = [];
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
@@ -182,11 +176,20 @@
                                 if (probMatch) {
                                     let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
                                     let cVal = 0; let hasKai = false;
+                                    
+                                    // 【修正】数字があれば取る。「回」は検品のみ。
                                     for (let offset = 1; offset <= 3; offset++) {
                                         const tIdx = i - offset;
-                                        if (tIdx >= 0 && sortedLines[tIdx].text.includes("回")) {
-                                            let cMatch = sortedLines[tIdx].text.match(/([\d,]+)/);
-                                            if (cMatch) { cVal = parseInt(cMatch[1].replace(/,/g, '')); hasKai = true; break; }
+                                        if (tIdx >= 0) {
+                                            const cand = sortedLines[tIdx].text;
+                                            if (cand.match(/[\d,]+/) && !cand.includes("/")) {
+                                                let cMatch = cand.match(/([\d,]+)/);
+                                                if (cMatch) { 
+                                                    cVal = parseInt(cMatch[1].replace(/,/g, ''));
+                                                    hasKai = cand.includes("回"); 
+                                                    break; 
+                                                }
+                                            }
                                         }
                                     }
                                     const col = item.calc ? "text-pink-400" : "text-gray-500";
@@ -199,7 +202,6 @@
                         }
                     }
 
-                    // (3) CALC (尤度可視化)
                     await addLog("\n--- (3) CALC DETAIL ---", false, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
@@ -211,20 +213,18 @@
                                 let p = 1 / d.item.probs[s];
                                 let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                                 logLikelihoods[s] += L;
-                                sumL += L; // デバッグ用に簡易合算
+                                sumL += L;
                             });
                             await addLog(`<span class="text-red-600 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | L_sum: ${sumL.toFixed(2)} | ΣL: ${logLikelihoods[6].toFixed(2)}</span>`, true, 100);
                             await updateBars(logLikelihoods);
                         }
                     }
 
-                    // (4) FINAL (1行パネル)
                     await addLog("\n--- (4) FINAL RESULT ---", false, 300);
                     const f = await updateBars(logLikelihoods);
-                    // 【修正】全ての数値を1つの文字列にまとめて1回だけ出力
-                    const panelStr = `<div class="flex justify-around bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-white text-[11px] my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]">` +
+                    const panel = `<div class="flex justify-around bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-white text-[11px] my-2">` +
                         `<div>S1:${f[1]}%</div><div>S2:${f[2]}%</div><div>S5:${f[5]}%</div><div>S6:${f[6]}%</div></div>`;
-                    await addLog(panelStr, true, 200);
+                    await addLog(panel, true, 200);
                     await addLog("\n>> ANALYSIS COMPLETE.", false, 100);
 
                 } catch (err) { await addLog(`❌ FATAL: ${err.message}`, false); }
