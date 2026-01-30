@@ -38,7 +38,7 @@
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-md mx-auto result-card">
+    <div class="w-full max-w-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -88,7 +88,7 @@
             { id: "bell_b", name: "ベルＢ", active: true, weight: 1.0, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6}, calc: true },
             { id: "suika_total", name: "スイカ合算", active: false, weight: 0.0, probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3}, calc: false },
             { id: "suika_a", name: "スイカＡ", active: true, weight: 1.0, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8}, calc: true },
-            { id: "suika_b", name: "スイカＢ", active: true, weight: 1.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1}, calc: true },
+            { id: "suika_b", name: "スイカＢ", active: true, weight: 0.0, probs: {1: 218.5, 2: 219.2, 5: 217.9, 6: 218.1}, calc: false },
             { id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3}, calc: false },
             { id: "cherry_a", name: "チェリーＡ", active: false, weight: 0.0, probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9}, calc: false },
             { id: "cherry_b", name: "チェリーＢ", active: true, weight: 1.0, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4}, calc: true },
@@ -129,7 +129,6 @@
             return exps;
         }
 
-        // --- 設定表示を強制リセット（0%）にする関数 ---
         function resetResult() {
             [1,2,5,6].forEach(s => {
                 document.getElementById(`p${s}`).innerText = `0.0%`;
@@ -141,6 +140,7 @@
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY missing"); return; }
             document.getElementById('log').innerText = ">> BOOTING ANALYZER...";
+            resetResult();
             await sleep(500);
 
             const reader = new FileReader();
@@ -231,7 +231,9 @@
                                 let p = 1 / d.item.probs[s];
                                 logLikelihoods[s] += (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                             });
-                            await addLog(`<span class="text-red-500 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | ΣL(S6): ${logLikelihoods[6].toFixed(2)}</span>`, true, 100);
+                            // --- 日本語表記（設定1, 2, 5, 6）に改修 ---
+                            let detail = `設定1:${logLikelihoods[1].toFixed(1)} 設定2:${logLikelihoods[2].toFixed(1)} 設定5:${logLikelihoods[5].toFixed(1)} 設定6:${logLikelihoods[6].toFixed(1)}`;
+                            await addLog(`<span class="text-red-500 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | ${detail}</span>`, true, 100);
                             await updateBars(logLikelihoods);
                         }
                     }
@@ -250,7 +252,6 @@
                     await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
 
                 } catch (err) { 
-                    // --- FATALエラー時に設定表示を0%に強制リセット ---
                     resetResult();
                     await addLog(`<span class="text-red-500 font-bold">❌ FATAL ERROR: ${err.message}</span>`, true); 
                 }
