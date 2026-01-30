@@ -8,14 +8,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        /* タイトルを1行で最大化するための設定 */
         .kawaii-title { 
             font-family: 'M PLUS Rounded 1c', sans-serif; 
             background: linear-gradient(45deg, #ff7eb3, #ff758c); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
             filter: drop-shadow(0 0 5px rgba(255,126,179,0.3));
-            font-size: 9.5vw; /* スマフォ横幅に対して最大化 */
+            font-size: 9.5vw;
             white-space: nowrap;
             line-height: 1.1;
         }
@@ -35,11 +34,11 @@
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行</label>
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ<br>解析実行</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card">
+    <div class="w-full max-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -130,6 +129,14 @@
             return exps;
         }
 
+        // --- 設定表示を強制リセット（0%）にする関数 ---
+        function resetResult() {
+            [1,2,5,6].forEach(s => {
+                document.getElementById(`p${s}`).innerText = `0.0%`;
+                document.getElementById(`b${s}`).style.width = `0%`;
+            });
+        }
+
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY missing"); return; }
@@ -190,47 +197,25 @@
 
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         if (configPtr >= currentConfig.length) break;
-
                         const line = sortedLines[i].text;
                         const hasProb = line.includes("/") || (line.includes(".") && line.match(/\d/));
-                        
                         if (hasProb) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
-                            
                             if (probMatch) {
                                 let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                                
-                                let cVal = 0;
-                                let cIdx = -1;
-                                let warning = "";
-
-                                if (i >= 2 && sortedLines[i-2].text.includes("回")) {
-                                    cIdx = i - 2;
-                                } 
-                                else if (i >= 3 && sortedLines[i-3].text.includes("回")) {
-                                    cIdx = i - 3;
-                                } 
-                                else if (i >= 2) {
-                                    cIdx = i - 2;
-                                    warning = "⚠️";
-                                }
-
+                                let cVal = 0; let cIdx = -1; let warning = "";
+                                if (i >= 2 && sortedLines[i-2].text.includes("回")) { cIdx = i - 2; } 
+                                else if (i >= 3 && sortedLines[i-3].text.includes("回")) { cIdx = i - 3; } 
+                                else if (i >= 2) { cIdx = i - 2; warning = "⚠️"; }
                                 if (cIdx !== -1) {
                                     let cMatch = sortedLines[cIdx].text.match(/([\d,]+)/);
                                     cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
-                                    
                                     let errorMark = "";
-                                    if (cIdx + 2 !== i) {
-                                        errorMark = "❌";
-                                    }
-
+                                    if (cIdx + 2 !== i) { errorMark = "❌"; }
                                     const colClass = item.calc ? "text-purple-500" : "text-pink-400";
                                     await addLog(`${errorMark}${warning}<span class="${colClass}">[${item.name}] 回数:${cVal} / 確率:${line}</span>`, true, 40);
-                                    
-                                    if (errorMark === "") {
-                                        extractedData.push({ item, k: cVal, p_ocr: pVal });
-                                    }
+                                    if (errorMark === "") { extractedData.push({ item, k: cVal, p_ocr: pVal }); }
                                 }
                                 configPtr++;
                             }
@@ -264,7 +249,11 @@
                     await addLog(panel, true, 100);
                     await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
 
-                } catch (err) { await addLog(`<span class="text-red-500 font-bold">❌ FATAL ERROR: ${err.message}</span>`, true); }
+                } catch (err) { 
+                    // --- FATALエラー時に設定表示を0%に強制リセット ---
+                    resetResult();
+                    await addLog(`<span class="text-red-500 font-bold">❌ FATAL ERROR: ${err.message}</span>`, true); 
+                }
             };
             reader.readAsDataURL(file);
         }
