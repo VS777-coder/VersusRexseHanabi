@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.4</title>
+    <title>ぷりんの解析 Rev 1.5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
         body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); }
         .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; line-height: 1.2; }
         .main-btn:active { transform: scale(0.95); }
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.4 (NUMERIC FIRST)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.5 (SYNC FIXED)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -117,12 +117,11 @@
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY?"); return; }
-            document.getElementById('log').innerText = ">> ANALYZER BOOTED";
+            document.getElementById('log').innerText = ">> BOOTING ANALYZER...";
 
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
-                    await addLog(">> IMAGE FETCHING...", false, 100);
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
                         body: JSON.stringify({ requests: [{ image: { content: e.target.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -142,7 +141,7 @@
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
 
-                    await addLog("\n--- (1) THRESHOLD DATA (Y-POS) ---", false, 100);
+                    await addLog("--- (1) THRESHOLD DATA (Y-POS) ---", false, 100);
                     for (const [idx, obj] of sortedLines.entries()) {
                         await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
                     }
@@ -152,7 +151,6 @@
                     if (fullText.match(/ハナビ|ドン|花火/)) currentConfig = HANABI_CONFIG;
                     else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
                     if (!currentConfig) throw new Error("TARGET UNKNOWN");
-                    await addLog(`\n>> TARGET: ${fullText.includes("ハナビ")?"HANABI":"VERSUS"} 🆗`, false, 200);
 
                     let totalG = 0; let startIndex = 0;
                     for (let i = 0; i < Math.min(sortedLines.length, 35); i++) {
@@ -162,8 +160,8 @@
                             if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); startIndex = i; break; }
                         }
                     }
-                    if (totalG === 0) throw new Error("G NOT DETECTED");
-                    await addLog(`>> TotalG: ${totalG}G`, false, 100);
+                    if (totalG === 0) throw new Error("G NOT FOUND");
+                    await addLog(`\n>> TARGET: ${fullText.includes("ハナビ")?"HANABI":"VERSUS"} | TotalG: ${totalG}G`, false, 100);
 
                     await addLog("\n--- (2) DATA MAPPING ---", false, 50);
                     let configPtr = 0; let extractedData = [];
@@ -177,12 +175,12 @@
                                     let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
                                     let cVal = 0; let hasKai = false;
                                     
-                                    // 【修正】数字があれば取る。「回」は検品のみ。
-                                    for (let offset = 1; offset <= 3; offset++) {
+                                    // 【修正】ピンポイントで2行上を狙う
+                                    for (let offset = 2; offset <= 3; offset++) {
                                         const tIdx = i - offset;
                                         if (tIdx >= 0) {
                                             const cand = sortedLines[tIdx].text;
-                                            if (cand.match(/[\d,]+/) && !cand.includes("/")) {
+                                            if (!cand.includes("/") && cand.match(/[\d,]+/)) {
                                                 let cMatch = cand.match(/([\d,]+)/);
                                                 if (cMatch) { 
                                                     cVal = parseInt(cMatch[1].replace(/,/g, ''));
@@ -204,14 +202,12 @@
 
                     await addLog("\n--- (3) CALC DETAIL ---", false, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
-                    const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                     for (const d of extractedData) {
                         if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
-                            let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
                             let sumL = 0;
                             [1,2,5,6].forEach(s => {
                                 let p = 1 / d.item.probs[s];
-                                let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
+                                let L = (d.k * Math.log(p) + (totalG - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                                 logLikelihoods[s] += L;
                                 sumL += L;
                             });
