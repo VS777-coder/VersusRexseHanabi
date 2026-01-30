@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.5</title>
+    <title>ぷりんの解析 Rev 1.5.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -14,14 +14,14 @@
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; box-shadow: inset 0 0 10px rgba(255,117,140,0.1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.5 (STABLE FINAL)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.5.7 (FIXED)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,33 +44,32 @@
     </div>
 
     <script>
-        // --- 必須ユーティリティ (これが消えてた) ---
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         const randTime = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
         const HANABI_CONFIG = [
-            { name: "ビックボーナス", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:277.7,2:268.6,5:256,6:248.2} },
-            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, weight: 1.0, probs: {1:356.2,2:331,5:306.2,6:280.1} },
-            { name: "風鈴Ａ", id: "ba", active: true, calc: true, weight: 1.0, probs: {1:15.6,2:15.3,5:15.1,6:14.9} },
-            { name: "風鈴Ｂ", id: "bb_b", active: true, calc: true, weight: 1.0, probs: {1:15.3,2:14.9,5:14.7,6:13.8} },
-            { name: "氷Ａ", id: "ice", active: true, calc: true, weight: 1.0, probs: {1:54.6,2:59.6,5:51.2,6:54.6} },
-            { name: "チェリーＡ２", id: "ca2", active: true, calc: true, weight: 1.0, probs: {1:21,2:19.3,5:20.6,6:19.9} },
-            { name: "チェリーＢ", id: "cb", active: true, calc: true, weight: 1.0, probs: {1:282.5,2:281.3,5:276.5,6:274.2} },
-            { name: "ハナビチャレンジ中はずれ", id: "vc", active: true, calc: true, weight: 1.0, probs: {1:6.6,2:6.2,5:5.8,6:5.3} },
-            { name: "ハナビゲーム中はずれ", id: "vg", active: true, calc: true, weight: 1.0, probs: {1:11.7,2:10.8,5:10,6:9.4} },
-            { name: "斜め風鈴", id: "nf", active: true, calc: true, weight: 1.0, probs: {1:11,2:9,5:11,6:9} }
+            { name: "ビックボーナス", id: "bb", calc: true, weight: 1.0, probs: {1:277.7,2:268.6,5:256,6:248.2} },
+            { name: "レギュラーボーナス", id: "rb", calc: true, weight: 1.0, probs: {1:356.2,2:331,5:306.2,6:280.1} },
+            { name: "風鈴Ａ", id: "ba", calc: true, weight: 1.0, probs: {1:15.6,2:15.3,5:15.1,6:14.9} },
+            { name: "風鈴Ｂ", id: "bb_b", calc: true, weight: 1.0, probs: {1:15.3,2:14.9,5:14.7,6:13.8} },
+            { name: "氷Ａ", id: "ice", calc: true, weight: 1.0, probs: {1:54.6,2:59.6,5:51.2,6:54.6} },
+            { name: "チェリーＡ２", id: "ca2", calc: true, weight: 1.0, probs: {1:21,2:19.3,5:20.6,6:19.9} },
+            { name: "チェリーＢ", id: "cb", calc: true, weight: 1.0, probs: {1:282.5,2:281.3,5:276.5,6:274.2} },
+            { name: "ハナビチャレンジ中はずれ", id: "vc", calc: true, weight: 1.0, probs: {1:6.6,2:6.2,5:5.8,6:5.3} },
+            { name: "ハナビゲーム中はずれ", id: "vg", calc: true, weight: 1.0, probs: {1:11.7,2:10.8,5:10,6:9.4} },
+            { name: "斜め風鈴", id: "nf", calc: true, weight: 1.0, probs: {1:11,2:9,5:11,6:9} }
         ];
 
         const VERSUS_CONFIG = [
-            { name: "ビックボーナス合算", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:292.6,2:284.9,5:275.4,6:264.3} },
-            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, weight: 1.0, probs: {1:374.5,2:341.3,5:319.7,6:292.6} },
-            { name: "ベルＡ", id: "bell_a", active: true, calc: true, weight: 1.0, probs: {1:10.9,2:10.7,5:10.5,6:10.2} },
-            { name: "ベルＢ", id: "bell_b", active: true, calc: true, weight: 1.0, probs: {1:20.9,2:21.2,5:20.3,6:20.6} },
-            { name: "スイカＡ", id: "suika_a", active: true, calc: true, weight: 1.0, probs: {1:74.5,2:70.6,5:72.5,6:68.8} },
-            { name: "スイカＢ", id: "suika_b", active: true, calc: true, weight: 1.0, probs: {1:218.5,2:219.2,5:217.9,6:218.1} },
-            { name: "チェリーＢ", id: "cherry_b", active: true, calc: true, weight: 1.0, probs: {1:56.2,2:57.7,5:53.1,6:54.4} },
-            { name: "バーサスチャンスはずれ", id: "vc_miss", active: true, calc: true, weight: 1.0, probs: {1:5,2:4.9,5:4.6,6:4.5} },
-            { name: "バーサスゲームはずれ", id: "vg_miss", active: true, calc: true, weight: 1.0, probs: {1:10.1,2:9.4,5:8.7,6:8.1} }
+            { name: "ビックボーナス合算", id: "bb", calc: true, weight: 1.0, probs: {1:292.6,2:284.9,5:275.4,6:264.3} },
+            { name: "レギュラーボーナス", id: "rb", calc: true, weight: 1.0, probs: {1:374.5,2:341.3,5:319.7,6:292.6} },
+            { name: "ベルＡ", id: "bell_a", calc: true, weight: 1.0, probs: {1:10.9,2:10.7,5:10.5,6:10.2} },
+            { name: "ベルＢ", id: "bell_b", calc: true, weight: 1.0, probs: {1:20.9,2:21.2,5:20.3,6:20.6} },
+            { name: "スイカＡ", id: "suika_a", calc: true, weight: 1.0, probs: {1:74.5,2:70.6,5:72.5,6:68.8} },
+            { name: "スイカＢ", id: "suika_b", calc: true, weight: 1.0, probs: {1:218.5,2:219.2,5:217.9,6:218.1} },
+            { name: "チェリーＢ", id: "cherry_b", calc: true, weight: 1.0, probs: {1:56.2,2:57.7,5:53.1,6:54.4} },
+            { name: "バーサスチャンスはずれ", id: "vc_miss", calc: true, weight: 1.0, probs: {1:5,2:4.9,5:4.6,6:4.5} },
+            { name: "バーサスゲームはずれ", id: "vg_miss", calc: true, weight: 1.0, probs: {1:10.1,2:9.4,5:8.7,6:8.1} }
         ];
 
         window.onload = () => {
@@ -93,7 +92,6 @@
 
         async function updateBars(logLikelihoods) {
             const maxLL = Math.max(...Object.values(logLikelihoods));
-            // 指数オーバーフロー対策: maxLLを引いてからexpをとる
             const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - maxLL)]));
             const sumExps = Object.values(exps).reduce((a,b)=>a+b, 0);
             let res = {};
@@ -120,7 +118,7 @@
                         body: JSON.stringify({ requests: [{ image: { content: e.target.result.split(',')[1] }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
                     });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.error?.message || "API ERROR");
+                    if (!response.ok) throw new Error(data.error?.message || "API Error");
                     const raw = data.responses[0]?.textAnnotations;
                     if (!raw) throw new Error("OCR FAIL");
 
@@ -155,7 +153,7 @@
                         }
                     }
                     if (totalG === 0) throw new Error("G NOT FOUND");
-                    await addLog(`\n>> TARGET: ${fullText.includes("ハナビ")?"HANABI":"VERSUS"} | TotalG: ${totalG}G`, false, 200);
+                    await addLog(`\n>> TARGET: ${fullText.includes("ハナビ")?"HANABI":"VERSUS"} | TotalG: ${totalG}G`, false, 100);
 
                     await addLog("\n--- (2) DATA MAPPING ---", false, 50);
                     let configPtr = 0; let extractedData = [];
@@ -167,6 +165,10 @@
                                 let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
                                 if (probMatch) {
                                     let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
+                                    
+                                    // 物理同期チェック（妥当性確認）
+                                    if (pVal > totalG && configPtr < 2) continue; // 総ボーナス等の誤爆回避
+
                                     let cVal = 0; let hasKai = false;
                                     for (let offset = 1; offset <= 3; offset++) {
                                         const tIdx = i - offset;
@@ -192,15 +194,12 @@
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     for (const d of extractedData) {
                         if (d.item.calc && totalG > 0 && d.p_ocr > 0 && d.k <= totalG) {
-                            let n = totalG; // 簡易化。RT等の詳細nが必要なら後日。
-                            let sumL = 0;
+                            let n = totalG;
                             [1,2,5,6].forEach(s => {
                                 let p = 1 / d.item.probs[s];
-                                let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
-                                logLikelihoods[s] += L;
-                                sumL += L;
+                                logLikelihoods[s] += (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p));
                             });
-                            await addLog(`<span class="text-red-600 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | L_sum: ${sumL.toFixed(2)} | ΣL(S6): ${logLikelihoods[6].toFixed(2)}</span>`, true, 100);
+                            await addLog(`<span class="text-red-600 font-bold">[CALC] ${d.item.name.padEnd(8,' ')} | ΣL(S6): ${logLikelihoods[6].toFixed(2)}</span>`, true, 100);
                             await updateBars(logLikelihoods);
                         }
                     }
@@ -209,10 +208,10 @@
                     const f = await updateBars(logLikelihoods);
                     const panel = `<div class="flex justify-around bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-white text-[11px] my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]">` +
                         `<div>S1:${f[1]}%</div><div>S2:${f[2]}%</div><div>S5:${f[5]}%</div><div>S6:${f[6]}%</div></div>`;
-                    await addLog(panel, true, 200);
+                    await addLog(panel, true, 100);
                     await addLog("\n>> ANALYSIS COMPLETE.", false, 100);
 
-                } catch (err) { await addLog(`<span class="text-red-500 font-bold">❌ FATAL: ${err.message}</span>`, true); }
+                } catch (err) { await addLog(`❌ FATAL: ${err.message}`, false); }
             };
             reader.readAsDataURL(file);
         }
