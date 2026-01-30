@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.4.6</title>
+    <title>ぷりんの解析 Rev 1.4.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.4.6 (FINAL STABLE)</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.4.7 (STABLE)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -83,61 +83,63 @@
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         const randTime = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-        // キーの読み込みと保存
         window.onload = () => {
-            const savedKey = localStorage.getItem('v_api_key_v_146');
-            if (savedKey) document.getElementById('api-key').value = savedKey;
+            const saved = localStorage.getItem('v_api_key_v_147');
+            if (saved) document.getElementById('api-key').value = saved;
         };
 
         document.getElementById('save-key').onclick = () => {
             const val = document.getElementById('api-key').value.trim();
-            localStorage.setItem('v_api_key_v_146', val);
-            alert('API KEY を保存しました。');
+            localStorage.setItem('v_api_key_v_147', val);
+            alert('保存しました。');
         };
 
         async function addLog(msg, isHtml = false, delay = 0) {
             const l = document.getElementById('log');
-            if (isHtml) { l.innerHTML += `\n${msg}`; } else { l.innerText += `\n${msg}`; }
+            if (isHtml) { 
+                l.innerHTML += (l.innerHTML ? "\n" : "") + msg; 
+            } else { 
+                l.innerText += (l.innerText ? "\n" : "") + msg; 
+            }
             l.scrollTop = l.scrollHeight;
             if (delay > 0) await sleep(delay);
         }
 
-        // グラフと上部数値を更新する（ログ出力なし）
         async function updateBars(logLikelihoods) {
             const maxLL = Math.max(...Object.values(logLikelihoods));
             const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - maxLL)]));
             const sumExps = Object.values(exps).reduce((a,b)=>a+b, 0);
             
-            let currentPct = {};
+            let res = {};
             [1,2,5,6].forEach(s => {
                 const pct = ((exps[s] / sumExps) * 100).toFixed(1);
                 document.getElementById(`p${s}`).innerText = `${pct}%`;
                 document.getElementById(`b${s}`).style.width = `${pct}%`;
-                currentPct[s] = pct;
+                res[s] = pct;
             });
-            return currentPct;
+            return res;
         }
 
         async function analyze(file) {
             const key = document.getElementById('api-key').value.trim();
+            if (!key) { alert("API KEY を入力してください"); return; }
+            
             const logBox = document.getElementById('log');
             logBox.innerText = ">> ANALYSIS STARTING...";
-            if (!key) { await addLog("<span class='text-red-500 font-bold'>❌ ERROR: API KEY が未入力です。</span>", true); return; }
 
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
                     await addLog(">> IMAGE DATA LOADED.", false, 100);
                     const base64 = e.target.result.split(',')[1];
-                    await addLog(">> SENDING TO CLOUD VISION...", false, 100);
-                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
                         body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
                     });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error?.message || "API Error");
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error?.message || "API Error");
                     const raw = data.responses[0]?.textAnnotations;
-                    if (!raw) throw new Error("テキストが検出できません。");
+                    if (!raw) throw new Error("テキスト検出不可");
 
                     const rawWords = raw.slice(1);
                     let rows = [];
@@ -150,66 +152,62 @@
                         return r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ");
                     });
 
-                    // (1) 生データ出力
                     await addLog("\n--- (1) THRESHOLD DATA (10px) ---", false, 100);
                     for (const [idx, line] of sortedLines.entries()) {
                         await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}] ${line}</span>`, true, 10);
                     }
 
-                    // 機種判定
                     let currentConfig = null;
                     const fullText = sortedLines.join("");
-                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; await addLog("\n>> TARGET: HANABI 🎆", false, 200); }
-                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; await addLog("\n>> TARGET: VERSUS ⚡", false, 200); }
+                    if (fullText.match(/ハナビ|ドン|花火/)) { currentConfig = HANABI_CONFIG; }
+                    else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) { currentConfig = VERSUS_CONFIG; }
                     if (!currentConfig) throw new Error("機種特定不可");
+                    await addLog(`\n>> TARGET: ${fullText.includes("ハナビ") ? "HANABI 🎆" : "VERSUS ⚡"}`, false, 200);
 
-                    // 総プレイ数取得
-                    let totalG = 0; let startParsing = false; let startIndex = 0;
+                    let totalG = 0; let startIndex = 0;
                     for (let i = 0; i < Math.min(sortedLines.length, 30); i++) {
                         const line = sortedLines[i].replace(/\s/g, '');
                         if (line.includes("総プレイ数") && line.match(/[GＧ]/)) {
                             let gMatch = line.match(/([\d,]+)/);
                             if (gMatch) {
                                 totalG = parseInt(gMatch[1].replace(/,/g, ''));
-                                startParsing = true; startIndex = i;
+                                startIndex = i;
                                 await addLog(`[START] TotalG: ${totalG}G 🆗`, false, 200);
                                 break;
                             }
                         }
                     }
-                    if (!startParsing) throw new Error("総プレイ数未検出");
+                    if (totalG === 0) throw new Error("総プレイ数未検出");
 
-                    // (2) 物理同期マッピング
                     await addLog("\n--- (2) DATA MAPPING ---", false, 100);
                     let configPtr = 0; let extractedData = [];
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         const line = sortedLines[i];
-                        const hasProb = line.includes("/") || line.includes(".") || line.includes("-");
-                        if (hasProb && configPtr < currentConfig.length) {
-                            const item = currentConfig[configPtr];
-                            let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
-                            if (!probMatch) { 
-                                await addLog(`<span class="text-red-500">❌ [${item.name}] FAIL: "${line}"</span>`, true);
-                                configPtr++; continue;
-                            }
-                            let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                            let cVal = 0;
-                            for (let offset = 1; offset <= 3; offset++) {
-                                const tIdx = i - offset;
-                                if (tIdx >= 0 && sortedLines[tIdx].includes("回")) {
-                                    let cMatch = sortedLines[tIdx].match(/([\d,]+)/);
-                                    if (cMatch) { cVal = parseInt(cMatch[1].replace(/,/g, '')); break; }
+                        if (line.includes("/") || line.includes(".") || line.includes("-")) {
+                            if (configPtr < currentConfig.length) {
+                                const item = currentConfig[configPtr];
+                                let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
+                                if (probMatch) {
+                                    let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
+                                    let cVal = 0;
+                                    for (let offset = 1; offset <= 3; offset++) {
+                                        const tIdx = i - offset;
+                                        if (tIdx >= 0 && sortedLines[tIdx].includes("回")) {
+                                            let cMatch = sortedLines[tIdx].match(/([\d,]+)/);
+                                            if (cMatch) { cVal = parseInt(cMatch[1].replace(/,/g, '')); break; }
+                                        }
+                                    }
+                                    const color = item.calc ? "text-pink-400" : "text-gray-500";
+                                    await addLog(`<span class="${color}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回</span>`, true, 50);
+                                    extractedData.push({ item, k: cVal, p_ocr: pVal });
+                                    configPtr++;
                                 }
                             }
-                            await addLog(`<span class="${item.calc ? 'text-pink-400':'text-gray-500'}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回</span>`, true, 50);
-                            extractedData.push({ item, k: cVal, p_ocr: pVal });
-                            configPtr++;
-                        } else if (!hasProb && !line.includes("回")) {
+                        } else if (!line.includes("回")) {
                             await addLog(`<span class="text-gray-500 opacity-30">[SKIP] ${line}</span>`, true, 5);
                         }
                     }
 
-                    // (3) 尤度計算
                     await addLog("\n--- (3) LIKELIHOOD CALC ---", false, 200);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
@@ -221,34 +219,22 @@
                                 logLikelihoods[s] += (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                             });
                             await addLog(`<span class="text-red-600 font-bold">[CALC] ${d.item.name}</span>`, true, 150);
-                            await updateBars(logLikelihoods); // グラフ更新
+                            await updateBars(logLikelihoods);
                         }
                     }
 
-                    // (4) 最終結果表示
                     await addLog("\n--- (4) FINAL RESULT ---", false, 400);
-                    
-                    // 1. 最新のパーセント確定値を取得
                     const f = await updateBars(logLikelihoods);
-
-                    // 2. テキストログ（1行）を出力
-                    const summary = `設定1: ${f[1]}% | 設定2: ${f[2]}% | 設定5: ${f[5]}% | 設定6: ${f[6]}%`;
-                    await addLog(summary, false, 100);
-
-                    // 3. デカ文字パネルを出力
-                    let panelHtml = `
-                    <div class="flex justify-around bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-white text-[14px] my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
-                        <div>S1:${f[1]}%</div><div>S2:${f[2]}%</div><div>S5:${f[5]}%</div><div>S6:${f[6]}%</div>
-                    </div>`;
-                    await addLog(panelHtml, true, 200);
-
+                    await addLog(`設定1: ${f[1]}% | 設定2: ${f[2]}% | 設定5: ${f[5]}% | 設定6: ${f[6]}%`, false, 100);
+                    
+                    const panel = `<div class="flex justify-around bg-slate-900 p-3 border-2 border-red-600 rounded-lg font-black text-white text-[14px] my-2 shadow-[0_0_15px_rgba(220,38,38,0.4)]"><div>S1:${f[1]}%</div><div>S2:${f[2]}%</div><div>S5:${f[5]}%</div><div>S6:${f[6]}%</div></div>`;
+                    await addLog(panel, true, 200);
                     await addLog("\n>> ANALYSIS COMPLETE.", false, 100);
 
                 } catch (err) { await addLog(`<span class="text-red-500 font-bold">❌ FATAL ERROR: ${err.message}</span>`, true); }
             };
             reader.readAsDataURL(file);
         }
-
         document.getElementById('file-input').onchange = (e) => { if (e.target.files.length > 0) analyze(e.target.files[0]); };
     </script>
 </body>
