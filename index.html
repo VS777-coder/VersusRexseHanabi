@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.50</title>
+    <title>ぷりんの解析 Rev 1.0.55</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4">
         <div class="text-xl font-black kawaii-title tracking-tighter">✨ VERSUS & HANABI ✨</div>
-        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.50</p>
+        <p class="text-[8px] text-pink-300 font-bold uppercase">みおちゃん専用 Rev 1.0.55</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -44,41 +44,40 @@
     </div>
 
     <script>
-        // ユニメモの全行を網羅した定義表 (calcフラグで計算対象を制御)
         const HANABI_CONFIG = [
-            { name: "ボーナス合算", id: "total_b", active: true, calc: false, probs: {1:156,2:148,5:139,6:131} },
-            { name: "ビックボーナス", id: "bb", active: true, calc: true, probs: {1:277.7,2:268.6,5:256,6:248.2} },
-            { name: "ドンビッグ", id: "don_bb", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "赤七ビッグ", id: "red_bb", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, probs: {1:356.2,2:331,5:306.2,6:280.1} },
-            { name: "風鈴合算", id: "bell_total", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "風鈴Ａ", id: "ba", active: true, calc: true, probs: {1:15.6,2:15.3,5:15.1,6:14.9} },
-            { name: "風鈴Ｂ", id: "bb_b", active: true, calc: true, probs: {1:15.3,2:14.9,5:14.7,6:13.8} },
-            { name: "氷合算", id: "ice_total", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "氷Ａ", id: "ice", active: true, calc: true, probs: {1:54.6,2:59.6,5:51.2,6:54.6} },
-            { name: "氷Ｂ", id: "ice_b", active: true, calc: true, probs: {1:1,2:1,5:1,6:1} },
-            { name: "チェリー合算", id: "cherry_total", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "チェリーＡ１", id: "ca1", active: true, calc: false, probs: {1:1,2:1,5:1,6:1} },
-            { name: "チェリーＡ２", id: "ca2", active: true, calc: true, probs: {1:21,2:19.3,5:20.6,6:19.9} },
-            { name: "チェリーＢ", id: "cb", active: true, calc: true, probs: {1:282.5,2:281.3,5:276.5,6:274.2} },
-            { name: "ハナビチャレンジ中はずれ", id: "vc", active: true, calc: true, probs: {1:6.6,2:6.2,5:5.8,6:5.3} },
-            { name: "ハナビゲーム中はずれ", id: "vg", active: true, calc: true, probs: {1:11.7,2:10.8,5:10,6:9.4} },
-            { name: "斜め風鈴", id: "nf", active: true, calc: true, probs: {1:11,2:9,5:11,6:9} }
+            { name: "ボーナス合算", id: "total_b", active: true, calc: false, weight: 0.0, probs: {1:156,2:148.3,5:139.4,6:131.6} },
+            { name: "ビックボーナス", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:277.7,2:268.6,5:256,6:248.2} },
+            { name: "ドンビッグ", id: "don_bb", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "赤七ビッグ", id: "red_bb", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, weight: 1.0, probs: {1:356.2,2:331,5:306.2,6:280.1} },
+            { name: "風鈴合算", id: "bell_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "風鈴Ａ", id: "ba", active: true, calc: true, weight: 1.0, probs: {1:15.6,2:15.3,5:15.1,6:14.9} },
+            { name: "風鈴Ｂ", id: "bb_b", active: true, calc: true, weight: 1.0, probs: {1:15.3,2:14.9,5:14.7,6:13.8} },
+            { name: "氷合算", id: "ice_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "氷Ａ", id: "ice", active: true, calc: true, weight: 1.0, probs: {1:54.6,2:59.6,5:51.2,6:54.6} },
+            { name: "氷Ｂ", id: "ice_b", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "チェリー合算", id: "cherry_total", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "チェリーＡ１", id: "ca1", active: true, calc: false, weight: 0.0, probs: {1:1,2:1,5:1,6:1} },
+            { name: "チェリーＡ２", id: "ca2", active: true, calc: true, weight: 1.0, probs: {1:21,2:19.3,5:20.6,6:19.9} },
+            { name: "チェリーＢ", id: "cb", active: true, calc: true, weight: 1.0, probs: {1:282.5,2:281.3,5:276.5,6:274.2} },
+            { name: "ハナビチャレンジ中はずれ", id: "vc", active: true, calc: true, weight: 1.0, probs: {1:6.6,2:6.2,5:5.8,6:5.3} },
+            { name: "ハナビゲーム中はずれ", id: "vg", active: true, calc: true, weight: 1.0, probs: {1:11.7,2:10.8,5:10,6:9.4} },
+            { name: "並行風鈴", id: "pb", active: true, calc: false, weight: 0.0, probs: {1:1.10,2:1.13,5:1.10,6:1.13} },
+            { name: "斜め風鈴", id: "nf", active: true, calc: true, weight: 1.0, probs: {1:11,2:9,5:11,6:9} }
         ];
 
-        // VERSUS用も同様に構築
         const VERSUS_CONFIG = [
-            { name: "ビックボーナス合算", id: "bb", active: true, calc: true, probs: {1:292.6,2:284.9,5:275.4,6:264.3} },
-            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, probs: {1:374.5,2:341.3,5:319.7,6:292.6} },
-            { name: "ベルＡ", id: "bell_a", active: true, calc: true, probs: {1:10.9,2:10.7,5:10.5,6:10.2} },
-            { name: "ベルＢ", id: "bell_b", active: true, calc: true, probs: {1:20.9,2:21.2,5:20.3,6:20.6} },
-            { name: "スイカＡ", id: "suika_a", active: true, calc: true, probs: {1:74.5,2:70.6,5:72.5,6:68.8} },
-            { name: "スイカＢ", id: "suika_b", active: true, calc: true, probs: {1:218.5,2:219.2,5:217.9,6:218.1} },
-            { name: "チェリーＢ", id: "cherry_b", active: true, calc: true, probs: {1:56.2,2:57.7,5:53.1,6:54.4} },
-            { name: "バーサスチャンスはずれ", id: "vc_miss", active: true, calc: true, probs: {1:5,2:4.9,5:4.6,6:4.5} },
-            { name: "バーサスゲームはずれ", id: "vg_miss", active: true, calc: true, probs: {1:10.1,2:9.4,5:8.7,6:8.1} },
-            { name: "チェリー＋ベル揃い", id: "cb_hit", active: true, calc: true, probs: {1:11.1,2:8.9,5:11.1,6:8.9} },
-            { name: "チェリー＋ベルはずれ", id: "cb_miss", active: true, calc: true, probs: {1:256,2:128,5:256,6:128} }
+            { name: "ビックボーナス合算", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:292.6,2:284.9,5:275.4,6:264.3} },
+            { name: "レギュラーボーナス", id: "rb", active: true, calc: true, weight: 1.0, probs: {1:374.5,2:341.3,5:319.7,6:292.6} },
+            { name: "ベルＡ", id: "bell_a", active: true, calc: true, weight: 1.0, probs: {1:10.9,2:10.7,5:10.5,6:10.2} },
+            { name: "ベルＢ", id: "bell_b", active: true, calc: true, weight: 1.0, probs: {1:20.9,2:21.2,5:20.3,6:20.6} },
+            { name: "スイカＡ", id: "suika_a", active: true, calc: true, weight: 1.0, probs: {1:74.5,2:70.6,5:72.5,6:68.8} },
+            { name: "スイカＢ", id: "suika_b", active: true, calc: true, weight: 1.0, probs: {1:218.5,2:219.2,5:217.9,6:218.1} },
+            { name: "チェリーＢ", id: "cherry_b", active: true, calc: true, weight: 1.0, probs: {1:56.2,2:57.7,5:53.1,6:54.4} },
+            { name: "バーサスチャンスはずれ", id: "vc_miss", active: true, calc: true, weight: 1.0, probs: {1:5,2:4.9,5:4.6,6:4.5} },
+            { name: "バーサスゲームはずれ", id: "vg_miss", active: true, calc: true, weight: 1.0, probs: {1:10.1,2:9.4,5:8.7,6:8.1} },
+            { name: "チェリー＋ベル揃い", id: "cb_hit", active: true, calc: true, weight: 1.0, probs: {1:11.1,2:8.9,5:11.1,6:8.9} },
+            { name: "チェリー＋ベルはずれ", id: "cb_miss", active: true, calc: true, weight: 1.0, probs: {1:256,2:128,5:256,6:128} }
         ];
 
         async function addLog(msg, isHtml = false) {
@@ -116,7 +115,6 @@
                         return r.words.sort((a,b)=>a.boundingPoly.vertices[0].x - b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ");
                     });
 
-                    // (2) THRESHOLD DATA 出力
                     await addLog("\n--- (2) THRESHOLD DATA (10px) ---");
                     sortedLines.forEach((line, idx) => addLog(`[L-${idx.toString().padStart(3,'0')}] ${line}`));
 
@@ -145,18 +143,14 @@
                     let configPtr = 0; let extractedData = [];
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         const line = sortedLines[i];
-                        
-                        // 数値もスラッシュも含まない「間の文字列」をすべてログに出す
                         if (!line.includes("/") && !line.includes("回")) {
                             await addLog(`[SKIP/TEXT] ${line}`);
                             continue;
                         }
-
                         if (line.includes("/") && configPtr < currentConfig.length) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
                             if (!probMatch) continue;
-
                             let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
                             let cVal = 0;
                             for (let offset = 1; offset <= 3; offset++) {
@@ -175,14 +169,13 @@
                     await addLog("\n--- (4) LIKELIHOOD CALC ---");
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
-
                     for (const d of extractedData) {
                         if (d.item.calc && totalG > 0 && d.p_ocr > 0) {
                             let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.p_ocr) : totalG;
                             let lineLog = `[L-CALC] ${d.item.name.padEnd(8,' ')} | n=${String(n).padEnd(5,' ')} `;
                             [1,2,5,6].forEach(s => {
                                 let p = 1 / d.item.probs[s];
-                                let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p));
+                                let L = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                                 logLikelihoods[s] += L;
                                 lineLog += `S${s}:${L.toFixed(1)} `;
                             });
@@ -201,9 +194,7 @@
                         addLog(`設定${s}: ${pct}%`);
                     });
                     await addLog("\nANALYSIS COMPLETE.");
-                } catch (e) {
-                    await addLog(`❌ FATAL ERROR: ${e.message}`);
-                }
+                } catch (e) { await addLog(`❌ FATAL ERROR: ${e.message}`); }
             };
         }
 
