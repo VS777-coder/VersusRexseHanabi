@@ -47,7 +47,6 @@
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         const randTime = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
-        // --- ハナビ定義：尤度１で固定 ---
         const HANABI_CONFIG = [
             { name: "ボーナス合算", id: "total_b", active: true, calc: false, weight: 0.0, probs: {1:156,2:148.3,5:139.4,6:131.6} },
             { name: "ビックボーナス", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:277.7,2:268.6,5:256,6:248.2} },
@@ -70,7 +69,6 @@
             { name: "斜め風鈴", id: "nf", active: true, calc: true, weight: 1.0, probs: {1:11,2:9,5:11,6:9} }
         ];
 
-        // --- バーサス定義：全 active 項目を weight: 1.0 に統一 ---
         const VERSUS_CONFIG = [
             { id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8}, calc: false },
             { id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3}, calc: true },
@@ -163,43 +161,68 @@
                     if (!currentConfig) throw new Error("TARGET UNKNOWN");
                     
                     let totalG = 0; let startParsing = false; let startIndex = 0;
-                    for (let i = 0; i < Math.min(sortedLines.length, 15); i++) {
-                        const line = sortedLines[i].text.replace(/\s/g, '');
-                        if (line.includes("総プレイ数") && line.match(/[GＧ]/)) {
+                    for (let i = 0; i < Math.min(sortedLines.length, 20); i++) {
+                        const line = sortedLines[i].text;
+                        if (line.match(/[GＧ]/)) {
                             let gMatch = line.match(/([\d,]+)/);
                             if (gMatch) {
                                 totalG = parseInt(gMatch[1].replace(/,/g, ''));
                                 startParsing = true; startIndex = i;
-                                await addLog(`[INIT] BASE: ${totalG}G 🆗`, false, 200);
+                                await addLog(`[INIT] BASE: ${totalG}G 🆗 (Line:${i})`, false, 200);
                                 break;
                             }
                         }
                     }
                     if (!startParsing) throw new Error("G NOT FOUND");
 
-                    await addLog("\n--- (2) DATA MAPPING ---", false, 50);
+                    await addLog("\n--- (2) DATA MAPPING (STRICT) ---", false, 50);
                     let configPtr = 0; let extractedData = [];
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
 
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
+                        if (configPtr >= currentConfig.length) break;
+
                         const line = sortedLines[i].text;
-                        const hasProb = line.includes("/") || line.includes(".");
-                        if (hasProb && configPtr < currentConfig.length) {
+                        const hasProb = line.includes("/") || (line.includes(".") && line.match(/\d/));
+                        
+                        if (hasProb) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
+                            
                             if (probMatch) {
-                                let pVal = probMatch[1] === "-" ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                                let cVal = 0; let hasKai = false;
-                                for (let offset = 1; offset <= 3; offset++) {
-                                    const tIdx = i - offset;
-                                    if (tIdx >= 0 && sortedLines[tIdx].text.includes("回")) {
-                                        let cMatch = sortedLines[tIdx].text.match(/([\d,]+)/);
-                                        if (cMatch) { cVal = parseInt(cMatch[1].replace(/,/g, '')); hasKai = true; break; }
+                                let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
+                                
+                                let cVal = 0;
+                                let cIdx = -1;
+                                let warning = "";
+
+                                if (i >= 2 && sortedLines[i-2].text.includes("回")) {
+                                    cIdx = i - 2;
+                                } 
+                                else if (i >= 3 && sortedLines[i-3].text.includes("回")) {
+                                    cIdx = i - 3;
+                                } 
+                                else if (i >= 2) {
+                                    cIdx = i - 2;
+                                    warning = "⚠️";
+                                }
+
+                                if (cIdx !== -1) {
+                                    let cMatch = sortedLines[cIdx].text.match(/([\d,]+)/);
+                                    cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
+                                    
+                                    let errorMark = "";
+                                    if (cIdx + 2 !== i) {
+                                        errorMark = "❌";
+                                    }
+
+                                    const col = item.calc ? "text-pink-400" : "text-gray-500 opacity-50";
+                                    await addLog(`${errorMark}${warning}<span class="${col}">[${item.name}]</span> 回数:${cVal} / 確率:${line}`, true, 40);
+                                    
+                                    if (errorMark === "") {
+                                        extractedData.push({ item, k: cVal, p_ocr: pVal });
                                     }
                                 }
-                                const col = item.calc ? "text-pink-400" : "text-gray-500 opacity-50";
-                                await addLog(`<span class="${col}">[${item.name}]</span> <span class="text-cyan-300">"${line}"</span> | ${cVal}回`, true, 40);
-                                extractedData.push({ item, k: cVal, p_ocr: pVal });
                                 configPtr++;
                             }
                         }
