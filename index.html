@@ -157,6 +157,12 @@
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
 
+                    // (1) THRESHOLD DATA 復活
+                    await addLog(`<span class="text-green-500">--- (1) THRESHOLD DATA (Y-POS) ---</span>`, true, 50);
+                    for (const [idx, obj] of sortedLines.entries()) {
+                        await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
+                    }
+
                     let currentConfig = null;
                     const fullText = sortedLines.map(o=>o.text).join("");
                     if (fullText.match(/ハナビ|ドン|花火/)) currentConfig = HANABI_CONFIG;
@@ -171,13 +177,15 @@
                             if (gMatch) {
                                 totalG = parseInt(gMatch[1].replace(/,/g, ''));
                                 startParsing = true; startIndex = i;
-                                await addLog(`<span class="text-red-500">[INIT] BASE: ${totalG}G 🆗</span>`, true, 200);
+                                await addLog(`<span class="text-red-500">[INIT] BASE: ${totalG}G 🆗 (Line:${i})</span>`, true, 200);
                                 break;
                             }
                         }
                     }
                     if (!startParsing) throw new Error("G NOT FOUND");
 
+                    // (2) DATA MAPPING 復活
+                    await addLog(`<br><span class="text-pink-400">--- (2) DATA MAPPING (STRICT) ---</span>`, true, 50);
                     let configPtr = 0; let extractedData = [];
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
 
@@ -185,22 +193,35 @@
                         if (configPtr >= currentConfig.length) break;
                         const line = sortedLines[i].text;
                         const hasProb = line.includes("/") || (line.includes(".") && line.match(/\d/));
+                        
                         if (hasProb) {
                             const item = currentConfig[configPtr];
                             let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
+                            
                             if (probMatch) {
                                 let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                                let cIdx = (i >= 2 && sortedLines[i-2].text.includes("回")) ? i-2 : (i >= 3 && sortedLines[i-3].text.includes("回") ? i-3 : -1);
+                                let cVal = 0;
+                                let cIdx = -1;
+                                let warning = "";
+
+                                if (i >= 2 && sortedLines[i-2].text.includes("回")) cIdx = i - 2;
+                                else if (i >= 3 && sortedLines[i-3].text.includes("回")) cIdx = i - 3;
+                                else if (i >= 2) { cIdx = i - 2; warning = "⚠️"; }
+
                                 if (cIdx !== -1) {
                                     let cMatch = sortedLines[cIdx].text.match(/([\d,]+)/);
-                                    let cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
-                                    extractedData.push({ item, k: cVal, p_ocr: pVal });
+                                    cVal = cMatch ? parseInt(cMatch[1].replace(/,/g, '')) : 0;
+                                    let errorMark = (cIdx + 2 !== i) ? "❌" : "";
+                                    const colClass = item.calc ? "text-purple-500" : "text-pink-400";
+                                    await addLog(`${errorMark}${warning}<span class="${colClass}">[${item.name}] 回数:${cVal} / 確率:${line}</span>`, true, 40);
+                                    if (errorMark === "") extractedData.push({ item, k: cVal, p_ocr: pVal });
                                 }
                                 configPtr++;
                             }
                         }
                     }
 
+                    // (3) 尤度解析詳細（個別定義表形式）
                     await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) 項目別 尤度解析詳細 ---</span>`, true, 100);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                     for (const d of extractedData) {
@@ -225,6 +246,7 @@
                         }
                     }
 
+                    // (4) FINAL RESULT
                     await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
