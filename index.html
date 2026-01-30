@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.4</title>
+    <title>ぷりんの解析 Rev 1.0.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -30,7 +30,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">VERSUS & HANABI</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.0.4</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.0.5</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -55,7 +55,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 1. 新ハナビ 設定データ (バックアップ確定版) ---
+        // --- 1. 新ハナビ 設定データ (確定バックアップ) ---
         const HANABI_CONFIG = [
             { name: "ボーナス合算", id: "total_b", active: true, calc: false, weight: 0.0, probs: {1:156.0, 2:148.3, 5:139.4, 6:131.6} },
             { name: "ビックボーナス", id: "bb", active: true, calc: true, weight: 1.0, probs: {1:277.7, 2:268.6, 5:256.0, 6:248.2} },
@@ -78,7 +78,7 @@
             { name: "斜め風鈴", id: "nf", active: true, calc: true, weight: 1.0, probs: {1:11.0, 2:9.0, 5:11.0, 6:9.0} }
         ];
 
-        // --- 2. バーサスリヴァイズ 設定データ (バックアップ確定版) ---
+        // --- 2. バーサスリヴァイズ 設定データ (確定バックアップ) ---
         const VERSUS_CONFIG = [
             { name: "ボーナス合算", id: "total_bonus", active: false, weight: 0.0, probs: {1:164.3, 2:155.3, 5:147.9, 6:138.8}, calc: false },
             { name: "ビックボーナス合算", id: "bb", active: true, weight: 1.0, probs: {1:292.6, 2:284.9, 5:275.4, 6:264.3}, calc: true },
@@ -94,10 +94,10 @@
             { name: "チェリー合算", id: "cherry_total", active: false, weight: 0.0, probs: {1:38.2, 2:38.9, 5:36.7, 6:37.3}, calc: false },
             { name: "チェリーＡ", id: "cherry_a", active: false, weight: 0.0, probs: {1:119.2, 2:119.1, 5:119.2, 6:118.9}, calc: false },
             { name: "チェリーＢ", id: "cherry_b", active: true, weight: 1.0, probs: {1:56.2, 2:57.7, 5:53.1, 6:54.4}, calc: true },
-            { name: "バーサスチャンスはずれ", id: "vc_miss", active: true, weight: 1.2, probs: {1:5.0, 2:4.9, 5:4.6, 6:4.5}, calc: true },
-            { name: "バーサスゲームはずれ", id: "vg_miss", active: true, weight: 1.6, probs: {1:10.1, 2:9.4, 5:8.7, 6:8.1}, calc: true },
+            { id: "vc_miss", name: "バーサスチャンスはずれ", active: true, weight: 1.2, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5}, calc: true },
+            { id: "vg_miss", name: "バーサスゲームはずれ", active: true, weight: 1.6, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1}, calc: true },
             { name: "ビッグ中ベル", id: "bb_bell_total", active: false, weight: 0.0, probs: {1:1.0, 2:1.0, 5:1.0, 6:1.0}, calc: false },
-            { name: "チェリー＋ベル揃い", id: "cb_hit", active: true, weight: 1.0, probs: {1:11.1, 2:8.9, 5:11.1, 6:8.9}, calc: true },
+            { id: "cb_hit", name: "チェリー＋ベル揃い", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9}, calc: true },
             { name: "チェリー＋ベルはずれ", id: "cb_miss", active: false, weight: 0.8, probs: {1:256.0, 2:128.0, 5:256.0, 6:128.0}, calc: false }
         ];
 
@@ -183,9 +183,11 @@
                     if (totalG === 0) throw new Error("G NOT FOUND");
 
                     await addLog(`<br><span class="text-pink-400">--- (2) DATA MAPPING ---</span>`, true, 50);
-                    let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; // ★全項目の初期尤度を0にリセット
+                    let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
                     let configPtr = 0;
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit'];
+
+                    let calculationStarted = false;
 
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         if (configPtr >= currentConfig.length) break;
@@ -203,20 +205,28 @@
                                     await addLog(`[${item.name}] 回数:${k} / 確率:${line}`, true, 40);
 
                                     if (item.calc) {
+                                        if (!calculationStarted) {
+                                            await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) 項目別 尤度解析詳細 ---</span>`, true, 100);
+                                            calculationStarted = true;
+                                        }
+
                                         let n = rtIds.includes(item.id) ? Math.round(k * pVal) : totalG;
                                         if (n > 0) {
                                             let itemLL = {1:0, 2:0, 5:0, 6:0};
                                             [1,2,5,6].forEach(s => {
                                                 let p = 1 / item.probs[s];
-                                                // 尤度計算: P(data|H)
                                                 let ll = (k * Math.log(p) + (n - k) * Math.log(1 - p)) * (item.weight || 1.0);
                                                 itemLL[s] = ll;
                                                 logLikelihoods[s] += ll;
                                             });
-                                            let detail = `<div class="mb-1 border-b border-gray-800 pb-1 text-[9px]">`;
-                                            detail += `S1:${itemLL[1].toFixed(2)} S2:${itemLL[2].toFixed(2)} S5:${itemLL[5].toFixed(2)} S6:${itemLL[6].toFixed(2)}`;
-                                            detail += `</div>`;
-                                            await addLog(detail, true);
+                                            
+                                            // --- 指定の多行・色付きログ形式へ修正 ---
+                                            await addLog(`<div class="mt-2 text-pink-300 font-black bg-pink-900/30 px-2">■解析項目: ${item.name}</div>`, true);
+                                            await addLog(`<div class="text-cyan-400 ml-2">設定１の尤度計算結果: ${itemLL[1].toFixed(4)}</div>`, true);
+                                            await addLog(`<div class="text-yellow-400 ml-2">設定２の尤度計算結果: ${itemLL[2].toFixed(4)}</div>`, true);
+                                            await addLog(`<div class="text-green-400 ml-2">設定５の尤度計算結果: ${itemLL[5].toFixed(4)}</div>`, true);
+                                            await addLog(`<div class="text-red-500 ml-2">設定６の尤度計算結果: ${itemLL[6].toFixed(4)}</div>`, true);
+                                            
                                             await updateBars(logLikelihoods);
                                         }
                                     }
