@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.1</title>
+    <title>ぷりんの解析 Rev 1.5.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.5.1 (Fix Merge)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.5.2 (Fixed & Complete)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -50,6 +50,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         
+        // --- 設定定義 ---
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -71,6 +72,7 @@
             { index: 17, id: "bb_bell_a", name: "BIG中風鈴Ａ", active: true, weight: 1.0, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { index: 18, id: "bb_bell_b", name: "BIG中風鈴Ｂ", active: true, weight: 1.0, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
+
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -92,6 +94,7 @@
             { index: 17, id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
+
         const VERSUS_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -113,6 +116,37 @@
             { index: 17, id: "cb_hit", name: "チェリー＋ベル揃い", active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
             { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 1.0, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
+
+        window.onload = () => {
+            const saved = localStorage.getItem('v_key');
+            if (saved) document.getElementById('api-key').value = saved;
+        };
+        document.getElementById('save-key').onclick = () => {
+            localStorage.setItem('v_key', document.getElementById('api-key').value.trim());
+            alert('SYSTEM SAVED');
+        };
+
+        // --- 不足していた関数を定義 ---
+        async function addLog(msg, isHtml = false, delay = 0) {
+            const l = document.getElementById('log');
+            const entry = document.createElement('div');
+            if (isHtml) entry.innerHTML = msg; else entry.innerText = msg;
+            l.appendChild(entry);
+            l.scrollTop = l.scrollHeight;
+            if (delay > 0) await sleep(delay);
+        }
+
+        async function updateBars(logLikelihoods) {
+            const maxLL = Math.max(...Object.values(logLikelihoods));
+            const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - maxLL)]));
+            const sumExps = Object.values(exps).reduce((a,b)=>a+b, 0);
+            [1,2,5,6].forEach(s => {
+                let pct = ((exps[s] / sumExps) * 100).toFixed(1);
+                document.getElementById(`p${s}`).innerText = `${pct}%`;
+                document.getElementById(`b${s}`).style.width = `${pct}%`;
+            });
+            return exps;
+        }
 
         async function processFiles(files) {
             const key = document.getElementById('api-key').value.trim();
@@ -168,7 +202,6 @@
                         };
                     });
                     
-                    // --- Raw Data Log Output ---
                     await addLog(`<span class="text-yellow-400 font-bold border-b border-yellow-400 block mt-4">--- FILE ${i+1} RAW DATA (Threshold:10) ---</span>`, true, 50);
                     for (const line of currentLines) {
                         await addLog(`<span class="text-gray-300 text-[10px]">[F${i+1}][Y:${line.y}] ${line.text}</span>`, true, 5);
@@ -238,9 +271,9 @@
                     
                     if (!foundData) {
                         for (const [extractedKey, data] of extractedMap.entries()) {
-                            if (data.used) continue; // 使用済みはスキップ
+                            if (data.used) continue;
 
-                            // 【修正】文字数比率チェックで「ベル」が「チェリーベル」に吸われるのを防ぐ
+                            // 【判定強化】文字数比率によるガード
                             if (extractedKey.includes(targetKey)) {
                                 if (targetKey.length / extractedKey.length > 0.6) {
                                     foundData = data;
@@ -257,7 +290,7 @@
                     }
 
                     if (foundData) {
-                        foundData.used = true; // ロック
+                        foundData.used = true;
                         await addLog(`<span class="text-purple-500 font-bold">[FOUND] ${item.name} -> 回数:${foundData.k} / 確率:${foundData.rawProb}</span>`, true, 20);
                         usedData.push({ item: item, k: foundData.k, pVal: foundData.pVal });
                     } else {
