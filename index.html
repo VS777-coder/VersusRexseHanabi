@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.6.1</title>
+    <title>ぷりんの解析 Rev 1.6.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.6.1 (Raw Prob Logic)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.6.2 (Hanabi Restored)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -50,7 +50,8 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
         
-        // --- 設定定義 (Alias追加版) ---
+        // --- 設定定義 (HANABI復活 & Alias追加) ---
+        
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", alias: ["総ボーナス", "合算"], active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス", alias: ["BB", "ビッグ"], active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -67,14 +68,37 @@
             { index: 12, id: "cherry_a1", name: "チェリーＡ１", active: false, weight: 0.0, probs: {1: 99.4, 2: 99.4, 5: 99.4, 6: 99.3} },
             { index: 13, id: "cherry_a2", name: "チェリーＡ２", alias: ["チェリーA2"], active: true, weight: 1.0, probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
             { index: 14, id: "cherry_b", name: "チェリーＢ", alias: ["チェリーB"], active: true, weight: 1.0, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
-            { index: 15, id: "vc", name: "ハナビチャレンジ中はずれ", alias: ["VC中", "HC中"], active: true, weight: 1.0, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
-            { index: 16, id: "vg", name: "ハナビゲーム中はずれ", alias: ["VG中", "HG中"], active: true, weight: 1.0, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
+            { index: 15, id: "vc", name: "ハナビチャレンジ中はずれ", alias: ["VC中", "HC中", "ハナビチャレンジ", "花火チャレンジ"], active: true, weight: 1.0, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
+            { index: 16, id: "vg", name: "ハナビゲーム中はずれ", alias: ["VG中", "HG中", "ハナビゲーム", "花火ゲーム"], active: true, weight: 1.0, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
             { index: 17, id: "bb_bell_a", name: "BIG中風鈴Ａ", alias: ["BIG中風鈴A"], active: true, weight: 1.0, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { index: 18, id: "bb_bell_b", name: "BIG中風鈴Ｂ", alias: ["BIG中風鈴B"], active: true, weight: 1.0, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
+        // 復活させたハナビの定義
+        const HANABI_CONFIG = [
+            { index: 0, id: "total_bonus", name: "ボーナス合算", alias: ["総ボーナス", "合算"], active: false, weight: 0.0, probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
+            { index: 1, id: "bb", name: "ビックボーナス", alias: ["BB", "ビッグ"], active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { index: 2, id: "don_bb", name: "ドンビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 3, id: "red_bb", name: "赤七ビッグ", active: false, weight: 0.0, probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.5} },
+            { index: 4, id: "rb", name: "レギュラーボーナス", alias: ["RB", "レギュラー"], active: true, weight: 1.0, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { index: 5, id: "bell_total", name: "風鈴合算", active: false, weight: 0.0, probs: {1: 7.72, 2: 7.55, 5: 7.45, 6: 7.16} },
+            { index: 6, id: "ba", name: "風鈴Ａ", alias: ["風鈴A"], active: true, weight: 1.0, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { index: 7, id: "bb_b", name: "風鈴Ｂ", alias: ["風鈴B"], active: true, weight: 1.0, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { index: 8, id: "ice_total", name: "氷合算", active: false, weight: 0.0, probs: {1: 52.9, 2: 57.5, 5: 49.7, 6: 52.8} },
+            { index: 9, id: "ice", name: "氷Ａ", alias: ["氷A"], active: true, weight: 1.0, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { index: 10, id: "ice_b", name: "氷Ｂ", alias: ["氷B"], active: false, weight: 0.0, probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
+            { index: 11, id: "cherry_total", name: "チェリー合算", active: false, weight: 0.0, probs: {1: 16.3, 2: 15.3, 5: 16.1, 6: 15.6} },
+            { index: 12, id: "cherry_a1", name: "チェリーＡ１", active: false, weight: 0.0, probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
+            { index: 13, id: "ca2", name: "チェリーＡ２", alias: ["チェリーA2", "チェリーA"], active: true, weight: 1.0, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { index: 14, id: "cb", name: "チェリーＢ１", alias: ["チェリーB1", "チェリーB"], active: true, weight: 1.0, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { index: 15, id: "vc", name: "ハナビチャレンジ中はずれ", alias: ["VC中", "HC中", "ハナビチャレンジ", "花火チャレンジ"], active: true, weight: 1.0, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { index: 16, id: "vg", name: "ハナビゲーム中はずれ", alias: ["VG中", "HG中", "ハナビゲーム", "花火ゲーム"], active: true, weight: 1.0, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { index: 17, id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
+            { index: 18, id: "nf", name: "斜め風鈴", alias: ["斜め風鈴合算", "斜め風鈴A"], active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+
         const VERSUS_CONFIG = [
-            { index: 0, id: "total_bonus", name: "ボーナス合算", alias: ["総ボーナス"], active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
+            { index: 0, id: "total_bonus", name: "ボーナス合算", alias: ["総ボーナス", "合算"], active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス合算", alias: ["#BB", "総BB"], active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
             { index: 2, id: "x_bb", name: "Ｘビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
             { index: 3, id: "seven_bb", name: "７ビッグボーナス", active: false, weight: 0.0, probs: {1: 585.1, 2: 569.9, 5: 550.7, 6: 528.5} },
@@ -94,7 +118,6 @@
             { index: 17, id: "cb_hit", name: "チェリー＋ベル揃い", alias: ["チェリー+ベル揃い"], active: true, weight: 1.0, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
             { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", alias: ["チェリー+ベルはずれ"], active: true, weight: 1.0, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
-        const HANABI_CONFIG = [];
 
         window.onload = () => {
             const saved = localStorage.getItem('v_key');
@@ -299,7 +322,6 @@
                         let n = rtIds.includes(item.id) ? Math.round(foundItem.k * foundItem.pVal) : totalG;
                         
                         await addLog(`<div class="mt-2 text-pink-300 font-black bg-pink-900/30 px-2">■ ${item.name} (検出: ${foundItem.name})</div>`, true);
-                        // 指示: 確率文字列(rawProb)を出力
                         await addLog(`<span class="text-purple-400 ml-2">回数:${foundItem.k} / 確率:${foundItem.rawProb}</span>`, true);
 
                         if (foundItem.pVal > 0) {
