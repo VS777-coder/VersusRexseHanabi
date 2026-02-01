@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.0</title>
+    <title>ぷりんの解析 Rev 1.1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -18,19 +18,30 @@
             white-space: nowrap;
             line-height: 1.1;
         }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; line-height: 1.2; cursor: pointer; transition: all 0.2s; }
+        /* ボタンの高さを固定し、中身を常に中央へ */
+        .main-btn { 
+            background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); 
+            border-radius: 20px; 
+            border: 2px solid #ffffff; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            min-height: 82px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+        }
         .main-btn:active { transform: scale(0.95); }
         .main-btn.processing { opacity: 0.6; pointer-events: none; filter: grayscale(0.5); }
+        
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 0; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
         
-        /* ログ領域コンテナ */
         .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; max-width: 28rem; margin: 0 auto 8px auto; width: 100%; }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; transition: border 0.3s; }
         .future-log.error-flash { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
         
-        /* コピーボタン：ログの上、最右に配置 */
         .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(48, 54, 61, 0.8); color: #fff; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #ff758c; z-index: 10; display: none; backdrop-filter: blur(4px); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
@@ -38,11 +49,14 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.1.0 (Log Optimized)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.1.1 (Button Fixed)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" id="btn-label" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ<br>解析実行</label>
+        <label for="file-input" id="btn-label" class="main-btn w-full py-4 text-white font-black text-2xl text-center">
+            <span>ユニメモ</span>
+            <span>解析実行</span>
+        </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -89,7 +103,6 @@
             { index: 18, id: "bb_bell_b", name: "BIG中風鈴Ｂ", active: true, weight: 1.0, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
-        // --- 新ハナビ ---
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -112,7 +125,6 @@
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
-        // --- バーサスリヴァイズ ---
         const VERSUS_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -136,10 +148,8 @@
         ];
 
         window.onload = () => {
-            try {
-                const saved = localStorage.getItem('v_key');
-                if (saved) document.getElementById('api-key').value = saved;
-            } catch(e) { console.error(e); }
+            const saved = localStorage.getItem('v_key');
+            if (saved) document.getElementById('api-key').value = saved;
         };
         document.getElementById('save-key').onclick = () => {
             localStorage.setItem('v_key', document.getElementById('api-key').value.trim());
@@ -180,7 +190,7 @@
                 return; 
             }
 
-            btn.innerText = "解析中...";
+            btn.innerHTML = "<span>解析中...</span>";
             btn.classList.add('processing');
             logBox.innerText = ">> BOOTING ANALYZER...";
             copyBtn.style.display = 'none';
@@ -208,7 +218,6 @@
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
 
-                    // (1) OCR SCAN LOG
                     await addLog(`<span class="text-green-500">--- (1) OCR SCAN COMPLETE (Y-POS) ---</span>`, true, 50);
                     for (const [idx, obj] of sortedLines.entries()) {
                         await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
@@ -236,7 +245,6 @@
                     }
                     if (totalG === 0) throw new Error("G NOT FOUND (総ゲーム数が見つかりません)");
 
-                    // (2) DATA MAPPING
                     await addLog(`<br><span class="text-pink-400">--- (2) DATA MAPPING ---</span>`, true, 50);
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
                     let configPtr = 0;
@@ -270,7 +278,6 @@
                         }
                     }
 
-                    // (3) LIKELIHOOD ANALYSIS
                     await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) LIKELIHOOD ANALYSIS ---</span>`, true, 100);
                     const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                     for (const d of extractedData) {
@@ -293,7 +300,6 @@
                         }
                     }
 
-                    // (4) FINAL RESULT
                     await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
@@ -310,7 +316,7 @@
                     logBox.classList.add('error-flash');
                     await addLog(`<span class="text-red-500 font-bold bg-white p-2 block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true); 
                 } finally {
-                    btn.innerHTML = "ユニメモ<br>解析実行";
+                    btn.innerHTML = "<span>ユニメモ</span><span>解析実行</span>";
                     btn.classList.remove('processing');
                 }
             };
