@@ -3,52 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.8.2</title>
+    <title>ぷりんの解析 Rev 1.8.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; padding: 12px; display: flex; flex-direction: column; height: 100dvh; box-sizing: border-box; }
-        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 8.5vw; line-height: 1.1; }
-        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; cursor: pointer; transition: transform 0.1s; }
-        .main-btn:active { transform: scale(0.98); }
-        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; margin-bottom: 8px; }
+        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        .kawaii-title { font-family: 'M PLUS Rounded 1c', sans-serif; background: linear-gradient(45deg, #ff7eb3, #ff758c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 5px rgba(255,126,179,0.3)); font-size: 8.5vw; white-space: nowrap; line-height: 1.1; }
+        .main-btn { background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); border-radius: 20px; border: 2px solid #ffffff; line-height: 1.2; cursor: pointer; }
+        .main-btn:active { transform: scale(0.95); }
+        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.5s ease; }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; line-height: 1.4; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; height: 320px; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
     </style>
 </head>
 <body>
-    <div class="text-center mb-4 shrink-0">
+    <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.8.2 (Absolute Recovery Mode)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.8.4 (Absolute UI & Logic Fix)</p>
     </div>
 
-    <div class="w-full mb-4 max-w-md mx-auto shrink-0">
-        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center text-center">ユニメモ解析実行</label>
+    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
+        <label for="file-input" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行 (複数選択可)</label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card shrink-0">
-        <div class="mb-2 flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div>
-        <div class="bar-bg mb-3"><div id="b1" class="bar-fill bg-cyan-400"></div></div>
-        <div class="mb-2 flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div>
-        <div class="bar-bg mb-3"><div id="b2" class="bar-fill bg-yellow-400"></div></div>
-        <div class="mb-2 flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div>
-        <div class="bar-bg mb-3"><div id="b5" class="bar-fill bg-green-400"></div></div>
-        <div class="mb-2 flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div>
-        <div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
+    <div class="w-full max-w-md mx-auto result-card">
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY... (WAITING FOR ACTION)</div>
+    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
-    <div class="w-full max-w-md mx-auto pb-2 flex gap-2 shrink-0">
-        <input type="password" id="api-key" class="api-input" placeholder="API KEY">
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
         <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
     </div>
 
     <script>
-        // --- 聖域：初代 index.html から完全復旧した CONFIG (一文字も改変なし) ---
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        // --- 全機種定義 (初期 index.html から完全復旧) ---
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス|ドンBB|赤七BB", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -115,21 +113,21 @@
             { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 1.0, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        window.onload = () => { const s = localStorage.getItem('v_key'); if(s) document.getElementById('api-key').value=s; };
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('SAVED'); };
+        window.onload = () => { try { const s = localStorage.getItem('v_key'); if(s) document.getElementById('api-key').value=s; } catch(e){} };
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('SAVE OK'); };
         const addLog = (m, h = false) => { const l = document.getElementById('log'); const e = document.createElement('div'); if(h) e.innerHTML = m; else e.innerText = m; l.appendChild(e); l.scrollTop = l.scrollHeight; };
         const toBase64 = f => new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result.split(',')[1]); rd.readAsDataURL(f); });
 
         async function analyzeFiles(files) {
             const key = document.getElementById('api-key').value.trim();
-            if(!key) return alert("API KEY?");
-            document.getElementById('log').innerHTML = ">> REBUILD BOOTING (Rev 1.8.2)...<br>";
+            if(!key) return alert("API KEY Missing");
+            document.getElementById('log').innerHTML = ">> REBOOTING SCANNER (Rev 1.8.4)...<br>";
             
             let dataMap = {}; let totalG = 0; let config = null;
 
             try {
                 for (let i = 0; i < files.length; i++) {
-                    addLog(`--- SCANNING IMAGE ${i+1}/${files.length} ---`);
+                    await addLog(`[IMG ${i+1}/${files.length}] Scanning...`);
                     const b64 = await toBase64(files[i]);
                     const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
@@ -139,7 +137,7 @@
                     const raw = json.responses[0]?.textAnnotations;
                     if(!raw) continue;
 
-                    // 単語リストと平均高さの算出 (動的バッファ用)
+                    // 単語リストと平均高さの算出 (バッファ動的計算)
                     const heights = [];
                     const words = raw.slice(1).map(w => {
                         const h = w.boundingPoly.vertices[2].y - w.boundingPoly.vertices[0].y;
@@ -148,7 +146,7 @@
                     });
                     heights.sort((a,b)=>a-b);
                     const medianH = heights[Math.floor(heights.length/2)] || 10;
-                    const scanBuf = Math.max(25, medianH * 1.5); // 段ズレ対策: 最低25px
+                    const scanBuf = Math.max(30, medianH * 2.0); // バッファを大幅強化：最低30px確保
 
                     const allText = words.map(w => w.t).join("");
                     if(!config) {
@@ -162,26 +160,26 @@
 
                     if(config) {
                         config.forEach(item => {
-                            // 定義を汚さず、APIの誤読（A->4, B->8等）を検索時のみ吸収
-                            const searchPattern = new RegExp(item.name.replace(/Ａ|A/g, "[AＡ4]").replace(/Ｂ|B/g, "[BＢ8]"), "i");
+                            const p = item.name.replace(/Ａ|A/g, "[AＡ4H]").replace(/Ｂ|B/g, "[BＢ86]");
+                            const searchPattern = new RegExp(p, "i");
                             
                             words.forEach(word => {
                                 if (searchPattern.test(word.t)) {
                                     if(word.t.includes("詳細") || word.t.includes("中")) return;
 
-                                    // $Y座標を意識した動的水平スキャン
+                                    // ヒントに基づくY座標スキャン：左右の文字列を全て取得
                                     const row = words.filter(w => Math.abs(w.y - word.y) < scanBuf && w.x > word.x);
                                     row.sort((a,b) => a.x - b.x);
                                     const rowText = row.map(w => w.t).join("");
                                     
-                                    // 厳密な数値抽出 (1/XXX の後ろに 回数 が来ても混同しない)
+                                    // 厳密な抽出：末尾の「回」に吸い寄せ、分母と回数が混ざるのを物理的に防止
                                     const kM = rowText.match(/(\d{1,5})回/);
                                     const pM = rowText.match(/1\/([\d,.]+)/);
                                     
                                     if(kM && pM) {
                                         dataMap[item.id] = { item, k: parseInt(kM[1]), p: parseFloat(pM[1].replace(/,/g, '')) };
-                                        addLog(`[DETECT] ${item.name.split('|')[0]}: ${kM[1]}回 (Y:${word.y})`);
-                                    } else if (rowText.length > 0) {
+                                        addLog(`[DETECT] ${item.name.split('|')[0]}: ${kM[1]}回`);
+                                    } else {
                                         addLog(`[SKIP] ${item.name.split('|')[0]}: RowText="${rowText}"`, true);
                                     }
                                 }
@@ -190,8 +188,8 @@
                     }
                 }
 
-                if(!totalG) throw new Error("Total G not found.");
-                await addLog(`<br>--- FINAL RESULT ---<br>TOTAL: ${totalG}G`, true);
+                if(!totalG) throw new Error("Total G failure");
+                await addLog(`<br>--- RESULT ---<br>TOTAL: ${totalG}G`, true);
                 
                 const missing = config.filter(it => it.active && !dataMap[it.id]).map(it => it.name.split('|')[0]);
                 if(missing.length > 0) {
@@ -199,7 +197,6 @@
                     return;
                 }
 
-                // 尤度解析 (1.4.1以前の計算式)
                 let ll = {1:0, 2:0, 5:0, 6:0};
                 const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
                 Object.values(dataMap).forEach(d => {
