@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.4.1</title>
+    <title>ぷりんの解析 Rev 1.5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -59,7 +59,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.4.1 (Debug Mode)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.5.0 (Pattern Extraction)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -190,7 +190,7 @@
             return exps;
         }
 
-        // --- 画像処理・OCR・テキスト結合処理 ---
+        // --- Rev 1.5.0: 全ファイル一括処理 & パターン抽出ロジック ---
         async function processFiles(files) {
             const key = document.getElementById('api-key').value.trim();
             const logBox = document.getElementById('log');
@@ -208,21 +208,21 @@
 
             // ファイル名順ソート
             const sortedFiles = Array.from(files).sort((a, b) => a.name.localeCompare(b.name));
-            let masterLines = [];
+            
+            // 全ファイルの全行を蓄積する配列
+            let allLines = [];
 
             try {
-                // 1枚ずつOCRにかけてテキスト行リストを取得し、マージしていく
+                // Step 1: 全ファイルをOCRにかけて rawLines を回収
                 for (let i = 0; i < sortedFiles.length; i++) {
                     const file = sortedFiles[i];
                     
-                    // FileReaderでBase64化
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result.split(',')[1]);
                         reader.readAsDataURL(file);
                     });
 
-                    // Google Vision API コール
                     const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
                         method: 'POST',
                         body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -231,7 +231,6 @@
                     const raw = json.responses[0]?.textAnnotations;
                     if (!raw) throw new Error(`OCR FAIL at File ${i+1}`);
 
-                    // 行データへの変換 (y座標ソート済み)
                     const rawWords = raw.slice(1);
                     let rows = [];
                     rawWords.forEach(w => {
@@ -239,184 +238,190 @@
                         let f = rows.find(r => Math.abs(r.y - y) < 10);
                         if (f) f.words.push(w); else rows.push({ y, words: [w] });
                     });
+                    // 行データ (Y座標ソート)
                     const currentLines = rows.sort((a,b)=>a.y-b.y).map(r => {
-                        return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
+                        return { 
+                            y: Math.round(r.y), 
+                            text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" "),
+                            fileIndex: i 
+                        };
                     });
+                    
+                    // ログ出し
+                    await addLog(`<span class="text-green-500">--- FILE ${i+1} SCANNED (${currentLines.length} lines) ---</span>`, true, 10);
+                    currentLines.forEach(l => allLines.push(l));
+                }
 
-                    // --- ここからログ出力（デバッグ用・指示内容） ---
-                    await addLog(`<span class="text-yellow-400 font-bold border-b border-yellow-400 block mt-4">--- FILE ${i+1} RAW DATA (Threshold:10) ---</span>`, true, 50);
-                    for (const line of currentLines) {
-                        await addLog(`<span class="text-gray-300 text-[10px]">[F${i+1}][Y:${line.y}] ${line.text}</span>`, true, 5);
-                    }
-                    // --- ログ出力ここまで ---
+                // Step 2: 機種判別 (全テキストから)
+                let currentConfig = null;
+                const fullText = allLines.map(l => l.text).join("");
+                if (fullText.match(/Lハナビ|スマスロ|Ｌハナビ/)) currentConfig = L_HANABI_CONFIG;
+                else if (fullText.match(/ハナビ|ドン|花火/)) currentConfig = HANABI_CONFIG;
+                else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
+                if (!currentConfig) throw new Error("TARGET UNKNOWN (機種が判別できません)");
 
-                    if (i === 0) {
-                        // 1枚目はそのまま採用
-                        masterLines = currentLines;
-                    } else {
-                        // 2枚目以降：指示通りのマージ処理
-                        // 手順1: masterLinesの末尾から、[回数][文字][確率]が揃っているセットを探す
-                        let anchor = null;
-                        for (let j = masterLines.length - 1; j >= 2; j--) {
-                            // 簡易判定: 確率は "1/xx", 回数は数字を含む
-                            if (masterLines[j].text.includes("1/") && /\d/.test(masterLines[j-2].text)) {
-                                anchor = {
-                                    probLine: masterLines[j].text,
-                                    nameLine: masterLines[j-1].text,
-                                    countLine: masterLines[j-2].text
-                                };
-                                // 見つかったら、masterLinesをここまでで打ち切る (重複排除のため)
-                                masterLines = masterLines.slice(0, j + 1);
-                                break;
-                            }
-                        }
-
-                        if (anchor) {
-                            // 手順2: currentLinesの上から、同じセットを探す
-                            let matchIndex = -1;
-                            for (let k = 0; k < currentLines.length; k++) {
-                                if (currentLines[k].text === anchor.probLine &&
-                                    currentLines[k-1]?.text === anchor.nameLine) {
-                                    matchIndex = k;
-                                    break;
-                                }
-                            }
-
-                            // 手順3: マッチしたらその次から結合、マッチしなければ全部結合
-                            // ※Y座標はずれるので、masterの最後尾に加算して擬似的に下に配置
-                            const lastY = masterLines[masterLines.length - 1].y + 50; 
-                            const linesToAdd = (matchIndex !== -1) ? currentLines.slice(matchIndex + 1) : currentLines;
-                            
-                            linesToAdd.forEach(l => {
-                                masterLines.push({ y: l.y + lastY, text: l.text });
-                            });
-                        } else {
-                            // アンカーが見つからない場合はそのまま結合
-                            const lastY = masterLines[masterLines.length - 1].y + 50;
-                            currentLines.forEach(l => masterLines.push({ y: l.y + lastY, text: l.text }));
+                // Step 3: 総ゲーム数 (G) の探索 - 全行から最大値を探す
+                let totalG = 0;
+                for (const line of allLines) {
+                    if (line.text.match(/[GＧ]/)) {
+                        let gMatch = line.text.match(/([\d,]+)/);
+                        if (gMatch) {
+                            let val = parseInt(gMatch[1].replace(/,/g, ''));
+                            if (val > totalG) totalG = val;
                         }
                     }
                 }
+                if (totalG === 0) throw new Error("G NOT FOUND (総ゲーム数が見つかりません)");
+                await addLog(`<span class="text-red-500">[INIT] BASE: ${totalG}G 🆗 (Max found)</span>`, true, 200);
+
+                // Step 4: パターン抽出 (Extraction) & マージ
+                await addLog(`<br><span class="text-pink-400">--- (2) PATTERN EXTRACTION & MERGE ---</span>`, true, 50);
                 
-                // マージ完了後、既存の解析ロジックへ
-                await runAnalysis(masterLines);
+                // 抽出されたデータを溜めるマップ (Key: 正規化された名前 => Value: {count, prob})
+                let extractedMap = new Map();
+                
+                // 正規化ヘルパー
+                const normalize = (str) => {
+                    return str.replace(/\s+/g, '')
+                              .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+                              .replace(/／/g, '/')
+                              .replace(/[Ａ-Ｚａ-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角英字も半角へ
+                              .toLowerCase();
+                };
+
+                // 全行を走査し、「1/xx」パターンを探す
+                for (let i = 0; i < allLines.length; i++) {
+                    const line = allLines[i];
+                    let probMatch = line.text.match(/1\s*\/\s*([\d,.]+|-)/);
+                    
+                    if (probMatch) {
+                        // パターンヒット: これが確率行
+                        let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
+                        
+                        // 1行上が名前、2行上が回数と仮定 (範囲チェック付き)
+                        if (i >= 2) {
+                            let nameLine = allLines[i-1].text;
+                            let countLine = allLines[i-2].text;
+                            
+                            // 名前が短すぎる、または記号だけなら、さらに1つ上を見るなどの補正が必要かもしれないが、
+                            // とりあえず指示通り「2行上が回数」とする。
+                            
+                            let kMatch = countLine.match(/([\d,]+)/);
+                            if (kMatch) {
+                                let k = parseInt(kMatch[1].replace(/,/g, ''));
+                                
+                                // 重複チェック用キー (名前 + 確率)
+                                // 名前だけだと「ベルA」「ベルB」がOCRミスで同じになる恐れがあるので確率もキーに含めるか？
+                                // いや、ユーザー指示は「重複部分があれば取る」なので、
+                                // 正規化された名前をキーにして、上書き保存 (または既にあったら無視) するのが良い。
+                                
+                                let key = normalize(nameLine);
+                                
+                                // ゴミ除外: キーがあまりに短い、または数値だけの場合は無視
+                                if (key.length < 2 || /^\d+$/.test(key)) continue;
+
+                                if (!extractedMap.has(key)) {
+                                    extractedMap.set(key, { name: nameLine, k: k, pVal: pVal, rawProb: line.text });
+                                } else {
+                                    // 既に登録済み -> 重複とみなす (値が同じなら問題なし。違う場合は...?)
+                                    // 今回は「重複部分を取って並べる」なので、最初に見つけたもの勝ち、あるいは後勝ち。
+                                    // 単純なMap.setなら上書き(後勝ち)になるが、
+                                    // 上から順に読んでいるので、同じデータなら上書きしても同じ。
+                                    // 違うデータ(ゴミ混じり)でキーが被る可能性は低い。
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Step 5: 定義リストとの照合 (Mapping)
+                let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
+                let usedData = [];
+
+                // 抽出データから定義にマッチするものを探す
+                for (const item of currentConfig) {
+                    if (!item.active) continue;
+                    
+                    // 定義名を正規化
+                    const targetKey = normalize(item.name);
+                    
+                    // マップから探す (完全一致だけでなく、部分一致も試みる)
+                    let foundData = extractedMap.get(targetKey);
+                    
+                    if (!foundData) {
+                        // 完全一致がない場合、抽出済みキーの中から「含む」ものを探す (逆もしかり)
+                        for (const [extractedKey, data] of extractedMap.entries()) {
+                            // "ベルＡ" (config) vs "ベルa" (extracted) -> normalizeで一致済み
+                            // "チェリー＋ベルはずれ" vs "チェリー+ベルはずれ" -> normalizeで一致済み
+                            // OCRの揺らぎ対策: レーベンシュタイン距離などを入れると重いので、簡易的に「含んでいるか」
+                            if (extractedKey.includes(targetKey) || targetKey.includes(extractedKey)) {
+                                // ただし確率が著しく違う(別の役)場合は除外したいが...
+                                // ここはシンプルにヒットさせる
+                                foundData = data;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (foundData) {
+                        // データあり
+                        await addLog(`<span class="text-purple-500 font-bold">[FOUND] ${item.name} -> 回数:${foundData.k} / 確率:${foundData.rawProb}</span>`, true, 20);
+                        usedData.push({ item: item, k: foundData.k, pVal: foundData.pVal });
+                    } else {
+                        // データなし -> 欠損アラート
+                        await addLog(`<span class="text-red-500 font-black bg-yellow-900/50 px-1">❌ MISSING: ${item.name} (検出されませんでした)</span>`, true, 20);
+                    }
+                }
+
+                // Step 6: 尤度計算 (Likenihood Analysis)
+                await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) LIKELIHOOD ANALYSIS ---</span>`, true, 100);
+                const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
+                
+                for (const d of usedData) {
+                    if (d.pVal === 0) continue; // 確率0はスキップ
+
+                    let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.pVal) : totalG;
+                    if (n > 0) {
+                        let itemLL = {1:0, 2:0, 5:0, 6:0};
+                        [1,2,5,6].forEach(s => {
+                            let p = 1 / d.item.probs[s];
+                            let ll = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
+                            itemLL[s] = ll;
+                            logLikelihoods[s] += ll;
+                        });
+                        await addLog(`<div class="mt-2 text-pink-300 font-black bg-pink-900/30 px-2">■解析項目: ${d.item.name}</div>`, true);
+                        let max = Math.max(...Object.values(itemLL));
+                        let gap = max - Math.min(...Object.values(itemLL));
+                        [1,2,5,6].forEach(s => {
+                            const colors = {1:'text-cyan-400', 2:'text-yellow-400', 5:'text-green-400', 6:'text-red-500'};
+                            addLog(`<div class="${colors[s]} ml-2">設定${s}の尤度: ${itemLL[s].toFixed(4)}</div>`, true);
+                        });
+                        addLog(`<div class="text-gray-500 ml-2 text-[10px]">強度(Gap): ${gap.toFixed(4)}</div>`, true);
+                        await updateBars(logLikelihoods);
+                        await sleep(20);
+                    }
+                }
+
+                // Step 7: 最終結果 (Final Result)
+                await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
+                const finalExps = await updateBars(logLikelihoods);
+                const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
+                let panel = `<div id="final-stats" class="flex justify-around bg-slate-900 p-2 border border-blue-900 rounded-lg font-black text-sm">`;
+                [1,2,5,6].forEach(s => {
+                    let pct = ((finalExps[s] / sumFinal) * 100).toFixed(1);
+                    panel += `<div class="text-center"><span class="block text-[10px] opacity-70">設定${s}</span><span class="text-white">${pct}%</span></div>`;
+                });
+                panel += `</div>`;
+                await addLog(panel, true, 100);
+                await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
+                copyBtn.style.display = 'block';
 
             } catch (err) {
                 logBox.classList.add('error-flash');
                 await addLog(`<span class="text-red-500 font-bold bg-white p-2 block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true);
+            } finally {
                 btn.classList.remove('processing');
             }
-        }
-
-        // --- 既存解析ロジック (Rev 1.2.2 完全維持) ---
-        async function runAnalysis(sortedLines) {
-            const btn = document.getElementById('btn-label');
-            const copyBtn = document.getElementById('copy-log');
-
-            // (1) OCR SCAN LOG - 復元
-            await addLog(`<span class="text-green-500">--- (1) OCR SCAN COMPLETE (Y-POS) ---</span>`, true, 50);
-            for (const [idx, obj] of sortedLines.entries()) {
-                await addLog(`<span class="text-green-500">[L-${idx.toString().padStart(3,'0')}][Y:${obj.y}] ${obj.text}</span>`, true, 5);
-            }
-
-            let currentConfig = null;
-            const fullText = sortedLines.map(o=>o.text).join("");
-            if (fullText.match(/Lハナビ|スマスロ|Ｌハナビ/)) currentConfig = L_HANABI_CONFIG;
-            else if (fullText.match(/ハナビ|ドン|花火/)) currentConfig = HANABI_CONFIG;
-            else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
-            if (!currentConfig) throw new Error("TARGET UNKNOWN (機種が判別できません)");
-            
-            let totalG = 0; let startIndex = 0;
-            for (let i = 0; i < Math.min(sortedLines.length, 20); i++) {
-                const line = sortedLines[i].text;
-                if (line.match(/[GＧ]/)) {
-                    let gMatch = line.match(/([\d,]+)/);
-                    if (gMatch) {
-                        totalG = parseInt(gMatch[1].replace(/,/g, ''));
-                        startIndex = i;
-                        await addLog(`<span class="text-red-500">[INIT] BASE: ${totalG}G 🆗 (Line:${i})</span>`, true, 200);
-                        break;
-                    }
-                }
-            }
-            if (totalG === 0) throw new Error("G NOT FOUND (総ゲーム数が見つかりません)");
-
-            // (2) DATA MAPPING - 復元
-            await addLog(`<br><span class="text-pink-400">--- (2) DATA MAPPING ---</span>`, true, 50);
-            let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
-            let configPtr = 0;
-            let extractedData = [];
-
-            for (let i = startIndex + 1; i < sortedLines.length; i++) {
-                if (configPtr >= currentConfig.length) break;
-                const line = sortedLines[i].text;
-                let probMatch = line.match(/1\s*\/\s*([\d,.]+|-)/);
-                if (probMatch) {
-                    const item = currentConfig[configPtr];
-                    let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                    let countRowIndex = -1;
-                    let warning = "";
-                    if (i >= 2 && /\d/.test(sortedLines[i-2].text)) countRowIndex = i-2;
-                    else if (i >= 3 && /\d/.test(sortedLines[i-3].text)) countRowIndex = i-3;
-                    else if (i >= 1 && /\d/.test(sortedLines[i-1].text)) countRowIndex = i-1;
-
-                    if (countRowIndex !== -1) {
-                        let countLine = sortedLines[countRowIndex].text;
-                        let kMatch = countLine.match(/([\d,]+)/);
-                        let k = kMatch ? parseInt(kMatch[1].replace(/,/g, '')) : 0;
-                        if (!countLine.includes("回")) warning = "⚠️"; 
-                        const colClass = item.active ? "text-purple-500 font-bold" : "text-pink-400 opacity-60";
-                        const logPrefix = warning ? `<span class="text-yellow-400 font-black">${warning}</span> ` : "";
-                        await addLog(`${logPrefix}<span class="${colClass}">[${item.name}] 回数:${k} / 確率:${line}</span>`, true, 40);
-                        if (item.active && pVal > 0) extractedData.push({ item, k, pVal });
-                        configPtr++;
-                    } else {
-                        await addLog(`<span class="text-red-500 font-black">❌ [${item.name}] 回数データ不明</span>`, true, 40);
-                        configPtr++; 
-                    }
-                }
-            }
-
-            // (3) LIKELIHOOD ANALYSIS - 復元
-            await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) LIKELIHOOD ANALYSIS ---</span>`, true, 100);
-            const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
-            for (const d of extractedData) {
-                let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.pVal) : totalG;
-                if (n > 0) {
-                    let itemLL = {1:0, 2:0, 5:0, 6:0};
-                    [1,2,5,6].forEach(s => {
-                        let p = 1 / d.item.probs[s];
-                        let ll = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
-                        itemLL[s] = ll;
-                        logLikelihoods[s] += ll;
-                    });
-                    await addLog(`<div class="mt-2 text-pink-300 font-black bg-pink-900/30 px-2">■解析項目: ${d.item.name}</div>`, true);
-                    let max = Math.max(...Object.values(itemLL));
-                    let gap = max - Math.min(...Object.values(itemLL));
-                    [1,2,5,6].forEach(s => {
-                        const colors = {1:'text-cyan-400', 2:'text-yellow-400', 5:'text-green-400', 6:'text-red-500'};
-                        addLog(`<div class="${colors[s]} ml-2">設定${s}の尤度: ${itemLL[s].toFixed(4)}</div>`, true);
-                    });
-                    addLog(`<div class="text-gray-500 ml-2 text-[10px]">強度(Gap): ${gap.toFixed(4)}</div>`, true);
-                    await updateBars(logLikelihoods);
-                    await sleep(20);
-                }
-            }
-
-            // (4) FINAL RESULT - 復元
-            await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
-            const finalExps = await updateBars(logLikelihoods);
-            const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
-            let panel = `<div id="final-stats" class="flex justify-around bg-slate-900 p-2 border border-blue-900 rounded-lg font-black text-sm">`;
-            [1,2,5,6].forEach(s => {
-                let pct = ((finalExps[s] / sumFinal) * 100).toFixed(1);
-                panel += `<div class="text-center"><span class="block text-[10px] opacity-70">設定${s}</span><span class="text-white">${pct}%</span></div>`;
-            });
-            panel += `</div>`;
-            await addLog(panel, true, 100);
-            await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
-            copyBtn.style.display = 'block';
-            btn.classList.remove('processing');
         }
 
         document.getElementById('file-input').onchange = (e) => processFiles(e.target.files);
