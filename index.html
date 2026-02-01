@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.4.0</title>
+    <title>ぷりんの解析 Rev 1.4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -59,7 +59,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.4.0 (Text Merge)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.4.1 (Debug Mode)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -93,7 +93,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 設定定義 (Rev 1.2.2より完全維持) ---
+        // --- 設定定義 ---
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -242,6 +242,13 @@
                     const currentLines = rows.sort((a,b)=>a.y-b.y).map(r => {
                         return { y: Math.round(r.y), text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") };
                     });
+
+                    // --- ここからログ出力（デバッグ用・指示内容） ---
+                    await addLog(`<span class="text-yellow-400 font-bold border-b border-yellow-400 block mt-4">--- FILE ${i+1} RAW DATA (Threshold:10) ---</span>`, true, 50);
+                    for (const line of currentLines) {
+                        await addLog(`<span class="text-gray-300 text-[10px]">[F${i+1}][Y:${line.y}] ${line.text}</span>`, true, 5);
+                    }
+                    // --- ログ出力ここまで ---
 
                     if (i === 0) {
                         // 1枚目はそのまま採用
