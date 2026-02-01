@@ -3,25 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.2</title>
+    <title>ぷりんの解析 Rev 1.2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
-        body { background-color: #0d0f14; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
+        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        
+        /* タイトル：寒色・男仕様 */
         .kawaii-title { 
-            font-family: 'M PLUS Rounded 1c', sans-serif; 
-            background: linear-gradient(45deg, #ff7eb3, #ff758c); 
+            font-family: 'Squada One', cursive; 
+            background: linear-gradient(180deg, #00d2ff, #3a7bd5); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
-            filter: drop-shadow(0 0 5px rgba(255,126,179,0.3));
-            font-size: 8.5vw; 
+            filter: drop-shadow(0 0 8px rgba(0,210,255,0.4));
+            font-size: 10vw; 
             white-space: nowrap;
-            line-height: 1.1;
+            line-height: 1.0;
+            letter-spacing: -1px;
         }
+
+        /* メインボタン：寒色・重厚仕様 */
         .main-btn { 
-            background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%); 
-            border-radius: 20px; 
-            border: 2px solid #ffffff; 
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); 
+            border-radius: 12px; 
+            border: 1px solid #3b82f6; 
+            box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2);
             cursor: pointer; 
             transition: all 0.2s; 
             min-height: 82px; 
@@ -30,26 +36,30 @@
             justify-content: center; 
             align-items: center;
         }
-        .main-btn span { display: block; line-height: 1.2; }
-        .main-btn:active { transform: scale(0.95); }
-        .main-btn.processing { opacity: 0.6; pointer-events: none; filter: grayscale(0.5); }
+        .main-btn span { display: block; line-height: 1.2; letter-spacing: 2px; }
+        .main-btn:active { transform: scale(0.97); background: #1e1b4b; }
+        .main-btn.processing { opacity: 0.6; pointer-events: none; filter: grayscale(0.8); }
         
-        .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 0; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
-        .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 14px; border: 1px solid #1e293b; flex-grow: 0; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+        .bar-bg { background-color: #020617; height: 10px; border-radius: 2px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
         
+        /* ログ領域：ピンク/赤系（指示通り変更なし） */
         .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; max-width: 28rem; margin: 0 auto 8px auto; width: 100%; }
         .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; transition: border 0.3s; }
         .future-log.error-flash { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
         
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(48, 54, 61, 0.8); color: #fff; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #ff758c; z-index: 10; display: none; backdrop-filter: blur(4px); }
-        .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(15, 23, 42, 0.9); color: #3b82f6; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6; z-index: 10; display: none; backdrop-filter: blur(4px); font-weight: bold; }
+        
+        /* 下部エリア：男仕様 */
+        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 4px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #1e293b; outline: none; }
+        .save-btn { background-color: #334155; color: #f8fafc; font-bold; py-2 px-6 rounded-md text-[10px]; border: 1px solid #475569; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.1.2 (UI Consistency)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">System Rev 1.2.0 (Tactical)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -73,14 +83,14 @@
     </div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
-        <button id="save-key" class="bg-slate-700 text-white font-bold py-2 px-6 rounded-full text-[10px]">SAVE</button>
+        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
+        <button id="save-key" class="save-btn">SAVE</button>
     </div>
 
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- スマスロハナビ (Lハナビ) 完全定義 ---
+        // --- 設定定義 (保護: 変更なし) ---
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -190,7 +200,6 @@
                 return; 
             }
 
-            // 解析開始時の表示変更
             btn.innerHTML = "<span>解析中...</span><span> </span>";
             btn.classList.add('processing');
             logBox.innerText = ">> BOOTING ANALYZER...";
@@ -301,7 +310,7 @@
                     await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
                     const finalExps = await updateBars(logLikelihoods);
                     const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
-                    let panel = `<div id="final-stats" class="flex justify-around bg-slate-900 p-2 border border-red-900 rounded-lg font-black text-sm">`;
+                    let panel = `<div id="final-stats" class="flex justify-around bg-slate-900 p-2 border border-blue-900 rounded-lg font-black text-sm">`;
                     [1,2,5,6].forEach(s => {
                         let pct = ((finalExps[s] / sumFinal) * 100).toFixed(1);
                         panel += `<div class="text-center"><span class="block text-[10px] opacity-70">設定${s}</span><span class="text-white">${pct}%</span></div>`;
@@ -314,7 +323,6 @@
                     logBox.classList.add('error-flash');
                     await addLog(`<span class="text-red-500 font-bold bg-white p-2 block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true); 
                 } finally {
-                    // 解析終了時の表示復元（HTML構造を維持）
                     btn.innerHTML = "<span>ユニメモ</span><span>解析実行</span>";
                     btn.classList.remove('processing');
                 }
