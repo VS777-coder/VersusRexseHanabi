@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.0</title>
+    <title>ぷりんの解析 Rev 1.1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -24,22 +24,25 @@
         .result-card { background-color: #161b22; border-radius: 16px; padding: 14px; border: 1px solid #30363d; flex-grow: 0; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
         .bar-bg { background-color: #0d1117; height: 12px; border-radius: 6px; overflow: hidden; margin-top: 4px; border: 1px solid #21262d; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
-        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 8px; transition: border 0.3s; }
+        
+        /* ログ領域コンテナ */
+        .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; max-width: 28rem; margin: 0 auto 8px auto; width: 100%; }
+        .future-log { background-color: #000000; border: 1px solid #ff758c; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; transition: border 0.3s; }
         .future-log.error-flash { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
+        
+        /* コピーボタン：ログの上、最右に配置 */
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(48, 54, 61, 0.8); color: #fff; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #ff758c; z-index: 10; display: none; backdrop-filter: blur(4px); }
         .api-input { background-color: #161b22; color: #ffffff; border-radius: 99px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #30363d; outline: none; }
-        #preview-container { width: 100%; max-height: 120px; overflow: hidden; border-radius: 8px; margin-bottom: 8px; display: none; border: 1px solid #30363d; background: #000; }
-        #preview-img { width: 100%; height: auto; object-fit: contain; opacity: 0.7; }
-        .copy-btn { background: #30363d; color: #fff; font-size: 10px; padding: 4px 12px; border-radius: 4px; display: none; margin-left: auto; margin-bottom: 4px; }
     </style>
 </head>
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.0.0 (UI Enhanced)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.1.0 (Log Optimized)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
-        <label for="file-input" id="btn-label" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ解析<br>実行</label>
+        <label for="file-input" id="btn-label" class="main-btn w-full py-4 text-white font-black text-2xl flex items-center justify-center cursor-pointer text-center">ユニメモ<br>解析実行</label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
@@ -50,12 +53,10 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div id="preview-container" class="max-w-md mx-auto">
-        <img id="preview-img" src="" alt="preview">
+    <div class="log-container">
+        <button id="copy-log" class="copy-btn">COPY</button>
+        <div id="log" class="future-log">READY...</div>
     </div>
-
-    <button id="copy-log" class="copy-btn max-w-md">LOG COPY</button>
-    <div id="log" class="future-log w-full max-w-md mx-auto">READY...</div>
 
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="API KEY (VISION API)">
@@ -179,14 +180,6 @@
                 return; 
             }
 
-            // UI: プレビュー表示
-            const readerPrev = new FileReader();
-            readerPrev.onload = (e) => {
-                document.getElementById('preview-img').src = e.target.result;
-                document.getElementById('preview-container').style.display = 'block';
-            };
-            readerPrev.readAsDataURL(file);
-
             btn.innerText = "解析中...";
             btn.classList.add('processing');
             logBox.innerText = ">> BOOTING ANALYZER...";
@@ -223,11 +216,9 @@
 
                     let currentConfig = null;
                     const fullText = sortedLines.map(o=>o.text).join("");
-                    
                     if (fullText.match(/Lハナビ|スマスロ|Ｌハナビ/)) currentConfig = L_HANABI_CONFIG;
                     else if (fullText.match(/ハナビ|ドン|花火/)) currentConfig = HANABI_CONFIG;
                     else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
-                    
                     if (!currentConfig) throw new Error("TARGET UNKNOWN (機種が判別できません)");
                     
                     let totalG = 0; let startIndex = 0;
@@ -250,7 +241,6 @@
                     let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
                     let configPtr = 0;
                     let extractedData = [];
-
                     for (let i = startIndex + 1; i < sortedLines.length; i++) {
                         if (configPtr >= currentConfig.length) break;
                         const line = sortedLines[i].text;
@@ -263,7 +253,6 @@
                             if (i >= 2 && /\d/.test(sortedLines[i-2].text)) countRowIndex = i-2;
                             else if (i >= 3 && /\d/.test(sortedLines[i-3].text)) countRowIndex = i-3;
                             else if (i >= 1 && /\d/.test(sortedLines[i-1].text)) countRowIndex = i-1;
-
                             if (countRowIndex !== -1) {
                                 let countLine = sortedLines[countRowIndex].text;
                                 let kMatch = countLine.match(/([\d,]+)/);
@@ -316,14 +305,12 @@
                     panel += `</div>`;
                     await addLog(panel, true, 100);
                     await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true, 100);
-                    
                     copyBtn.style.display = 'block';
-
                 } catch (err) { 
                     logBox.classList.add('error-flash');
                     await addLog(`<span class="text-red-500 font-bold bg-white p-2 block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true); 
                 } finally {
-                    btn.innerText = "ユニメモ解析\n実行";
+                    btn.innerHTML = "ユニメモ<br>解析実行";
                     btn.classList.remove('processing');
                 }
             };
