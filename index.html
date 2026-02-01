@@ -3,55 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.0</title>
+    <title>ぷりんの解析 Rev 1.5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        
-        .kawaii-title { 
-            font-family: 'Squada One', cursive; 
-            background: linear-gradient(180deg, #00d2ff, #3a7bd5); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            filter: drop-shadow(0 0 8px rgba(0,210,255,0.4));
-            font-size: 10vw; 
-            white-space: nowrap;
-            line-height: 1.0;
-            letter-spacing: -1px;
-        }
-
-        .main-btn { 
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); 
-            border-radius: 12px; 
-            border: 2px solid #3b82f6; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-            height: 82px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center;
-            position: relative;
-        }
+        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 10vw; line-height: 1.0; letter-spacing: -1px; }
+        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; transition: all 0.2s; height: 82px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .main-btn span { display: block; line-height: 1.2; letter-spacing: 2px; font-weight: 900; }
-        .main-btn:active { transform: scale(0.97); }
-        
-        .main-btn.processing { pointer-events: none; opacity: 0.7; }
-        .main-btn.processing .normal-text { display: none; }
-        .main-btn.processing .loading-text { display: block; }
-        .loading-text { display: none; color: #60a5fa; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 14px; border: 1px solid #1e293b; flex-grow: 0; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 14px; border: 1px solid #1e293b; margin-bottom: 8px; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
-        
+        .bar-fill { height: 100%; width: 0%; transition: width 0.5s; }
         .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; max-width: 28rem; margin: 0 auto 8px auto; width: 100%; }
-        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; transition: border 0.3s; }
-        .future-log.error-flash { border-color: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.5); }
-        
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(15, 23, 42, 0.9); color: #00d2ff; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #00d2ff; z-index: 10; display: none; backdrop-filter: blur(4px); font-weight: bold; }
+        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(15, 23, 42, 0.9); color: #00d2ff; font-size: 10px; padding: 4px 10px; border-radius: 4px; border: 1px solid #00d2ff; display: none; font-weight: bold; }
         .api-input { background-color: #0f172a; color: #ffffff; border-radius: 4px; padding: 8px 16px; font-size: 12px; width: 100%; border: 1px solid #1e293b; outline: none; }
         .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 20px; border-radius: 4px; border: 1px solid #3b82f6; text-xs; }
     </style>
@@ -59,41 +24,32 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.5.0 (Pattern Extraction)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.5.1 (Fix Merge)</p>
     </div>
-
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
-            <div class="normal-text">
-                <span>ユニメモ</span>
-                <span>解析実行</span>
-            </div>
-            <div class="loading-text font-black tracking-widest">PROCESSING...</div>
+            <div class="normal-text"><span>ユニメモ</span><span>解析実行</span></div>
+            <div class="loading-text font-black tracking-widest hidden">PROCESSING...</div>
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
-
     <div class="w-full max-w-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
-
     <div class="log-container">
         <button id="copy-log" class="copy-btn">COPY</button>
         <div id="log" class="future-log">READY...</div>
     </div>
-
     <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
         <button id="save-key" class="save-btn">SAVE</button>
     </div>
-
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
-
-        // --- 設定定義 ---
+        
         const L_HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -115,7 +71,6 @@
             { index: 17, id: "bb_bell_a", name: "BIG中風鈴Ａ", active: true, weight: 1.0, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { index: 18, id: "bb_bell_b", name: "BIG中風鈴Ｂ", active: true, weight: 1.0, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
-
         const HANABI_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
             { index: 1, id: "bb", name: "ビックボーナス", active: true, weight: 1.0, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -137,7 +92,6 @@
             { index: 17, id: "bell_center", name: "並行風鈴", active: false, weight: 0.0, probs: {1: 1.10, 2: 1.13, 5: 1.10, 6: 1.13} },
             { index: 18, id: "nf", name: "斜め風鈴", active: true, weight: 1.0, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
-
         const VERSUS_CONFIG = [
             { index: 0, id: "total_bonus", name: "ボーナス合算", active: false, weight: 0.0, probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
             { index: 1, id: "bb", name: "ビックボーナス合算", active: true, weight: 1.0, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -160,63 +114,31 @@
             { index: 18, id: "cb_miss", name: "チェリー＋ベルはずれ", active: true, weight: 1.0, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        window.onload = () => {
-            const saved = localStorage.getItem('v_key');
-            if (saved) document.getElementById('api-key').value = saved;
-        };
-        document.getElementById('save-key').onclick = () => {
-            localStorage.setItem('v_key', document.getElementById('api-key').value.trim());
-            alert('SYSTEM SAVED');
-        };
-
-        async function addLog(msg, isHtml = false, delay = 0) {
-            const l = document.getElementById('log');
-            const entry = document.createElement('div');
-            if (isHtml) entry.innerHTML = msg; else entry.innerText = msg;
-            l.appendChild(entry);
-            l.scrollTop = l.scrollHeight;
-            if (delay > 0) await sleep(delay);
-        }
-
-        async function updateBars(logLikelihoods) {
-            const maxLL = Math.max(...Object.values(logLikelihoods));
-            const exps = Object.fromEntries(Object.entries(logLikelihoods).map(([s, l]) => [s, Math.exp(l - maxLL)]));
-            const sumExps = Object.values(exps).reduce((a,b)=>a+b, 0);
-            [1,2,5,6].forEach(s => {
-                let pct = ((exps[s] / sumExps) * 100).toFixed(1);
-                document.getElementById(`p${s}`).innerText = `${pct}%`;
-                document.getElementById(`b${s}`).style.width = `${pct}%`;
-            });
-            return exps;
-        }
-
-        // --- Rev 1.5.0: 全ファイル一括処理 & パターン抽出ロジック ---
         async function processFiles(files) {
             const key = document.getElementById('api-key').value.trim();
             const logBox = document.getElementById('log');
             const btn = document.getElementById('btn-label');
             const copyBtn = document.getElementById('copy-log');
+            const loader = btn.querySelector('.loading-text');
+            const normal = btn.querySelector('.normal-text');
 
             logBox.classList.remove('error-flash');
             if (!key) { logBox.classList.add('error-flash'); alert("API KEY REQUIRED"); return; }
             if (files.length === 0) return;
 
             btn.classList.add('processing');
+            normal.style.display = 'none';
+            loader.style.display = 'block';
             logBox.innerText = ">> BOOTING ANALYZER...";
             copyBtn.style.display = 'none';
             await sleep(300);
 
-            // ファイル名順ソート
             const sortedFiles = Array.from(files).sort((a, b) => a.name.localeCompare(b.name));
-            
-            // 全ファイルの全行を蓄積する配列
             let allLines = [];
 
             try {
-                // Step 1: 全ファイルをOCRにかけて rawLines を回収
                 for (let i = 0; i < sortedFiles.length; i++) {
                     const file = sortedFiles[i];
-                    
                     const base64 = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result.split(',')[1]);
@@ -238,7 +160,6 @@
                         let f = rows.find(r => Math.abs(r.y - y) < 10);
                         if (f) f.words.push(w); else rows.push({ y, words: [w] });
                     });
-                    // 行データ (Y座標ソート)
                     const currentLines = rows.sort((a,b)=>a.y-b.y).map(r => {
                         return { 
                             y: Math.round(r.y), 
@@ -247,12 +168,14 @@
                         };
                     });
                     
-                    // ログ出し
-                    await addLog(`<span class="text-green-500">--- FILE ${i+1} SCANNED (${currentLines.length} lines) ---</span>`, true, 10);
+                    // --- Raw Data Log Output ---
+                    await addLog(`<span class="text-yellow-400 font-bold border-b border-yellow-400 block mt-4">--- FILE ${i+1} RAW DATA (Threshold:10) ---</span>`, true, 50);
+                    for (const line of currentLines) {
+                        await addLog(`<span class="text-gray-300 text-[10px]">[F${i+1}][Y:${line.y}] ${line.text}</span>`, true, 5);
+                    }
                     currentLines.forEach(l => allLines.push(l));
                 }
 
-                // Step 2: 機種判別 (全テキストから)
                 let currentConfig = null;
                 const fullText = allLines.map(l => l.text).join("");
                 if (fullText.match(/Lハナビ|スマスロ|Ｌハナビ/)) currentConfig = L_HANABI_CONFIG;
@@ -260,7 +183,6 @@
                 else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
                 if (!currentConfig) throw new Error("TARGET UNKNOWN (機種が判別できません)");
 
-                // Step 3: 総ゲーム数 (G) の探索 - 全行から最大値を探す
                 let totalG = 0;
                 for (const line of allLines) {
                     if (line.text.match(/[GＧ]/)) {
@@ -274,112 +196,79 @@
                 if (totalG === 0) throw new Error("G NOT FOUND (総ゲーム数が見つかりません)");
                 await addLog(`<span class="text-red-500">[INIT] BASE: ${totalG}G 🆗 (Max found)</span>`, true, 200);
 
-                // Step 4: パターン抽出 (Extraction) & マージ
                 await addLog(`<br><span class="text-pink-400">--- (2) PATTERN EXTRACTION & MERGE ---</span>`, true, 50);
                 
-                // 抽出されたデータを溜めるマップ (Key: 正規化された名前 => Value: {count, prob})
                 let extractedMap = new Map();
-                
-                // 正規化ヘルパー
                 const normalize = (str) => {
                     return str.replace(/\s+/g, '')
                               .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
                               .replace(/／/g, '/')
-                              .replace(/[Ａ-Ｚａ-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)) // 全角英字も半角へ
+                              .replace(/[Ａ-Ｚａ-ｚ]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
                               .toLowerCase();
                 };
 
-                // 全行を走査し、「1/xx」パターンを探す
                 for (let i = 0; i < allLines.length; i++) {
                     const line = allLines[i];
                     let probMatch = line.text.match(/1\s*\/\s*([\d,.]+|-)/);
-                    
                     if (probMatch) {
-                        // パターンヒット: これが確率行
                         let pVal = (probMatch[1] === "-" || probMatch[1] === "0") ? 0 : parseFloat(probMatch[1].replace(/,/g, ''));
-                        
-                        // 1行上が名前、2行上が回数と仮定 (範囲チェック付き)
                         if (i >= 2) {
                             let nameLine = allLines[i-1].text;
                             let countLine = allLines[i-2].text;
-                            
-                            // 名前が短すぎる、または記号だけなら、さらに1つ上を見るなどの補正が必要かもしれないが、
-                            // とりあえず指示通り「2行上が回数」とする。
-                            
                             let kMatch = countLine.match(/([\d,]+)/);
                             if (kMatch) {
                                 let k = parseInt(kMatch[1].replace(/,/g, ''));
-                                
-                                // 重複チェック用キー (名前 + 確率)
-                                // 名前だけだと「ベルA」「ベルB」がOCRミスで同じになる恐れがあるので確率もキーに含めるか？
-                                // いや、ユーザー指示は「重複部分があれば取る」なので、
-                                // 正規化された名前をキーにして、上書き保存 (または既にあったら無視) するのが良い。
-                                
                                 let key = normalize(nameLine);
-                                
-                                // ゴミ除外: キーがあまりに短い、または数値だけの場合は無視
                                 if (key.length < 2 || /^\d+$/.test(key)) continue;
-
                                 if (!extractedMap.has(key)) {
-                                    extractedMap.set(key, { name: nameLine, k: k, pVal: pVal, rawProb: line.text });
-                                } else {
-                                    // 既に登録済み -> 重複とみなす (値が同じなら問題なし。違う場合は...?)
-                                    // 今回は「重複部分を取って並べる」なので、最初に見つけたもの勝ち、あるいは後勝ち。
-                                    // 単純なMap.setなら上書き(後勝ち)になるが、
-                                    // 上から順に読んでいるので、同じデータなら上書きしても同じ。
-                                    // 違うデータ(ゴミ混じり)でキーが被る可能性は低い。
+                                    extractedMap.set(key, { name: nameLine, k: k, pVal: pVal, rawProb: line.text, used: false });
                                 }
                             }
                         }
                     }
                 }
 
-                // Step 5: 定義リストとの照合 (Mapping)
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 }; 
                 let usedData = [];
 
-                // 抽出データから定義にマッチするものを探す
                 for (const item of currentConfig) {
                     if (!item.active) continue;
-                    
-                    // 定義名を正規化
                     const targetKey = normalize(item.name);
-                    
-                    // マップから探す (完全一致だけでなく、部分一致も試みる)
                     let foundData = extractedMap.get(targetKey);
                     
                     if (!foundData) {
-                        // 完全一致がない場合、抽出済みキーの中から「含む」ものを探す (逆もしかり)
                         for (const [extractedKey, data] of extractedMap.entries()) {
-                            // "ベルＡ" (config) vs "ベルa" (extracted) -> normalizeで一致済み
-                            // "チェリー＋ベルはずれ" vs "チェリー+ベルはずれ" -> normalizeで一致済み
-                            // OCRの揺らぎ対策: レーベンシュタイン距離などを入れると重いので、簡易的に「含んでいるか」
-                            if (extractedKey.includes(targetKey) || targetKey.includes(extractedKey)) {
-                                // ただし確率が著しく違う(別の役)場合は除外したいが...
-                                // ここはシンプルにヒットさせる
-                                foundData = data;
-                                break;
+                            if (data.used) continue; // 使用済みはスキップ
+
+                            // 【修正】文字数比率チェックで「ベル」が「チェリーベル」に吸われるのを防ぐ
+                            if (extractedKey.includes(targetKey)) {
+                                if (targetKey.length / extractedKey.length > 0.6) {
+                                    foundData = data;
+                                    break;
+                                }
+                            }
+                            if (targetKey.includes(extractedKey)) {
+                                if (extractedKey.length / targetKey.length > 0.7) {
+                                    foundData = data;
+                                    break;
+                                }
                             }
                         }
                     }
 
                     if (foundData) {
-                        // データあり
+                        foundData.used = true; // ロック
                         await addLog(`<span class="text-purple-500 font-bold">[FOUND] ${item.name} -> 回数:${foundData.k} / 確率:${foundData.rawProb}</span>`, true, 20);
                         usedData.push({ item: item, k: foundData.k, pVal: foundData.pVal });
                     } else {
-                        // データなし -> 欠損アラート
                         await addLog(`<span class="text-red-500 font-black bg-yellow-900/50 px-1">❌ MISSING: ${item.name} (検出されませんでした)</span>`, true, 20);
                     }
                 }
 
-                // Step 6: 尤度計算 (Likenihood Analysis)
                 await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- (3) LIKELIHOOD ANALYSIS ---</span>`, true, 100);
                 const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
-                
                 for (const d of usedData) {
-                    if (d.pVal === 0) continue; // 確率0はスキップ
-
+                    if (d.pVal === 0) continue; 
                     let n = rtIds.includes(d.item.id) ? Math.round(d.k * d.pVal) : totalG;
                     if (n > 0) {
                         let itemLL = {1:0, 2:0, 5:0, 6:0};
@@ -402,7 +291,6 @@
                     }
                 }
 
-                // Step 7: 最終結果 (Final Result)
                 await addLog(`<br><span class="text-pink-400">--- (4) FINAL RESULT ---</span>`, true, 300);
                 const finalExps = await updateBars(logLikelihoods);
                 const sumFinal = Object.values(finalExps).reduce((a,b)=>a+b, 0);
@@ -421,6 +309,8 @@
                 await addLog(`<span class="text-red-500 font-bold bg-white p-2 block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true);
             } finally {
                 btn.classList.remove('processing');
+                normal.style.display = 'block';
+                loader.style.display = 'none';
             }
         }
 
