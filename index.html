@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.5.1 (Debug Mode)</title>
+    <title>ぷりんの解析 Rev 1.5.2 (Multi-Resistant)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&family=Share+Tech+Mono&display=swap');
@@ -21,7 +21,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.5.1 (Debug Mode)</p>
+        <p class="text-[10px] text-pink-300 font-bold uppercase tracking-widest mt-1">Rev 1.5.2 (Multi-Resistant)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -29,7 +29,7 @@
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card">
+    <div class="w-full max-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -46,7 +46,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 設定値定義 (Rev 1.4.1継承) ---
+        // --- Configs (省略せず維持) ---
         const L_HANABI_CONFIG = [
             { index: 1, id: "bb", name: "ドンBB|赤七BB|ビックボーナス", active: true, weight: 1.0, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
             { index: 4, id: "rb", name: "RB", active: true, weight: 1.0, probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
@@ -110,17 +110,15 @@
                 document.getElementById(`p${s}`).innerText = `${pct}%`;
                 document.getElementById(`b${s}`).style.width = `${pct}%`;
             });
-            return exps;
         }
 
         async function analyzeFiles(files) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY missing"); return; }
-            document.getElementById('log').innerText = ">> BOOTING ANALYZER (Rev 1.5.1 DEBUG)...";
+            document.getElementById('log').innerText = ">> BOOTING ANALYZER (Rev 1.5.2)...";
             
             let globalWords = [];
             try {
-                // (1) 全画像をスキャンして単語を統合
                 for (let i = 0; i < files.length; i++) {
                     await addLog(`[SCAN] 画像(${i+1}/${files.length}) 解析中...`);
                     const content = await toBase64(files[i]);
@@ -133,52 +131,40 @@
                     if (raw) globalWords = globalWords.concat(raw.map(w => w.description));
                 }
 
-                const fullText = globalWords.join(" ");
-                let currentConfig = null;
-                if (fullText.match(/Lハナビ|スマスロ/)) currentConfig = L_HANABI_CONFIG;
-                else if (fullText.match(/新ハナビ|ハナビ|花火/)) currentConfig = HANABI_CONFIG;
-                else if (fullText.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
-                if (!currentConfig) throw new Error("機種が判別できません。画像が正しいか確認してください。");
+                const fullTextCombined = globalWords.join(" ");
+                const fullTextNoSpace = fullTextCombined.replace(/\s+/g, "");
 
-                // (2) 総プレイ数(totalG)の取得とデバッグ
+                let currentConfig = null;
+                if (fullTextCombined.match(/Lハナビ|スマスロ/)) currentConfig = L_HANABI_CONFIG;
+                else if (fullTextCombined.match(/新ハナビ|ハナビ|花火/)) currentConfig = HANABI_CONFIG;
+                else if (fullTextCombined.match(/バーサス|ＶＥＲＳＵＳ/)) currentConfig = VERSUS_CONFIG;
+                if (!currentConfig) throw new Error("機種判別不能");
+
                 let totalG = 0;
-                for (let i = globalWords.length - 1; i >= 0; i--) {
-                    if (globalWords[i].includes("総プレイ数") || globalWords[i].includes("総プレイ")) {
-                        const subG = globalWords.slice(i, i + 6).join(" ");
-                        addLog(`[DEBUG] 総プレイ数付近: "${subG}"`);
-                        for (let j = 1; j <= 5; j++) {
-                            const m = (globalWords[i+j] || "").match(/([\d,]+)/);
-                            if (m && !globalWords[i+j].includes("/")) {
-                                totalG = parseInt(m[1].replace(/,/g, ''));
-                                break;
-                            }
-                        }
-                        if (totalG > 0) break;
-                    }
+                const gMatch = fullTextNoSpace.match(/(?:総プレイ数|総プレイ|総ゲーム数)(\d{1,3}(?:,\d{3})*)G/);
+                if (gMatch) totalG = parseInt(gMatch[1].replace(/,/g, ''));
+                else {
+                    const fallbackG = fullTextCombined.match(/(\d{1,3}(?:,\d{3})*)\s*G/);
+                    if (fallbackG) totalG = parseInt(fallbackG[1].replace(/,/g, ''));
                 }
-                if (totalG === 0) throw new Error("総プレイ数が取得できません。");
+                if (totalG === 0) throw new Error("総G数特定不能");
                 await addLog(`<span class="text-red-500 font-bold">[INIT] TOTAL: ${totalG}G 🆗</span>`, true);
 
-                // (3) キーワード近傍探索とデバッグログ
-                await addLog(`<br><span class="text-pink-400">--- KEYWORD MAPPING DEBUG ---</span>`, true);
+                await addLog(`<br><span class="text-pink-400">--- KEYWORD MAPPING ---</span>`, true);
                 let extractedData = [];
                 let missingItems = [];
 
                 currentConfig.forEach(item => {
                     const namePattern = new RegExp(item.name);
-                    let nIdx = -1;
-                    // 降着優先で後ろからキーワードを探す
-                    for (let i = globalWords.length - 1; i >= 0; i--) {
-                        if (namePattern.test(globalWords[i])) { nIdx = i; break; }
-                    }
+                    let nIndices = [];
+                    globalWords.forEach((w, idx) => { if (namePattern.test(w)) nIndices.push(idx); });
 
-                    if (nIdx !== -1) {
-                        const subWords = globalWords.slice(nIdx + 1, nIdx + 12);
+                    if (nIndices.length > 0) {
+                        const nIdx = nIndices[nIndices.length - 1]; // 降着優先
+                        const subWords = globalWords.slice(nIdx + 1, nIdx + 31); // 探索範囲拡大
                         const subStr = subWords.join(" ");
-                        addLog(`[DEBUG] 検索: ${item.name.split('|')[0]} (Index:${nIdx})`);
-                        addLog(`[DEBUG] 周辺テキスト: "${subStr}"`);
-
-                        const kMatch = subStr.match(/(\d{1,5})回/);
+                        
+                        const kMatch = subStr.match(/(\d{1,5})\s*回/);
                         const pMatch = subStr.match(/1\s*[/／]\s*([\d,.]+)/);
                         
                         if (kMatch && pMatch) {
@@ -186,28 +172,18 @@
                             const pVal = parseFloat(pMatch[1].replace(/,/g, ''));
                             extractedData.push({ item, k, pVal });
                             addLog(`<span class="text-purple-400">[FOUND] ${item.name.split('|')[0]}: ${k}回 (1/${pVal})</span>`, true);
-                        } else {
-                            let reason = !kMatch ? "【回数欠落】" : "";
-                            reason += !pMatch ? "【確率欠落】" : "";
-                            addLog(`<span class="text-yellow-500">[WARN] ${item.name.split('|')[0]}: ${reason}</span>`, true);
-                            if (item.active) missingItems.push(item.name.split('|')[0]);
-                        }
-                    } else {
-                        addLog(`<span class="text-gray-500">[DEBUG] 項目名見つからず: ${item.name.split('|')[0]}</span>`, true);
-                        if (item.active) missingItems.push(item.name.split('|')[0]);
-                    }
+                        } else if (item.active) missingItems.push(item.name.split('|')[0]);
+                    } else if (item.active) missingItems.push(item.name.split('|')[0]);
                 });
 
-                // (4) 不足チェック
                 if (missingItems.length > 0) {
-                    await addLog(`<br><span class="text-red-500 font-bold bg-white text-black px-2">❌ 解析中止: 不足項目あり</span>`, true);
+                    await addLog(`<br><span class="text-red-500 font-bold bg-white text-black px-2">❌ 不足項目あり</span>`, true);
                     missingItems.forEach(m => addLog(`<span class="text-red-400"> ・${m}</span>`, true));
-                    alert("不足項目があります。ログの周辺テキストを確認してください。");
+                    alert("不足項目があります。画像を貼り直すか追加してください。");
                     return;
                 }
 
-                // (5) 尤度解析 (Rev 1.4.1継承)
-                await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- FINAL ANALYSIS ---</span>`, true, 100);
+                await addLog(`<br><span class="text-white border-b-2 border-pink-500 font-bold">--- ANALYSIS ---</span>`, true, 100);
                 let logLikelihoods = { 1:0, 2:0, 5:0, 6:0 };
                 const rtIds = ['vc', 'vg', 'nf', 'vc_miss', 'vg_miss', 'cb_hit', 'cb_miss'];
 
@@ -216,8 +192,7 @@
                     if (n > 0) {
                         [1,2,5,6].forEach(s => {
                             let p = 1 / d.item.probs[s];
-                            let ll = (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
-                            logLikelihoods[s] += ll;
+                            logLikelihoods[s] += (d.k * Math.log(p) + (n - d.k) * Math.log(1 - p)) * (d.item.weight || 1.0);
                         });
                         await updateBars(logLikelihoods);
                     }
@@ -225,7 +200,7 @@
                 await addLog(`<br><span class="text-pink-400">>> ANALYSIS COMPLETE.</span>`, true);
 
             } catch (err) {
-                await addLog(`<span class="text-red-500 font-bold block mt-4">❌ FATAL ERROR: ${err.message}</span>`, true);
+                await addLog(`<span class="text-red-500 font-bold block mt-4">❌ ERROR: ${err.message}</span>`, true);
             }
         }
 
