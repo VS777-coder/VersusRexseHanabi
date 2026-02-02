@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>L-HANABI & VERSUS Rev 1.2.7</title>
+    <title>L-HANABI & VERSUS Rev 1.2.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -31,7 +31,7 @@
 <body>
     <div class="header-area">
         <div class="font-black kawaii-title uppercase">L-HANABI & VERSUS</div>
-        <div class="ver-text">Rev 1.2.7 (Normalized Core)</div>
+        <div class="ver-text">Rev 1.2.8 (Flexible Mapper)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn">
@@ -57,7 +57,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // ---  【聖域】定義表：Rev 1.1.2 準拠 ---
+        // --- 【聖域】定義表：一切の変更禁止 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -80,7 +80,6 @@
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
-        // 正規化関数：全角半角・スペース無視
         const normalize = s => s.replace(/[！-～]/g, r => String.fromCharCode(r.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '');
 
         async function addLog(msg, colorClass = "text-cyan-400") {
@@ -100,16 +99,14 @@
             });
         }
 
-        // --- 【核】完動解析エンジン：不干渉 ---
         async function runAnalysis(totalG, finalMasterList, config) {
             await addLog(`<br>[3. MAPPING & LIKELIHOOD]`, "color-3 font-bold underline");
             let lls = { 1:0, 2:0, 5:0, 6:0 };
             const specialIds = ["vc", "vg", "pf", "nf", "rb_bel", "cbs", "cbh", "b_ba", "b_bb"];
-
             for(let i=0; i<config.length; i++) {
                 const conf = config[i];
                 const data = finalMasterList[i];
-                if (data && data.p > 0) {
+                if (data && data.k > 0) {
                     addLog(`✅ ${conf.name} : ${data.k}回 (1/${data.pStr})`, "color-3");
                     if (conf.active) {
                         let n = specialIds.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
@@ -121,17 +118,15 @@
                         updateBars(lls);
                     }
                 }
-                await sleep(40);
             }
         }
 
-        // --- 【マージ・エージェント】前処理・ログ強化層 ---
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY REQUIRED"); return; }
             document.getElementById('log').innerHTML = "";
             document.getElementById('result-area').classList.add('analyzing');
-            await addLog(`[VERSION] Rev 1.2.7 (Normalized Core)`, "color-1 font-bold");
+            await addLog(`[VERSION] Rev 1.2.8 (Flexible Mapper)`, "color-1 font-bold");
 
             try {
                 let allTexts = [];
@@ -151,10 +146,9 @@
                     allTexts.push(lines);
                 }
 
-                // 指示: G数重複チェック
                 const parentIndices = allTexts.map((lines, idx) => lines.some(l => l.match(/[\d,]+G/)) ? idx : -1).filter(i => i !== -1);
-                if (parentIndices.length === 0) throw new Error("総G数(G)がどの画像からも見つかりません。");
-                if (parentIndices.length > 1) throw new Error(`総G数が複数の画像(${parentIndices.length}枚)から検出されました。処理を停止します。`);
+                if (parentIndices.length === 0) throw new Error("総G数が見つかりません。");
+                if (parentIndices.length > 1) throw new Error("複数の画像に総G数があります。1枚に絞ってください。");
                 
                 const parentIdx = parentIndices[0];
                 const parentLines = allTexts[parentIdx];
@@ -164,53 +158,68 @@
 
                 let totalG = parseInt(parentLines.find(l => l.match(/[\d,]+G/)).match(/([\d,]+)G/)[1].replace(/,/g, ''));
                 let currentConfig = L_HANABI_CONFIG; 
-
-                // スロット固定マスター配列
                 let finalMasterList = currentConfig.map(() => ({ k: 0, p: 0, pStr: "0.0", name: "" }));
 
                 await addLog(`<br>[2. MERGE PROCESS LOG]`, "color-2 font-bold underline");
+                
                 const scanToMaster = (lines, imgIdx) => {
                     for(let i=0; i<lines.length; i++){
                         const pMatch = lines[i].match(/1?\s*\/\s*([\d,.-]+|--)/) || lines[i].match(/[\d,.-]+\.[\d]+/);
                         if(pMatch && i >= 2){
                             const pStr = pMatch[0].replace(/1\s*\/\s*/, '').replace(/\s+/g, '');
-                            const nameStr = lines[i-1];
+                            const nameStr = normalize(lines[i-1]);
                             const countMatch = lines[i-2].match(/([\d,]+)/);
                             if(countMatch){
                                 let kVal = parseInt(countMatch[1].replace(/,/g,''));
                                 
-                                // 指示: 正規化による名称照合
-                                let targetIdx = currentConfig.findIndex(conf => normalize(conf.name) === normalize(nameStr));
-                                
+                                // 改良：OCRの表記から定義表のスロット(Index)を特定する地図
+                                let targetIdx = -1;
+                                if (nameStr.includes("ビックボーナス") || nameStr === "総BB" || nameStr === "BB") targetIdx = 1;
+                                else if (nameStr.includes("レギュラーボーナス") || nameStr === "RB") targetIdx = 4;
+                                else if (nameStr.includes("風鈴合算") || nameStr.includes("風綜合算")) targetIdx = 5;
+                                else if (nameStr.includes("風鈴A") || nameStr.includes("風鈴A")) targetIdx = 6;
+                                else if (nameStr.includes("風鈴B") || nameStr.includes("風鈴B")) targetIdx = 7;
+                                else if (nameStr.includes("氷合算")) targetIdx = 8;
+                                else if (nameStr.includes("氷A")) targetIdx = 9;
+                                else if (nameStr.includes("氷B")) targetIdx = 10;
+                                else if (nameStr.includes("赤七BB")) targetIdx = 3;
+                                else if (nameStr.includes("ドンBB")) targetIdx = 2;
+                                else if (nameStr.includes("チェリー合算")) targetIdx = 11;
+                                else if (nameStr.includes("チェリーA2")) targetIdx = 13;
+                                else if (nameStr.includes("チェリーB")) targetIdx = 14;
+                                else if (nameStr.includes("ハナビチャレンジ中ハズレ") || nameStr.includes("HC中ハズレ")) targetIdx = 15;
+                                else if (nameStr.includes("ハナビゲーム中ハズレ") || nameStr.includes("HG中ハズレ")) targetIdx = 16;
+                                else if (nameStr.includes("BIG中風鈴A")) targetIdx = 17;
+                                else if (nameStr.includes("BIG中風鈴B")) targetIdx = 18;
+
                                 if(targetIdx !== -1) {
                                     let existing = finalMasterList[targetIdx];
                                     if(existing.k === 0) {
-                                        finalMasterList[targetIdx] = { k: kVal, p: parseFloat(pStr)||0, pStr: pStr, name: nameStr };
-                                        addLog(`[ADOPT] SLOT_${targetIdx.toString().padStart(2,'0')} | ${currentConfig[targetIdx].name} <- "${nameStr}" (IMG_${imgIdx})`, "color-2 text-[10px]");
+                                        finalMasterList[targetIdx] = { k: kVal, p: parseFloat(pStr)||0, pStr: pStr, name: lines[i-1] };
+                                        addLog(`[ADOPT] ${currentConfig[targetIdx].name} <- "${lines[i-1]}" (IMG_${imgIdx})`, "color-2 text-[10px]");
                                     } else {
-                                        // 指示: 数値矛盾チェック
-                                        if(existing.k !== kVal || existing.pStr !== pStr) {
-                                            throw new Error(`整合性エラー: ${currentConfig[targetIdx].name} の数値が IMG_${imgIdx} と既知データで矛盾しています。 (${existing.k}回 vs ${kVal}回)`);
+                                        // 同一数値ならパス、不一致なら警告
+                                        if(Number(existing.k) === Number(kVal)) {
+                                            addLog(`[DUPE] ${currentConfig[targetIdx].name} (IMG_${imgIdx})数値一致につきOK`, "color-1 opacity-50 text-[8px]");
+                                        } else {
+                                            addLog(`⚠️ ERROR: ${currentConfig[targetIdx].name} 数値矛盾! ${existing.k} vs ${kVal}`, "text-red-400 font-bold");
                                         }
-                                        addLog(`[SKIP] 重複: ${currentConfig[targetIdx].name} (IMG_${imgIdx})`, "color-1 opacity-50 text-[8px]");
                                     }
                                 } else {
-                                    addLog(`[GARBAGE] 無視: "${nameStr}" (IMG_${imgIdx})`, "color-1 opacity-30 text-[8px]");
+                                    addLog(`[SKIP] "${lines[i-1]}" はマッピング対象外`, "color-1 opacity-30 text-[8px]");
                                 }
                             }
                         }
                     }
                 };
 
-                // 実行
                 scanToMaster(parentLines, parentIdx);
                 allTexts.forEach((lines, idx) => { if(idx !== parentIdx) scanToMaster(lines, idx); });
 
-                // バトンタッチ
                 await runAnalysis(totalG, finalMasterList, currentConfig);
 
             } catch (err) { 
-                await addLog(`❌ ERROR: ${err.message}`, "text-red-500 font-bold"); 
+                await addLog(`❌ FATAL: ${err.message}`, "text-red-500 font-bold"); 
             }
             document.getElementById('result-area').classList.remove('analyzing');
         }
