@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.4</title>
+    <title>ぷりんの解析 Rev 1.0.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.4 (Multi-Stitch Engine)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.5 (Visual Debugger)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -33,7 +33,7 @@
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
-    <div class="w-full max-md mx-auto result-card">
+    <div class="w-full max-w-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -50,7 +50,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // 定義部分は Rev 1.0.3 を厳格に維持
+        // 共通言語（定義表）: Rev 1.0.3を厳守
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -127,12 +127,12 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); normal.style.display = 'none'; loader.style.display = 'block';
             logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 1.0.4)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.0.5)...`, true);
 
             let masterUnitList = []; let totalG = 0; let rawFilesData = [];
 
             try {
-                // (1) 読込 & 画像並び特定
+                // (1) 画像情報とOCR生値の取得
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
@@ -143,10 +143,10 @@
                         let row = acc.find(r => r.y === y); if (row) row.words.push(w); else acc.push({ y, words: [w] }); return acc;
                     }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") }));
                     
-                    rawFilesData.push({ id: i, lines: lines, maxY: Math.max(...lines.map(l=>l.y)) });
+                    rawFilesData.push({ id: i, lines: lines });
                 }
 
-                // (1-B) ソート: Gあり画像を最優先、それ以外は平均インデックス
+                // ソート処理（G数優先）
                 const allTextPre = rawFilesData.map(f => f.lines.map(l=>l.text).join("")).join("");
                 let currentConfig = allTextPre.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (allTextPre.match(/ハナビ|ドン|花火/) ? HANABI_CONFIG : VERSUS_CONFIG);
 
@@ -156,112 +156,96 @@
                     return (hasG(a) + getAvg(a)) - (hasG(b) + getAvg(b));
                 });
 
-                // (2) (3) アンカー固定 & ゴミ排除スキャン
-                await addLog(`--- RAW DATA SCAN & UNIT EXTRACTION ---`, true);
-                rawFilesData.forEach((file, fIdx) => {
-                    addLog(`[IMAGE:${file.id}] SCANNING...`, true);
-                    const lines = file.lines;
-                    lines.forEach(l => addLog(`[RAW] Y:${l.y} | ${l.text}`, false));
+                // (2) (3) 配列構築プロセスの可視化ログ
+                await addLog(`<br>--- (1) IMAGE & (2) RAW DATA SCAN ---`, true);
+                rawFilesData.forEach(file => {
+                    addLog(`[IMAGE:${file.id}] SCANNING START...`, true);
+                    file.lines.forEach(l => addLog(`[RAW] Y:${l.y} | ${l.text}`, false));
 
                     let tempUnits = [];
-                    for (let i = 0; i < lines.length; i++) {
-                        // (2) Gをアンカーに固定
-                        if (lines[i].text.includes("総プレイ数")) {
-                            let m = lines[i].text.match(/([\d,]+)/);
-                            if (m && totalG === 0) {
-                                totalG = parseInt(m[1].replace(/,/g, ''));
-                                addLog(`<span class="text-cyan-400">[ANCHOR] TOTAL G LOCKED: ${totalG}</span>`, true);
-                            }
+                    for (let i = 0; i < file.lines.length; i++) {
+                        const line = file.lines[i];
+                        if (line.text.includes("総プレイ数")) {
+                            let m = line.text.match(/([\d,]+)/);
+                            if (m && totalG === 0) { totalG = parseInt(m[1].replace(/,/g, '')); addLog(`[ANCHOR] G LOCKED: ${totalG}`, true); }
                         }
-
-                        // (3) 上下のゴミ排除: Y座標が端すぎるものは無視
-                        if (lines[i].text.match(/1\s*\/\s*[\d,.-]+/)) {
+                        if (line.text.match(/1\s*\/\s*[\d,.-]+/)) {
                             if (i >= 2) {
-                                const y = lines[i].y;
-                                if (y < 30 || y > (file.maxY - 30)) {
-                                    addLog(`[DISCARD] Y:${y} | ちぎれ端のため排除`, true);
-                                    continue;
-                                }
-
-                                const probStr = lines[i].text.match(/1\s*\/\s*([\d,.-]+)/)[1].replace(/,/g, '');
-                                const nameLine = lines[i-1];
-                                const countLine = lines[i-2];
-                                const dist = Math.abs(countLine.y - lines[i].y);
-                                
-                                if (dist < 80 && countLine.text.match(/[\d,]+/)) {
-                                    const pVal = probStr === '-' ? 0 : parseFloat(probStr);
-                                    const kVal = parseInt(countLine.text.match(/([\d,]+)/)[1].replace(/,/g, ''));
-                                    tempUnits.push({ k: kVal, n: nameLine.text, p: pVal, pStr: probStr });
-                                }
+                                const probStr = line.text.match(/1\s*\/\s*([\d,.-]+)/)[1].replace(/,/g, '');
+                                const nameLine = file.lines[i-1];
+                                const countLine = file.lines[i-2];
+                                const kVal = parseInt(countLine.text.match(/([\d,]+)/)?.[1]?.replace(/,/g, '') || "0");
+                                tempUnits.push({ k: kVal, n: nameLine.text, p: parseFloat(probStr || "0"), pStr: probStr });
                             }
                         }
                     }
 
-                    // (4) ステッチマージ: 重複があれば飛ばす
+                    // ステッチ処理（重複削除）のログ詳細化
                     tempUnits.forEach(u => {
                         const isDup = masterUnitList.some(m => m.k === u.k && m.n.substring(0,2) === u.n.substring(0,2));
                         if (!isDup) {
                             masterUnitList.push(u);
                             addLog(`[SET OK] INDEX:${masterUnitList.length-1} | ${u.k}回 | ${u.n} | 1/${u.pStr}`, false);
                         } else {
-                            addLog(`[SKIP DUP] ${u.n} (${u.k}回) は既に取り込み済み`, true);
+                            addLog(`[SKIP DUP] ${u.n} (${u.k}回) は既出のため無視`, true);
                         }
                     });
                 });
 
-                // (3-B) マッピング
-                await addLog(`<br>--- (3) PHYSICAL MAPPING ---`, true);
+                // (4) 定義表へのマッピング可視化
+                await addLog(`<br>--- (4) DEFINITION MAPPING (Config vs Value) ---`, true);
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const rts = ['vc', 'vg', 'pf', 'nf', 'rb_bel', 'cbs', 'cbh'];
                 
                 for (let i = 0; i < currentConfig.length; i++) {
                     const conf = currentConfig[i];
                     const data = masterUnitList[i];
-                    if (data) {
-                        await addLog(`MAP[${i}] ${conf.name} <== ${data.k}回`, false);
-                        if (conf.active && data.p > 0) {
-                            let n = rts.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
-                            [1,2,5,6].forEach(s => { 
-                                let p = 1 / conf.probs[s]; 
-                                lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p)); 
-                            });
-                        }
-                    } else {
-                        await addLog(`<span class="text-red-500">MAP[${i}] ${conf.name} <- MISSING</span>`, true);
+                    const valText = data ? `${data.k}回 (1/${data.pStr})` : `<span class="text-red-500">MISSING</span>`;
+                    await addLog(`MAP[${i}] ${conf.name.padEnd(10, ' ')} | ${valText}`, true);
+
+                    if (conf.active && data && data.p > 0) {
+                        let n = rts.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
+                        [1,2,5,6].forEach(s => { 
+                            let p = 1 / conf.probs[s]; 
+                            let logP = (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p));
+                            lls[s] += logP;
+                        });
                     }
                 }
 
-                // (4) 尤度表示
-                await addLog(`<br>--- (4) LIKELIHOOD CALC ---`, true);
-                const m = Math.max(...Object.values(lls)); 
-                Object.keys(lls).forEach(s => addLog(`S${s} Log-Likelihood: ${lls[s].toFixed(2)} ${lls[s]===m?'(MAX)':''}`, false));
+                // (5) 尤度計算の詳細ログ
+                await addLog(`<br>--- (5) LIKELIHOOD CALC DETAILS ---`, true);
+                const maxLL = Math.max(...Object.values(lls)); 
+                Object.keys(lls).forEach(s => addLog(`S${s} Total Log-Likelihood: ${lls[s].toFixed(2)} ${lls[s]===maxLL?'(MAX)':''}`, false));
 
-                // 結果反映
-                const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - m)])); 
-                const sum = Object.values(exps).reduce((a,b)=>a+b, 0); 
+                // (6) 判別結果のグラフィカル表示
+                const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)])); 
+                const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0); 
                 let resSummary = "";
                 [1,2,5,6].forEach(s => { 
-                    let p = ((exps[s] / sum) * 100).toFixed(1); 
+                    let p = ((exps[s] / sumExp) * 100).toFixed(1); 
                     document.getElementById(`p${s}`).innerText = `${p}%`; 
                     document.getElementById(`b${s}`).style.width = `${p}%`;
                     resSummary += `S${s}:${p}% `;
                 });
-                await addLog(`<br><span class="text-white font-bold">[RESULT] ${resSummary}</span>`, true);
+                
+                await addLog(`<br><span class="text-white font-bold">┌──────────────────────────────────┐</span>`, true);
+                await addLog(`<span class="text-white font-bold">│ [FINAL RESULT] ${resSummary.padEnd(17)} │</span>`, true);
+                await addLog(`<span class="text-white font-bold">└──────────────────────────────────┘</span>`, true);
                 await addLog(`--- ANALYSIS COMPLETE ---`, true);
 
             } catch (err) { alert(err.message); } finally { btn.classList.remove('processing'); normal.style.display = 'block'; loader.style.display = 'none'; }
         }
 
-        async function addLog(msg, isH) { const l = document.getElementById('log'); const e = document.createElement('div'); if (isH) e.innerHTML = msg; else e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(5); }
+        async function addLog(msg, isH) { const l = document.getElementById('log'); const e = document.createElement('div'); if (isH) e.innerHTML = msg; else e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(2); }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('v_key');
-            if (saved) document.getElementById('api-key').value = saved;
+            const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
             document.getElementById('file-input').addEventListener('change', e => { if (e.target.files.length > 0) processFiles(e.target.files); });
             document.getElementById('save-key').addEventListener('click', () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('API KEY SAVED'); });
             document.getElementById('copy-log').addEventListener('click', () => {
-                const res = `RESULT >> S1:${document.getElementById('p1').innerText}, S2:${document.getElementById('p2').innerText}, S5:${document.getElementById('p5').innerText}, S6:${document.getElementById('p6').innerText}`;
-                navigator.clipboard.writeText(res + "\n\n" + document.getElementById('log').innerText);
+                const resHeader = `RESULT >> S1:${document.getElementById('p1').innerText}, S2:${document.getElementById('p2').innerText}, S5:${document.getElementById('p5').innerText}, S6:${document.getElementById('p6').innerText}`;
+                navigator.clipboard.writeText(resHeader + "\n\n" + document.getElementById('log').innerText);
                 alert('COPIED');
             });
         });
