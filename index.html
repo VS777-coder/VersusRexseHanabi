@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>L-HANABI & VERSUS Rev 1.0.16</title>
+    <title>L-HANABI & VERSUS Rev 1.0.17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
-        .header-area { flex-shrink: 0; text-align: center; margin-bottom: 8px; }
-        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem; line-height: 1.1; }
-        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; shrink-0; margin-bottom: 8px; }
+        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* タイトルサイズをRev 1.4.1ベースに厳格固定 */
+        .header-area { flex-shrink: 0; text-align: center; margin-bottom: 12px; }
+        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem; line-height: 1.1; }
+        
+        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; shrink-0; margin-bottom: 12px; }
         .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; text-align: center; line-height: 1.2; color: #fff; }
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 8px; flex-shrink: 0; }
+
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 12px; flex-shrink: 0; }
         .bar-bg { background-color: #020617; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.3s ease-out; }
+
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 8px; }
-        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #22d3ee; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-all; }
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 8px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; min-width: 0; }
+        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #22d3ee; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-all; }
+
+        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 4px; }
+        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 10px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; min-width: 0; }
         .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 16px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 11px; cursor: pointer; flex-shrink: 0; }
+        
         @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .analyzing { animation: flash 0.5s infinite; }
     </style>
@@ -38,10 +45,10 @@
     </div>
 
     <div id="result-area" class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between text-[11px] font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-[12px] font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
     <div class="log-container">
@@ -56,7 +63,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 定義表：聖域 ---
+        // --- 定義表：聖域（不変） ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -89,7 +96,7 @@
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
             { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 54.6: 54.6} },
             { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
@@ -150,7 +157,7 @@
             document.getElementById('result-area').classList.add('analyzing');
             
             try {
-                await addLog(`[VERSION] Rev 1.0.16 (Faithful Update)`);
+                await addLog(`[VERSION] Rev 1.0.17 (Corrected Spec)`);
                 await sleep(500);
 
                 const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
@@ -174,18 +181,18 @@
                 }));
 
                 const fullText = lines.map(l => l.text).join("");
-                let targetMachine = fullText.match(/Lハナビ|スマスロ/) ? "L新ハナビ" : (fullText.match(/VERSUS|バーサス/) ? "バーサスリヴァイズ" : "新ハナビ");
-                let currentConfig = targetMachine === "L新ハナビ" ? L_HANABI_CONFIG : (targetMachine === "バーサスリヴァイズ" ? VERSUS_CONFIG : HANABI_CONFIG);
+                let targetMachineName = fullText.match(/Lハナビ|スマスロ/) ? "L新ハナビ" : (fullText.match(/VERSUS|バーサス/) ? "バーサスリヴァイズ" : "新ハナビ");
+                let currentConfig = targetMachineName === "L新ハナビ" ? L_HANABI_CONFIG : (targetMachineName === "バーサスリヴァイズ" ? VERSUS_CONFIG : HANABI_CONFIG);
 
-                await addLog(`[MACHINE] 判別対象: ${targetMachine}`);
+                await addLog(`[MACHINE] 判別対象: ${targetMachineName}`);
                 await sleep(400);
 
                 await addLog(`<br>[1. RAW DATA LOG]`);
                 for(let i=0; i<lines.length; i++) {
                     addLog(`L${i.toString().padStart(2, '0')} | ${lines[i].text}`);
-                    if(i % 8 === 0) await sleep(10);
+                    if(i % 10 === 0) await sleep(10);
                 }
-                await sleep(400);
+                await sleep(500);
 
                 await addLog(`<br>[2. DATA SCAN]`);
                 let startIndex = -1, totalG = 0;
@@ -212,7 +219,7 @@
                         addLog(`SCAN: L${i} -> 1/${probValue} (K:${kVal})`);
                     }
                 }
-                await sleep(400);
+                await sleep(500);
 
                 await addLog(`<br>[3. MAPPING & LIKELIHOOD]`);
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
@@ -235,7 +242,7 @@
                             updateBars(lls);
                         }
                     }
-                    await sleep(50);
+                    await sleep(60);
                 }
 
                 await addLog(`<br>[4. ANALYSIS]`);
@@ -247,7 +254,7 @@
                         addLog(`${stars} ${conf.name.padEnd(12, ' ')} [Gap:${(gap*100).toFixed(1)}%]`);
                     }
                 });
-                await sleep(400);
+                await sleep(500);
 
                 await addLog(`<br>[5. FINAL JUDGMENT]`);
                 [1,2,5,6].forEach(s => {
