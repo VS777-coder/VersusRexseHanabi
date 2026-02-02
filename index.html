@@ -23,13 +23,12 @@
 </head>
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
-        <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.17 (Origin Mapping Engine)</p>
+        <div class="font-black kawaii-title tracking-tighter">VERSUS ANALYZER</div>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.17 (Origin Mapping)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
             <div class="normal-text"><span>ユニメモ</span><span>解析実行</span></div>
-            <div class="loading-text font-black tracking-widest hidden">PROCESSING...</div>
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
@@ -40,17 +39,16 @@
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
     <div class="log-container">
-        <button id="copy-log" class="copy-btn">COPY LOG ONLY</button>
+        <button id="copy-log" class="copy-btn">COPY LOG</button>
         <div id="log" class="future-log">READY...</div>
     </div>
-    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2 text-xs">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
-        <button id="save-key" class="save-btn">SAVE</button>
+        <button id="save-key" class="save-btn px-4">SAVE KEY</button>
     </div>
 
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
-
         const VERSUS_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -73,16 +71,11 @@
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        // Lハナビ、ハナビ設定省略（バーサステスト用）
-
         async function processFiles(files) {
             const key = document.getElementById('api-key').value.trim();
             const logBox = document.getElementById('log');
-            const btn = document.getElementById('btn-label');
             if (!key) { alert("API KEY REQUIRED"); return; }
-            
-            btn.classList.add('processing'); logBox.innerHTML = ""; 
-            await addLog(`>> BOOTING ANALYZER (Rev 1.1.17)...`, true);
+            logBox.innerHTML = ">> ANALYZING..."; 
 
             let results = new Array(VERSUS_CONFIG.length).fill(null);
             let totalG = 0; let imageDataArray = []; let lastReadMarker = null;
@@ -91,13 +84,12 @@
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
-                    const json = await resp.json(); const raw = json.responses[0]?.textAnnotations;
-                    if (!raw) continue;
-                    const lines = raw.slice(1).reduce((acc, w) => {
+                    const json = await resp.json();
+                    const lines = json.responses[0]?.textAnnotations?.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let row = acc.find(r => r.y === y); if (row) row.words.push(w); else acc.push({ y, words: [w] }); return acc;
-                    }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") }));
-                    imageDataArray.push({ id: i, lines: lines, used: false });
+                    }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") })) || [];
+                    imageDataArray.push({ id: i, lines, used: false });
                 }
 
                 let currentImg = imageDataArray.find(img => img.lines.some(l => l.text.match(/[\d,]+G/)));
@@ -106,106 +98,87 @@
                     totalG = parseInt(gLine.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                 }
 
-                await addLog(`<br>--- ② [EXTRACTION LOG] ---`, true);
-
                 while (currentImg) {
-                    await addLog(`[IMAGE:${currentImg.id}] SCANNING...`, true);
+                    await addLog(`[IMAGE:${currentImg.id}] SCANNING...`);
                     let isSyncing = (lastReadMarker !== null);
                     currentImg.used = true;
                     const scanLines = currentImg.lines;
 
                     for(let j=0; j<scanLines.length; j++){
-                        const line = scanLines[j];
-                        const probMatch = line.text.match(/1?\s*\/\s*([\d,.-]+)/) || line.text.match(/[\d,.-]+\.[\d]+/);
+                        const line = scanLines[j].text;
+                        const probMatch = line.match(/1\s*\/\s*([\d,.-]+)/) || line.match(/[\d,.-]+\.[\d]+/);
                         
                         if (probMatch) {
                             const probStr = probMatch[0].match(/[\d,.-]+\.[\d]+/)?.[0].replace(/,/g, '') || "";
-                            if (!probStr) continue;
                             const pVal = parseFloat(probStr);
 
-                            // 【数値救出：上4行を探索】
-                            let kVal = 0; let nVal = "Unknown";
+                            // 数値救出：上4行スキャン
+                            let kVal = -1; let nVal = "";
                             for (let k = 1; k <= 4; k++) {
                                 if (j - k < 0) break;
-                                const checkLine = scanLines[j - k].text;
-                                const numMatch = checkLine.match(/^([\d,]+)\s*回$/) || checkLine.match(/^([\d,]+)$/);
-                                if (numMatch && kVal === 0) kVal = parseInt(numMatch[1].replace(/,/g, ''));
-                                if (checkLine.length > 2 && !checkLine.match(/\d/) && nVal === "Unknown") nVal = checkLine.trim();
+                                const check = scanLines[j - k].text;
+                                const m = check.match(/^([\d,]+)\s*回$/) || check.match(/^([\d,]+)$/);
+                                if (m && kVal === -1) kVal = parseInt(m[1].replace(/,/g, ''));
+                                if (check.length > 2 && !check.match(/\d/) && nVal === "") nVal = check.trim();
                             }
 
                             if (isSyncing) {
-                                if (kVal === lastReadMarker.k && Math.abs(pVal - lastReadMarker.p) < 0.01) {
-                                    await addLog(`[SYNC OK] しおり同期完了: ${nVal}`, true);
-                                    isSyncing = false;
-                                }
+                                if (kVal === lastReadMarker.k && Math.abs(pVal - lastReadMarker.p) < 0.1) isSyncing = false;
                                 continue;
                             }
 
-                            // 【座席指定マッピング：名前からMAP位置を特定】
-                            const mapIndex = VERSUS_CONFIG.findIndex(c => nVal.includes(c.name.substring(0,2)) || c.name.includes(nVal.substring(0,2)));
-                            if (mapIndex !== -1) {
-                                results[mapIndex] = { k: kVal, n: nVal, p: pVal, pStr: probStr };
-                                lastReadMarker = { k: kVal, p: pVal, pStr: probStr };
-                                await addLog(`<span class="text-green-400">[SET MAP:${mapIndex}] ${nVal} -> ${kVal}回 (1/${probStr})</span>`, true);
-                            } else {
-                                await addLog(`<span class="text-yellow-500">[SKIP] 席が見つかりません: ${nVal} (${kVal}回)</span>`, true);
+                            // 座席指定
+                            const target = VERSUS_CONFIG.findIndex(c => nVal.includes(c.name.substring(0,2)) || c.name.includes(nVal.substring(0,2)));
+                            if (target !== -1) {
+                                results[target] = { k: Math.max(0, kVal), p: pVal, pStr: probStr, n: nVal };
+                                lastReadMarker = { k: kVal, p: pVal };
+                                await addLog(`[SET MAP:${target}] ${nVal} -> ${kVal}回 (1/${probStr})`);
                             }
                         }
                     }
 
-                    // 次の画像探索
+                    // 次の画像（同期優先）
                     let nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => {
-                        const m = l.text.match(/1?\s*\/\s*([\d,.-]+)/) || l.text.match(/[\d,.-]+\.[\d]+/);
+                        const m = l.text.match(/1\s*\/\s*([\d,.-]+)/) || l.text.match(/[\d,.-]+\.[\d]+/);
                         if (!m) return false;
                         const p = parseFloat(m[0].match(/[\d,.-]+\.[\d]+/)?.[0].replace(/,/g, '') || "0");
-                        return Math.abs(p - lastReadMarker.p) < 0.01;
+                        return Math.abs(p - lastReadMarker.p) < 0.1;
                     }));
 
                     if (!nextImg && lastReadMarker) {
-                        nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => {
-                            return VERSUS_CONFIG.some(conf => l.text.includes(conf.name.substring(0,2)));
-                        }));
-                        if (nextImg) {
-                            await addLog(`[BRIDGE] IMAGE:${nextImg.id}へワープ`, true);
-                            lastReadMarker = null; 
-                        }
+                        nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => VERSUS_CONFIG.some(c => l.text.includes(c.name.substring(0,2)))));
+                        if (nextImg) lastReadMarker = null; // BRIDGE
                     }
                     currentImg = nextImg;
                 }
 
-                await addLog(`<br>--- ④ [FINAL DEFINITION MAPPING] ---`, true);
+                // 判定
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
-                for (let i = 0; i < VERSUS_CONFIG.length; i++) {
-                    const conf = VERSUS_CONFIG[i]; const data = results[i];
-                    let log = `MAP[${i}] ${conf.name.padEnd(10, ' ')} | `;
-                    if (data) {
-                        log += `${data.k}回 (1/${data.pStr})`; await addLog(log, true);
-                        if (conf.active && data.p > 0) {
-                            let n = (['vc','vg','cbs','cbh'].includes(conf.id)) ? Math.round(data.k * data.p) : totalG;
-                            [1,2,5,6].forEach(s => { let p = 1 / conf.probs[s]; lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p)); });
-                        }
-                    } else { await addLog(log + `<span class="text-red-500">MISSING</span>`, true); }
-                }
+                results.forEach((data, i) => {
+                    const conf = VERSUS_CONFIG[i];
+                    if (data && conf.active) {
+                        let n = (['vc','vg','cbs','cbh'].includes(conf.id)) ? Math.round(data.k * data.p) : totalG;
+                        [1,2,5,6].forEach(s => { let p = 1 / conf.probs[s]; lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p)); });
+                    }
+                });
 
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                await addLog(`<br>--- ⑥ [FINAL JUDGMENT] ---`, true);
                 [1,2,5,6].forEach(s => {
                     let p = ((exps[s] / sumExp) * 100).toFixed(1);
                     document.getElementById(`p${s}`).innerText = `${p}%`; document.getElementById(`b${s}`).style.width = `${p}%`;
                 });
-            } catch (err) { alert(err.message); } finally { btn.classList.remove('processing'); }
+                await addLog(`--- ANALYSIS COMPLETE ---`);
+
+            } catch (err) { alert(err.message); }
         }
 
-        async function addLog(msg, isH) { const l = document.getElementById('log'); const e = document.createElement('div'); if (isH) e.innerHTML = msg; else e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(1); }
+        async function addLog(msg) { const l = document.getElementById('log'); const e = document.createElement('div'); e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(1); }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
-            document.getElementById('file-input').addEventListener('change', e => { if (e.target.files.length > 0) processFiles(e.target.files); });
-            document.getElementById('save-key').addEventListener('click', () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('API KEY SAVED'); });
-            document.getElementById('copy-log').addEventListener('click', () => { navigator.clipboard.writeText(document.getElementById('log').innerText); alert('LOG COPIED'); });
-        });
+        document.getElementById('file-input').addEventListener('change', e => { if (e.target.files.length > 0) processFiles(e.target.files); });
+        document.getElementById('save-key').addEventListener('click', () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('SAVED'); });
+        window.onload = () => { const k = localStorage.getItem('v_key'); if (k) document.getElementById('api-key').value = k; };
     </script>
 </body>
 </html>
