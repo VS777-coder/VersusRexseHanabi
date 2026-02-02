@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.15 (Data-First Engine)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.15 (Stable Chain Scanning)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -131,6 +131,7 @@
             let lastReadMarker = null;
 
             try {
+                // PHASE 1: OCR生データ全回収
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
@@ -143,6 +144,7 @@
                     imageDataArray.push({ id: i, lines: lines, used: false });
                 }
 
+                // G起点探索
                 let currentImg = imageDataArray.find(img => img.lines.some(l => l.text.match(/[\d,]+G/)));
                 if (!currentImg) { await addLog(`ERROR: 'G' NOT FOUND.`, true); return; }
                 let gLine = currentImg.lines.find(l => l.text.match(/[\d,]+G/));
@@ -160,8 +162,9 @@
 
                     for(let j=0; j<scanLines.length; j++){
                         const line = scanLines[j];
-                        if (lastReadMarker === null && line.y <= gLine.y && currentImg.used === false) {
-                            if(line.text.includes(totalG + "G")) continue;
+                        // 起点画像のみGより上をカット
+                        if (lastReadMarker === null && line.y <= gLine.y && !currentImg.used) {
+                           if(line.text.includes(totalG + "G")) continue;
                         }
 
                         const probMatch = line.text.match(/1?\s*\/\s*([\d,.-]+)/) || line.text.match(/[\d,.-]+\.[\d]+/);
@@ -186,8 +189,9 @@
                         }
                     }
 
-                    currentImg.used = true; // スキャン完了後にフラグを立てる
-                    
+                    currentImg.used = true; // ここでマーク
+
+                    // 次の画像探索（同期優先）
                     let nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => {
                         const m = l.text.match(/1?\s*\/\s*([\d,.-]+)/) || l.text.match(/[\d,.-]+\.[\d]+/);
                         if (!m) return false;
@@ -195,16 +199,18 @@
                         return Math.abs(p - lastReadMarker.p) < 0.01;
                     }));
 
+                    // ブリッジ（重なりなし）探索
                     if (!nextImg && lastReadMarker) {
                         nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => {
+                            // 定義表の残りの項目（最大5つ先まで）の名前が含まれているか確認
                             return currentConfig.slice(masterUnitList.length, masterUnitList.length + 5).some(conf => {
                                 const cleanName = conf.name.replace(/[ＡＢ合算]/g, '').substring(0,2);
                                 return l.text.includes(cleanName);
                             });
                         }));
-                        if (nextImg) await addLog(`[BRIDGE] 次の項目が見つかったIMAGE:${nextImg.id}へ連結。`, true);
+                        if (nextImg) await addLog(`[BRIDGE] 継ぎ目なしワープ検知。IMAGE:${nextImg.id}へ。`, true);
                     }
-                    currentImg = nextImg;
+                    currentImg = nextImg; // ループ継続
                 }
 
                 await addLog(`<br>--- ③ [FINAL LIST CHECK] ---`, true);
