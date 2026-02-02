@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.0</title>
+    <title>ぷりんの解析 Rev 1.1.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.0 (Definition Restored)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.1 (Numerical Identity Only)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -33,7 +33,7 @@
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
-    <div class="w-full max-md mx-auto result-card">
+    <div class="w-full max-w-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -50,7 +50,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // 定義表 Rev 1.0.3 完全復旧
+        // 定義表 Rev 1.0.3 厳守
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -127,7 +127,7 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); normal.style.display = 'none'; loader.style.display = 'block';
             logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 1.1.0)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.1.1)...`, true);
 
             let masterUnitList = []; let totalG = 0; let rawFilesData = [];
 
@@ -151,9 +151,7 @@
                     const hasG = (f) => f.lines.some(l => l.text.match(/[\d,]+G/)) ? -10000 : 0;
                     const getPos = (f) => {
                         let scores = [];
-                        f.lines.forEach(l => {
-                            currentConfig.forEach((conf, idx) => { if (l.text.includes(conf.name.substring(0,2))) scores.push(idx); });
-                        });
+                        f.lines.forEach(l => { currentConfig.forEach((conf, idx) => { if (l.text.includes(conf.name.substring(0,2))) scores.push(idx); }); });
                         return scores.length > 0 ? (scores.reduce((p,c)=>p+c,0) / scores.length) : 999;
                     };
                     return (hasG(a) + getPos(a)) - (hasG(b) + getPos(b));
@@ -185,14 +183,19 @@
                                 tempUnits.push({ k: kVal, n: nameLine.text, p: parseFloat(probStr || "0"), pStr: probStr });
                             }
                         } else if (line.text.match(/1\s*\/\s*[\d,.-]+/)) {
-                            addLog(`<span class="text-red-500 font-bold">[REJECTED] 小数点欠損ゴミを排除: ${line.text}</span>`, true);
+                            addLog(`<span class="text-red-500 font-bold">[REJECTED] 小数点欠損ゴミ排除: ${line.text}</span>`, true);
                         }
                     }
 
+                    // 【修正】大前提：回数と確率のみで判断。文字列（名前）は重複判定に使わない。
                     tempUnits.forEach(u => {
-                        const isDup = masterUnitList.some(m => m.k === u.k && m.n.substring(0,2) === u.n.substring(0,2));
-                        if (!isDup) { masterUnitList.push(u); addLog(`[SET OK] INDEX:${masterUnitList.length-1} | ${u.k}回 | ${u.n} | 1/${u.pStr}`, false); }
-                        else { addLog(`<span class="text-yellow-500">[SKIP DUP] 重複回避: ${u.n} (${u.k}回)</span>`, true); }
+                        const isDup = masterUnitList.some(m => m.k === u.k && m.p === u.p);
+                        if (!isDup) {
+                            masterUnitList.push(u);
+                            addLog(`[SET OK] INDEX:${masterUnitList.length-1} | ${u.k}回 | ${u.n} | 1/${u.pStr}`, false);
+                        } else {
+                            addLog(`<span class="text-yellow-500">[SKIP DUP] 数値完全一致のため重複回避: ${u.k}回 (1/${u.pStr})</span>`, true);
+                        }
                     });
                 });
 
