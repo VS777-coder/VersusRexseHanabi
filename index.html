@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.6</title>
+    <title>ぷりんの解析 Rev 1.1.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.6 (G-Anchor & Sequence Strict)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.8 (Full Definition Restore)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -51,7 +51,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // Rev 1.0.3 定義表
+        // 【完全復元】Rev 1.0.3 準拠定義
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -74,7 +74,49 @@
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
-        // HANABI, VERSUS も同様に Rev 1.0.3 固定（略）
+        const HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+
+        const VERSUS_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
 
         async function processFiles(files) {
             const key = document.getElementById('api-key').value.trim();
@@ -82,13 +124,12 @@
             const btn = document.getElementById('btn-label');
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 1.1.6)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.1.8)...`, true);
 
-            let masterUnitList = []; let totalG = 0; let gFoundGlobal = false;
-            let imageDataArray = [];
+            let masterUnitList = []; let totalG = 0; let imageDataArray = [];
 
             try {
-                // PHASE 1: OCR生データ全回収
+                // OCR実行と生データの全回収
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
@@ -101,68 +142,60 @@
                     imageDataArray.push({ id: i, lines: lines });
                 }
 
-                // ① [RAW DATA ARCHIVE]
                 await addLog(`<br>--- ① [RAW DATA ARCHIVE] ---`, true);
                 imageDataArray.forEach(img => {
                     addLog(`[IMAGE:${img.id}] RAW LINES:`, true);
                     img.lines.forEach(l => addLog(`Y:${String(l.y).padEnd(4, ' ')} | ${l.text}`, false));
                 });
 
-                const allTextPre = imageDataArray.map(f => f.lines.map(l=>l.text).join("")).join("");
-                let currentConfig = allTextPre.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : L_HANABI_CONFIG; // 判定は適宜
+                // G起点探索
+                let startIndex = -1; let gLineY = -1;
+                for (let i = 0; i < imageDataArray.length; i++) {
+                    const gLine = imageDataArray[i].lines.find(l => l.text.match(/[\d,]+G/));
+                    if (gLine) {
+                        startIndex = i; gLineY = gLine.y;
+                        totalG = parseInt(gLine.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
+                        await addLog(`<br>--- [G-DISCOVERY] ---`, true);
+                        await addLog(`[ANCHOR] G-FOUND in IMAGE:${i} (Y:${gLineY}) | TOTAL: ${totalG}G`, true);
+                        break;
+                    }
+                }
 
-                // ② [EXTRACTION LOG] G起点・物理順スキャン
+                if (startIndex === -1) { await addLog(`<span class="text-red-500">ERROR: 'G' NOT FOUND.</span>`, true); return; }
+
+                // 機種判定
+                const allText = imageDataArray.map(img => img.lines.map(l=>l.text).join("")).join("");
+                let currentConfig = allText.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (allText.match(/VERSUS|バーサス/) ? VERSUS_CONFIG : HANABI_CONFIG);
+                await addLog(`[MACHINE] ${allText.match(/Lハナビ/) ? 'L-HANABI' : (allText.match(/VERSUS/) ? 'VERSUS' : 'HANABI')}`, true);
+
+                // 物理スキャン
                 await addLog(`<br>--- ② [EXTRACTION LOG] ---`, true);
-                imageDataArray.forEach(img => {
-                    addLog(`[IMAGE:${img.id}] START SCANNING FROM G-ANCHOR...`, true);
-                    let gFoundInThisImage = false;
-
-                    for (let j = 0; j < img.lines.length; j++) {
-                        const line = img.lines[j];
-
-                        // G起点判定
-                        if (!gFoundGlobal || !gFoundInThisImage) {
-                            if (line.text.match(/[\d,]+G/)) {
-                                let m = line.text.match(/([\d,]+)G/);
-                                if (m) {
-                                    if (!gFoundGlobal) totalG = parseInt(m[1].replace(/,/g, ''));
-                                    gFoundGlobal = true; gFoundInThisImage = true;
-                                    addLog(`[ANCHOR] G-START: ${totalG}.`, true);
-                                }
-                            }
-                            if (!gFoundInThisImage) continue; // Gを見つけるまで無視
-                        }
-
-                        // 確率起点(1/ または 小数点)で3点セット取得
+                for (let i = startIndex; i < imageDataArray.length; i++) {
+                    const img = imageDataArray[i];
+                    addLog(`[IMAGE:${img.id}] SCANNING...`, true);
+                    img.lines.forEach((line, j) => {
+                        if (i === startIndex && line.y <= gLineY) return;
                         const probMatch = line.text.match(/1?\s*\/\s*([\d,.-]+)/) || line.text.match(/[\d,.-]+\.[\d]+/);
                         if (probMatch && j >= 2) {
                             const probStr = probMatch[0].match(/[\d,.-]+\.[\d]+/)?.[0].replace(/,/g, '') || "";
-                            if (!probStr) continue;
-                            
-                            const nameLine = img.lines[j-1]; 
-                            const countLine = img.lines[j-2];
+                            if (!probStr) return;
+                            const nameLine = img.lines[j-1]; const countLine = img.lines[j-2];
                             const kVal = parseInt(countLine.text.match(/([\d,]+)/)?.[1]?.replace(/,/g, '') || "0");
                             const pVal = parseFloat(probStr);
-
-                            // 重複排除: 既に取ったデータと「回数」および「確率」が一致したらスキップ
                             const isDup = masterUnitList.some(m => m.k === kVal && Math.abs(m.p - pVal) < 0.01);
-                            if (isDup) {
-                                addLog(`<span class="text-yellow-500">[SKIP] 既に取得済み: ${kVal}回 (1/${probStr})</span>`, true);
-                                continue; 
-                            }
-
+                            if (isDup) { addLog(`<span class="text-yellow-500">[SKIP DUP] ${kVal}回 (1/${probStr})</span>`, true); return; }
                             masterUnitList.push({ k: kVal, n: nameLine.text, p: pVal, pStr: probStr });
                             addLog(`<span class="text-green-400">[SET OK] INDEX:${masterUnitList.length-1} | ${kVal}回 | ${nameLine.text} | 1/${probStr}</span>`, true);
                         }
-                    }
-                });
+                    });
+                }
 
-                // ③〜⑥ 尤度計算・最終表示 ( Rev 1.1.4 と同様 )
+                // 最終計算
                 await addLog(`<br>--- ③ [FINAL LIST CHECK] ---`, true);
                 masterUnitList.forEach((m, idx) => addLog(`INDEX:${idx} | ${m.k}回 | ${m.n} | 1/${m.pStr}`, false));
 
                 await addLog(`<br>--- ④ [FINAL DEFINITION MAPPING] ---`, true);
-                let lls = { 1:0, 2:0, 5:0, 6:0 };
+                let lls = { 1:0, 2:0, 5:0, 6:0 }; const rts = ['vc', 'vg', 'pf', 'nf', 'rb_bel', 'cbs', 'cbh'];
                 for (let i = 0; i < currentConfig.length; i++) {
                     const conf = currentConfig[i]; const data = masterUnitList[i];
                     let mappingLog = `MAP[${i}] ${conf.name.padEnd(10, ' ')} | `;
@@ -170,7 +203,7 @@
                         mappingLog += `${data.k}回 (1/${data.pStr})`;
                         await addLog(mappingLog, true);
                         if (conf.active && data.p > 0) {
-                            let n = totalG; // 簡略化
+                            let n = rts.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
                             [1,2,5,6].forEach(s => { let p = 1 / conf.probs[s]; lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p)); });
                         }
                     } else { await addLog(mappingLog + `<span class="text-red-500">MISSING</span>`, true); }
