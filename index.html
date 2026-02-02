@@ -3,60 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>L-HANABI & VERSUS Rev 1.0.13</title>
+    <title>L-HANABI & VERSUS Rev 1.0.15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
-        
-        /* 全ての要素でパディングを含めた幅計算を強制 */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body { 
-            background-color: #0b0d11; 
-            color: #ffffff; 
-            font-family: 'Inter', sans-serif; 
-            height: 100dvh; /* スマホのアドレスバーを考慮した高さ */
-            width: 100%; 
-            margin: 0;
-            padding: 10px; 
-            overflow: hidden; /* ボディ全体のスクロールを禁止 */
-            display: flex; 
-            flex-direction: column; 
-        }
-
+        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
         .header-area { flex-shrink: 0; text-align: center; margin-bottom: 8px; }
         .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem; line-height: 1.1; }
-        
-        .button-area { flex-shrink: 0; margin-bottom: 8px; }
-        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; }
-        .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; text-align: center; line-height: 1.2; }
-
+        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; shrink-0; margin-bottom: 8px; }
+        .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; text-align: center; line-height: 1.2; color: #fff; }
         .result-card { background-color: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 8px; flex-shrink: 0; }
         .bar-bg { background-color: #020617; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.7s cubic-bezier(0.1, 0.7, 0.1, 1); }
-
-        /* ログエリアが残りの高さを全て奪い取る */
+        .bar-fill { height: 100%; width: 0%; transition: width 0.3s ease-out; }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 8px; }
-        .future-log { 
-            background-color: #000000; 
-            border: 1px solid #00d2ff; 
-            border-radius: 8px; 
-            padding: 10px; 
-            font-family: 'Share Tech Mono', monospace; 
-            font-size: 10px; 
-            color: #fbcfe8; 
-            width: 100%; 
-            height: 100%; 
-            overflow-y: auto; 
-            overflow-x: hidden; 
-            white-space: pre-wrap; 
-            word-break: break-all; 
-        }
-
+        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #22d3ee; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-all; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 8px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; min-width: 0; }
         .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 16px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 11px; cursor: pointer; flex-shrink: 0; }
-
         @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .analyzing { animation: flash 0.5s infinite; }
     </style>
@@ -64,11 +28,10 @@
 <body>
     <div class="header-area">
         <div class="font-black kawaii-title uppercase">L-HANABI & VERSUS</div>
-        <p class="text-[9px] text-cyan-500 font-bold uppercase tracking-[0.1em] mt-1">Rev 1.0.13 True One-Screen</p>
     </div>
 
-    <div class="button-area">
-        <label for="file-input" class="main-btn text-white">
+    <div class="shrink-0">
+        <label for="file-input" class="main-btn">
             <span>ユニメモ解析<br>実行</span>
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
@@ -93,7 +56,6 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 定義表（聖域） ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -160,14 +122,24 @@
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        async function addLog(msg, color = "") {
+        async function addLog(msg, color = "text-cyan-400") {
             const l = document.getElementById('log');
             const e = document.createElement('div');
-            if(color) e.className = color;
+            e.className = color;
             e.innerHTML = msg;
             l.appendChild(e);
             l.scrollTop = l.scrollHeight;
-            await sleep(1);
+        }
+
+        function updateBars(lls) {
+            const maxLL = Math.max(...Object.values(lls));
+            const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
+            const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
+            [1,2,5,6].forEach(s => {
+                let prob = (exps[s] / sumExp) * 100;
+                document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
+                document.getElementById(`b${s}`).style.width = `${prob}%`;
+            });
         }
 
         async function processFile(file) {
@@ -177,16 +149,19 @@
             document.getElementById('result-area').classList.add('analyzing');
             
             try {
+                await addLog(`[VERSION] Rev 1.0.15 (System Restoration)`);
+                await sleep(400);
+
                 const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
                 const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { 
                     method: 'POST', 
                     body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) 
                 });
                 const json = await resp.json();
-                const raw = json.responses[0]?.textAnnotations;
-                if (!raw) throw new Error("OCR解析失敗");
+                const rawData = json.responses[0]?.textAnnotations;
+                if (!rawData) throw new Error("OCR解析失敗");
 
-                const lines = raw.slice(1).reduce((acc, w) => {
+                const lines = rawData.slice(1).reduce((acc, w) => {
                     let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                     let x = w.boundingPoly.vertices[0].x;
                     let row = acc.find(r => r.y === y);
@@ -197,15 +172,20 @@
                     text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ")
                 }));
 
-                await addLog(`[1. RAW DATA LOG]`, "text-cyan-400 font-bold underline");
-                lines.forEach((l, i) => addLog(`L${i.toString().padStart(2, '0')} | ${l.text}`, "text-gray-500"));
-
-                await addLog(`<br>[2. DATA SCAN]`, "text-yellow-400 font-bold underline");
                 const fullText = lines.map(l => l.text).join("");
-                let machineName = fullText.match(/Lハナビ|スマスロ/) ? "L新ハナビ" : (fullText.match(/VERSUS|バーサス/) ? "バーサスリヴァイズ" : "新ハナビ");
-                let currentConfig = machineName === "L新ハナビ" ? L_HANABI_CONFIG : (machineName === "バーサスリヴァイズ" ? VERSUS_CONFIG : HANABI_CONFIG);
-                await addLog(`DEVICE: ${machineName}`, "text-white");
+                let targetMachine = fullText.match(/Lハナビ|スマスロ/) ? "L新ハナビ" : (fullText.match(/VERSUS|バーサス/) ? "バーサスリヴァイズ" : "新ハナビ");
+                let currentConfig = targetMachine === "L新ハナビ" ? L_HANABI_CONFIG : (targetMachine === "バーサスリヴァイズ" ? VERSUS_CONFIG : HANABI_CONFIG);
 
+                await addLog(`[MACHINE] 判別対象: ${targetMachine}`);
+                await sleep(300);
+
+                await addLog(`<br>[1. RAW DATA LOG]`);
+                for(let i=0; i<lines.length; i++) {
+                    addLog(`L${i.toString().padStart(2, '0')} | ${lines[i].text}`);
+                    if(i % 5 === 0) await sleep(10);
+                }
+
+                await addLog(`<br>[2. DATA SCAN]`);
                 let startIndex = -1, totalG = 0;
                 for (let i = 0; i < lines.length; i++) {
                     if (lines[i].text.match(/([\d,]+)G/)) {
@@ -216,6 +196,7 @@
                     }
                 }
                 if (startIndex === -1) throw new Error("総G数不明");
+                await sleep(300);
 
                 let masterList = [];
                 for (let i = startIndex + 1; i < lines.length; i++) {
@@ -226,15 +207,16 @@
                         const kMatch = kLine ? kLine.text.match(/([\d,]+)/) : null;
                         let kVal = (kLine && kLine.text.includes('/')) ? 0 : (kMatch ? parseInt(kMatch[1].replace(/,/g, '')) : 0);
                         masterList.push({ k: kVal, p: parseFloat(probValue) || 0, pStr: probValue });
-                        await addLog(`SCAN: L${i} -> 1/${probValue} (K:${kVal})`);
+                        addLog(`SCAN: L${i} -> 1/${probValue} (K:${kVal})`);
                     }
                 }
 
-                await addLog(`<br>[3. MAPPING]`, "text-green-400 font-bold underline");
+                await addLog(`<br>[3. MAPPING & LIKELIHOOD]`);
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const specialIds = ["vc", "vg", "pf", "nf", "rb_bel", "cbs", "cbh", "b_ba", "b_bb"];
 
-                currentConfig.forEach((conf, idx) => {
+                for(let idx=0; idx<currentConfig.length; idx++) {
+                    const conf = currentConfig[idx];
                     const data = masterList[idx];
                     if (data && data.p > 0) {
                         let isAnom = (data.k === 0 && !specialIds.includes(conf.id));
@@ -247,11 +229,14 @@
                                 let targetP = 1 / conf.probs[s];
                                 lls[s] += (k * Math.log(targetP) + (n - k) * Math.log(1 - targetP));
                             });
+                            // リアルタイム反映（グニュグニュ）
+                            updateBars(lls);
                         }
-                    } else addLog(`❌ ${conf.name} : 欠損`, "text-gray-700");
-                });
+                    }
+                    await sleep(40);
+                }
 
-                await addLog(`<br>[4. ANALYSIS]`, "text-pink-400 font-bold underline");
+                await addLog(`<br>[4. ANALYSIS]`);
                 currentConfig.forEach((conf, idx) => {
                     const data = masterList[idx];
                     if (data && data.p > 0) {
@@ -260,21 +245,17 @@
                         addLog(`${stars} ${conf.name.padEnd(12, ' ')} [Gap:${(gap*100).toFixed(1)}%]`);
                     }
                 });
+                await sleep(300);
 
-                await addLog(`<br>[5. JUDGMENT]`, "text-white font-bold underline");
-                const maxLL = Math.max(...Object.values(lls));
-                const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
-                const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-
+                await addLog(`<br>[5. FINAL JUDGMENT]`);
+                updateBars(lls); // 最終確定反映
                 [1,2,5,6].forEach(s => {
-                    let prob = (exps[s] / sumExp) * 100;
-                    document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
-                    document.getElementById(`b${s}`).style.width = `${prob}%`;
-                    addLog(`設定${s}: ${prob.toFixed(1)}%`);
+                    const prob = document.getElementById(`p${s}`).innerText;
+                    addLog(`設定${s}: ${prob}`);
                 });
 
                 document.getElementById('result-area').classList.remove('analyzing');
-                await addLog(`<br>COMPLETE.`, "text-cyan-400 font-bold");
+                await addLog(`<br>COMPLETE.`);
 
             } catch (err) { 
                 document.getElementById('result-area').classList.remove('analyzing');
