@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.1.14</title>
+    <title>ぷりんの解析 Rev 1.1.15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.14 (Stable Chained Engine)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.1.15 (Data-First Engine)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -51,7 +51,6 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // Rev 1.0.3 Definitions
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -125,8 +124,8 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             
             btn.classList.add('processing');
-            logBox.innerHTML = ""; // 初期化
-            await addLog(`>> BOOTING ANALYZER (Rev 1.1.14)...`, true);
+            logBox.innerHTML = ""; 
+            await addLog(`>> BOOTING ANALYZER (Rev 1.1.15)...`, true);
 
             let masterUnitList = []; let totalG = 0; let imageDataArray = [];
             let lastReadMarker = null;
@@ -157,14 +156,12 @@
                 while (currentImg) {
                     await addLog(`[IMAGE:${currentImg.id}] SCANNING...`, true);
                     let isSyncing = (lastReadMarker !== null);
-                    currentImg.used = true;
                     const scanLines = currentImg.lines;
 
                     for(let j=0; j<scanLines.length; j++){
                         const line = scanLines[j];
-                        // 起点画像のみGより上をカット
-                        if (lastReadMarker === null && line.y <= gLine.y && currentImg.lines === currentImg.lines) {
-                           if(currentImg.lines.find(l=>l.text.includes(totalG + "G")) === gLine) continue;
+                        if (lastReadMarker === null && line.y <= gLine.y && currentImg.used === false) {
+                            if(line.text.includes(totalG + "G")) continue;
                         }
 
                         const probMatch = line.text.match(/1?\s*\/\s*([\d,.-]+)/) || line.text.match(/[\d,.-]+\.[\d]+/);
@@ -189,7 +186,8 @@
                         }
                     }
 
-                    // 次の画像探索
+                    currentImg.used = true; // スキャン完了後にフラグを立てる
+                    
                     let nextImg = imageDataArray.find(img => !img.used && img.lines.some(l => {
                         const m = l.text.match(/1?\s*\/\s*([\d,.-]+)/) || l.text.match(/[\d,.-]+\.[\d]+/);
                         if (!m) return false;
@@ -204,7 +202,7 @@
                                 return l.text.includes(cleanName);
                             });
                         }));
-                        if (nextImg) await addLog(`[BRIDGE] 継ぎ目なしワープ検知。IMAGE:${nextImg.id}へ。`, true);
+                        if (nextImg) await addLog(`[BRIDGE] 次の項目が見つかったIMAGE:${nextImg.id}へ連結。`, true);
                     }
                     currentImg = nextImg;
                 }
@@ -251,7 +249,7 @@
             if (isH) e.innerHTML = msg; else e.innerText = msg; 
             l.appendChild(e); 
             l.scrollTop = l.scrollHeight; 
-            await sleep(1); // 描画を確実にする
+            await sleep(1); 
         }
 
         document.addEventListener('DOMContentLoaded', () => {
