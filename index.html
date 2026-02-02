@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>L-HANABI & VERSUS Rev 1.0.11</title>
+    <title>L-HANABI & VERSUS Rev 1.0.12</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 10vw; line-height: 1.0; letter-spacing: -1px; }
-        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; transition: all 0.2s; height: 72px; display: flex; align-items: center; justify-content: center; shrink-0; }
-        .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; }
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 8px; shrink-0; }
+        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem; line-height: 1.0; letter-spacing: -1px; }
+        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; transition: all 0.2s; height: 80px; display: flex; align-items: center; justify-content: center; shrink-0; width: 100%; max-width: 450px; margin: 0 auto; }
+        .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; text-align: center; line-height: 1.2; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 8px; shrink-0; width: 100%; max-width: 450px; margin: 0 auto 8px auto; }
         .bar-bg { background-color: #020617; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.7s cubic-bezier(0.1, 0.7, 0.1, 1); }
-        .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; margin-bottom: 60px; } /* Footer分空ける */
+        .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; max-width: 450px; margin: 0 auto 8px auto; }
         .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; white-space: pre-wrap; word-break: break-all; }
-        .api-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(11, 13, 17, 0.95); padding: 8px 12px; border-top: 1px solid #1e293b; display: flex; gap: 8px; backdrop-filter: blur(4px); z-index: 50; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 4px; padding: 6px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
-        .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 16px; border-radius: 4px; border: 1px solid #3b82f6; font-size: 10px; cursor: pointer; }
+        .api-footer { shrink-0; width: 100%; max-width: 450px; margin: 0 auto; display: flex; gap: 8px; padding-bottom: 4px; }
+        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 10px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
+        .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 16px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 11px; cursor: pointer; }
         @keyframes flash { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .analyzing { animation: flash 0.5s infinite; }
     </style>
@@ -26,28 +26,28 @@
 <body>
     <div class="text-center shrink-0 mb-3 px-2">
         <div class="font-black kawaii-title uppercase">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.11 Ultimate Flow</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.1em] mt-1">Rev 1.0.12 Golden Spec</p>
     </div>
 
-    <div class="w-full shrink-0 mb-3 max-w-md mx-auto">
-        <label for="file-input" class="main-btn w-full text-white">
-            <span>ユニメモ解析実行</span>
+    <div class="w-full shrink-0 mb-3 px-2">
+        <label for="file-input" class="main-btn text-white">
+            <span>ユニメモ解析<br>実行</span>
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div id="result-area" class="w-full max-w-md mx-auto result-card shrink-0">
+    <div id="result-area" class="result-card px-2">
         <div class="mb-2"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
         <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
-    <div class="log-container">
-        <div id="log" class="future-log">WAITING FOR DATA...</div>
+    <div class="log-container px-2">
+        <div id="log" class="future-log">READY...</div>
     </div>
 
-    <div class="api-footer">
+    <div class="api-footer px-2">
         <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
         <button id="save-key" class="save-btn">SAVE</button>
     </div>
@@ -55,7 +55,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 定義表：聖域（不変） ---
+        // --- 定義表：聖域 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -159,23 +159,21 @@
                     text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ")
                 }));
 
-                // (1) RAW DATA
-                await addLog(`[1. RAW DATA LOG]`, "text-cyan-400 underline font-bold");
+                await addLog(`[1. RAW DATA LOG]`, "text-cyan-400 font-bold underline");
                 lines.forEach((l, i) => addLog(`L${i.toString().padStart(2, '0')} | ${l.text}`, "text-gray-500"));
 
-                // (2) DATA SCAN
-                await addLog(`<br>[2. DATA SCAN]`, "text-yellow-400 underline font-bold");
+                await addLog(`<br>[2. DATA SCAN]`, "text-yellow-400 font-bold underline");
                 const fullText = lines.map(l => l.text).join("");
                 let machineName = fullText.match(/Lハナビ|スマスロ/) ? "L新ハナビ" : (fullText.match(/VERSUS|バーサス/) ? "バーサスリヴァイズ" : "新ハナビ");
                 let currentConfig = machineName === "L新ハナビ" ? L_HANABI_CONFIG : (machineName === "バーサスリヴァイズ" ? VERSUS_CONFIG : HANABI_CONFIG);
-                await addLog(`TARGET: ${machineName}`, "text-white");
+                await addLog(`DEVICE: ${machineName}`, "text-white");
 
                 let startIndex = -1, totalG = 0;
                 for (let i = 0; i < lines.length; i++) {
                     if (lines[i].text.match(/([\d,]+)G/)) {
                         totalG = parseInt(lines[i].text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                         startIndex = i;
-                        await addLog(`DETECTED TOTAL: ${totalG}G`, "text-cyan-300");
+                        await addLog(`DETECTED TOTAL: ${totalG}G`);
                         break;
                     }
                 }
@@ -190,20 +188,19 @@
                         const kMatch = kLine ? kLine.text.match(/([\d,]+)/) : null;
                         let kVal = (kLine && kLine.text.includes('/')) ? 0 : (kMatch ? parseInt(kMatch[1].replace(/,/g, '')) : 0);
                         masterList.push({ k: kVal, p: parseFloat(probValue) || 0, pStr: probValue });
-                        await addLog(`SCAN: Line ${i} -> Prob: 1/${probValue}, Count: ${kVal}`);
+                        await addLog(`SCAN: Line ${i} -> 1/${probValue} (K:${kVal})`);
                     }
                 }
 
-                // (3) DEFINITION MAPPING
-                await addLog(`<br>[3. DEFINITION MAPPING]`, "text-green-400 underline font-bold");
+                await addLog(`<br>[3. MAPPING]`, "text-green-400 font-bold underline");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const specialIds = ["vc", "vg", "pf", "nf", "rb_bel", "cbs", "cbh", "b_ba", "b_bb"];
 
                 currentConfig.forEach((conf, idx) => {
                     const data = masterList[idx];
                     if (data && data.p > 0) {
-                        let status = (data.k === 0 && !specialIds.includes(conf.id)) ? "⚠️不整合(確率逆算)" : "✅成功";
-                        addLog(`${status}: ${conf.name} -> ${data.k}回 (1/${data.pStr})`);
+                        let isAnom = (data.k === 0 && !specialIds.includes(conf.id));
+                        addLog(`${isAnom ? '⚠️' : '✅'} ${conf.name} : ${data.k}回 (1/${data.pStr})`);
 
                         if (conf.active) {
                             let n = specialIds.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
@@ -213,24 +210,20 @@
                                 lls[s] += (k * Math.log(targetP) + (n - k) * Math.log(1 - targetP));
                             });
                         }
-                    } else {
-                        addLog(`❌未検知: ${conf.name}`, "text-gray-600");
-                    }
+                    } else addLog(`❌ ${conf.name} : 欠損`, "text-gray-700");
                 });
 
-                // (4) LIKELIHOOD ANALYSIS
-                await addLog(`<br>[4. LIKELIHOOD ANALYSIS]`, "text-pink-400 underline font-bold");
+                await addLog(`<br>[4. ANALYSIS]`, "text-pink-400 font-bold underline");
                 currentConfig.forEach((conf, idx) => {
                     const data = masterList[idx];
                     if (data && data.p > 0) {
                         const gap = Math.abs((1/conf.probs[1]) - (1/conf.probs[6])) / Math.min(1/conf.probs[1], 1/conf.probs[6]);
                         const stars = "★".repeat(Math.min(5, Math.floor(gap * 10))) + "☆".repeat(Math.max(0, 5 - Math.floor(gap * 10)));
-                        addLog(`${stars} ${conf.name.padEnd(12, ' ')} [Gap: ${(gap*100).toFixed(1)}%]`);
+                        addLog(`${stars} ${conf.name.padEnd(12, ' ')} [Gap:${(gap*100).toFixed(1)}%]`);
                     }
                 });
 
-                // (5) FINAL JUDGMENT
-                await addLog(`<br>[5. FINAL JUDGMENT]`, "text-white underline font-bold");
+                await addLog(`<br>[5. JUDGMENT]`, "text-white font-bold underline");
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
@@ -239,11 +232,11 @@
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
                     document.getElementById(`b${s}`).style.width = `${prob}%`;
-                    addLog(`設定${s}: ${prob.toFixed(2)}%`);
+                    addLog(`設定${s}: ${prob.toFixed(1)}%`);
                 });
 
                 document.getElementById('result-area').classList.remove('analyzing');
-                await addLog(`<br>--- ALL PROCESS COMPLETED ---`, "text-cyan-400 font-bold");
+                await addLog(`<br>COMPLETE.`, "text-cyan-400 font-bold");
 
             } catch (err) { 
                 document.getElementById('result-area').classList.remove('analyzing');
