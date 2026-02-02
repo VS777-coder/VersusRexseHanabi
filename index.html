@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 2.2.10</title>
+    <title>ぷりんの解析 Rev 1.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 2.2.10 (Full Restoration)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.0 (Core Fixed)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -50,6 +50,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
+        // --- 定義表（Rev 2.2.10から完全復元） ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -124,9 +125,9 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); normal.style.display = 'none'; loader.style.display = 'block';
             logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 2.2.10)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.0.0)...`, true);
 
-            let extractedList = []; let totalG = 0; let rawFilesData = [];
+            let unitList = []; let totalG = 0; let rawFilesData = [];
 
             try {
                 for (let i = 0; i < files.length; i++) {
@@ -137,7 +138,7 @@
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let row = acc.find(r => r.y === y); if (row) row.words.push(w); else acc.push({ y, words: [w] }); return acc;
-                    }, []).sort((a,b)=>a.y-b.y).map(r => ({ text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") }));
+                    }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ") }));
                     rawFilesData.push({ id: i, lines: lines });
                 }
 
@@ -148,63 +149,64 @@
                     const getS = (f) => { let s = 0, c = 0; f.lines.forEach(l => { currentConfig.forEach((item, idx) => { if (l.text.includes(item.name.substring(0,2))) { s += idx; c++; } }); }); return c > 0 ? s / c : 999; };
                     return getS(a) - getS(b);
                 });
-                let combined = []; rawFilesData.forEach(f => combined.push(...f.lines));
 
-                await addLog(`<br>--- (2) DATA EXTRACTION ---`, true);
-                for (let i = 0; i < combined.length; i++) {
-                    const line = combined[i].text;
-                    if (line.match(/[GＧ]/)) { let m = line.match(/([\d,]+)/); if (m) totalG = Math.max(totalG, parseInt(m[1].replace(/,/g, ''))); }
-                    if (line.match(/\.|\-/)) {
-                        let pMatch = line.match(/1\s*\/\s*([\d,.-]+)/);
-                        if (pMatch) {
-                            let pRaw = pMatch[1].replace(/,/g, '');
-                            let pVal = pRaw === '-' ? 0 : parseFloat(pRaw);
+                await addLog(`<br>--- (2) UNIT EXTRACTION ---`, true);
+                rawFilesData.forEach(file => {
+                    const lines = file.lines;
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].text.match(/[GＧ]/)) { 
+                            let m = lines[i].text.match(/([\d,]+)/); 
+                            if (m) totalG = Math.max(totalG, parseInt(m[1].replace(/,/g, ''))); 
+                        }
+                        if (lines[i].text.match(/1\s*\/\s*[\d,.-]+/)) {
                             if (i >= 2) {
-                                let namePart = combined[i-1].text;
-                                let countPart = combined[i-2].text;
-                                if (i >= 3 && !countPart.match(/回|[\d,]+/)) { namePart = combined[i-2].text + combined[i-1].text; countPart = combined[i-3].text; }
-                                let kMatch = countPart.match(/([\d,]+)/);
-                                if (kMatch) {
-                                    let kVal = parseInt(kMatch[1].replace(/,/g, ''));
-                                    // 3点一致のみを排除
-                                    let dup = extractedList.find(e => e.k === kVal && e.name === namePart && e.pStr === pRaw);
-                                    if (dup) {
-                                        await addLog(`[SKIP/DUP] ${namePart}: ${kVal}回 (1/${pRaw})`, false);
-                                    } else {
-                                        extractedList.push({ name: namePart, k: kVal, pVal: pVal, pStr: pRaw });
-                                        await addLog(`[INDEX:${extractedList.length-1}] ${namePart}: ${kVal}回 (1/${pRaw})`, false);
-                                    }
+                                const probStr = lines[i].text.match(/1\s*\/\s*([\d,.-]+)/)[1].replace(/,/g, '');
+                                const nameLine = lines[i-1];
+                                const countLine = lines[i-2];
+                                const dist = Math.abs(countLine.y - lines[i].y);
+                                
+                                // 3点揃いチェック：物理的距離と回数の存在
+                                if (dist < 80 && countLine.text.match(/[\d,]+/)) {
+                                    const pVal = probStr === '-' ? 0 : parseFloat(probStr);
+                                    const kVal = parseInt(countLine.text.match(/([\d,]+)/)[1].replace(/,/g, ''));
+                                    unitList.push({ k: kVal, n: nameLine.text, p: pVal, pStr: probStr });
+                                    addLog(`[SET OK] ${kVal}回 | ${nameLine.text} | 1/${probStr}`, false);
+                                } else {
+                                    addLog(`[DISCARD] Incomplete set at Y:${lines[i].y}`, true);
                                 }
                             }
                         }
                     }
-                }
+                });
 
-                await addLog(`<br>--- (3&4) MAP MATCHING ---`, true);
-                let lls = { 1:0, 2:0, 5:0, 6:0 }; const rts = ['vc', 'vg', 'nf', 'cbs', 'cbh'];
+                await addLog(`<br>--- (3) PHYSICAL MAPPING ---`, true);
+                let lls = { 1:0, 2:0, 5:0, 6:0 };
+                const rts = ['vc', 'vg', 'nf', 'cbs', 'cbh'];
+                
                 for (let i = 0; i < currentConfig.length; i++) {
-                    let conf = currentConfig[i], data = extractedList[i];
+                    const conf = currentConfig[i];
+                    const data = unitList[i]; // 定義順に詰め込む
                     if (data) {
-                        await addLog(`MAP[${i}] ${conf.name} <- ${data.name} (${data.k}回)`, false);
-                        if (conf.active && data.pVal > 0) {
-                            let n = rts.includes(conf.id) ? Math.round(data.k * data.pVal) : totalG;
+                        await addLog(`MAP[${i}] ${conf.name} <- ${data.n} (${data.k}回)`, false);
+                        if (conf.active && data.p > 0) {
+                            let n = rts.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
                             [1,2,5,6].forEach(s => { let p = 1 / conf.probs[s]; lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p)); });
                         }
-                    } else { await addLog(`<span class="text-red-500">MAP[${i}] ${conf.name} <- MISSING</span>`, true); }
+                    } else {
+                        await addLog(`<span class="text-red-500">MAP[${i}] ${conf.name} <- MISSING</span>`, true);
+                    }
                 }
 
-                await addLog(`<br>--- (5) FINAL PROBABILITY ---`, true);
                 const m = Math.max(...Object.values(lls)); 
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - m)])); 
                 const sum = Object.values(exps).reduce((a,b)=>a+b, 0); 
-                let table = "\n| 設定 | 確率 |\n| :--- | :--- |\n";
                 [1,2,5,6].forEach(s => { 
                     let p = ((exps[s] / sum) * 100).toFixed(1); 
                     document.getElementById(`p${s}`).innerText = `${p}%`; 
                     document.getElementById(`b${s}`).style.width = `${p}%`;
-                    table += `| 設定${s} | ${p}% |\n`;
                 });
-                await addLog(table.replace(/\n/g, "<br>"), true);
+                await addLog(`<br>--- ANALYSIS COMPLETE ---`, true);
+
             } catch (err) { alert(err.message); } finally { btn.classList.remove('processing'); normal.style.display = 'block'; loader.style.display = 'none'; }
         }
 
