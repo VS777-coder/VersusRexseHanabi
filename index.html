@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.1</title>
+    <title>ぷりんの解析 Rev 1.0.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -23,7 +23,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.1 (Pure Extraction)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.3 (Strict Indexing)</p>
     </div>
 
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
@@ -52,6 +52,9 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
+        // ---------------------------------------------------------
+        // 【定義表：聖域】絶対に触らない、順序を変えない
+        // ---------------------------------------------------------
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -74,6 +77,52 @@
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
+        const HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+
+        const VERSUS_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
+
+        // ---------------------------------------------------------
+
         async function addLog(msg, color = "") {
             const l = document.getElementById('log');
             const e = document.createElement('div');
@@ -88,7 +137,7 @@
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY REQUIRED"); return; }
             document.getElementById('log').innerHTML = "";
-            await addLog(`[SYSTEM] 解析開始 Rev 1.0.1...`, "text-white");
+            await addLog(`[SYSTEM] 解析開始 Rev 1.0.3...`, "text-white");
             
             try {
                 const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
@@ -110,98 +159,84 @@
                     text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ")
                 }));
 
+                const fullText = lines.map(l => l.text).join("");
+                let currentConfig = fullText.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (fullText.match(/VERSUS|バーサス/) ? VERSUS_CONFIG : HANABI_CONFIG);
+
+                let startIndex = -1;
                 let totalG = 0;
-                const gLine = lines.find(l => l.text.match(/([\d,]+)G/));
-                if (gLine) {
-                    totalG = parseInt(gLine.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                    await addLog(`[G-FOUND] 総回転数: ${totalG}G`, "text-cyan-400 font-bold");
-                } else {
-                    await addLog(`❌ 総G数が見つかりません`, "text-red-500");
-                    return;
-                }
-
-                let masterList = [];
                 for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    // 小数点または1/xxxを探す
-                    const probMatch = line.text.match(/1?\s*\/\s*([\d,.-]+)/) || line.text.match(/[\d,.-]+\.[\d]+/);
-                    
-                    if (probMatch && i >= 2) {
-                        const probStr = probMatch[0].match(/[\d,.-]+\.[\d]+/)?.[0].replace(/,/g, '') || "";
-                        const nameText = lines[i-1].text.trim();
-                        const countText = lines[i-2].text.trim();
-
-                        await addLog(`--- 項目検知 ---`);
-                        
-                        // 回数チェック
-                        let kVal = 0;
-                        const kMatch = countText.match(/([\d,]+)/);
-                        if (kMatch) {
-                            kVal = parseInt(kMatch[1].replace(/,/g, ''));
-                            if (countText.includes("回")) {
-                                await addLog(`[回数] ${kVal} ... [OK] 回数確定`, "text-green-400");
-                            } else {
-                                await addLog(`[回数] ${kVal} ... ⚠️回無し (数値採用)`, "text-yellow-500");
-                            }
-                        } else {
-                            await addLog(`[回数] ❌数値不明 (スキップ)`, "text-red-500");
-                            continue;
-                        }
-
-                        // 名称チェック (定義表から探す)
-                        const configItem = L_HANABI_CONFIG.find(c => nameText.includes(c.name.substring(0, 2)));
-                        const finalName = configItem ? configItem.name : nameText;
-                        await addLog(`[名称] ${finalName} (${nameText})`);
-
-                        // 整合性チェック (総G数 vs 逆算確率)
-                        const pVal = parseFloat(probStr);
-                        const calcP = totalG / kVal;
-                        // BIG中項目や分母が特殊なものは一旦整合性チェックを緩める
-                        const isSpecial = ["vc", "vg", "b_ba", "b_bb"].includes(configItem?.id);
-                        
-                        if (!isSpecial && Math.abs(calcP - pVal) > 1.0) {
-                            await addLog(`[整合] 1/${calcP.toFixed(1)} vs 1/${pVal} ... ❌乖離大`, "text-red-500");
-                        } else {
-                            await addLog(`[整合] OK`, "text-green-400");
-                            masterList.push({ id: configItem?.id, n: finalName, k: kVal, p: pVal });
-                        }
+                    if (lines[i].text.match(/([\d,]+)G/)) {
+                        totalG = parseInt(lines[i].text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
+                        startIndex = i;
+                        await addLog(`[G-FOUND] 起点確定: ${totalG}G (Line:${i})`, "text-cyan-400 font-bold");
+                        break;
                     }
                 }
 
-                // 尤度計算
-                await addLog(`<br>[CALC] 設定推測計算開始...`, "text-white font-bold");
-                let lls = { 1:0, 2:0, 5:0, 6:0 };
-                const specialIds = ["vc", "vg", "b_ba", "b_bb"];
+                if (startIndex === -1) { await addLog(`❌ 総G数が見つかりません`, "text-red-500"); return; }
 
-                L_HANABI_CONFIG.forEach(conf => {
-                    if (!conf.active) return;
-                    const data = masterList.find(d => d.id === conf.id);
+                let masterList = [];
+                for (let i = startIndex + 1; i < lines.length; i++) {
+                    const probMatch = lines[i].text.match(/1?\s*\/\s*([\d,.-]+|--)/) || lines[i].text.match(/[\d,.-]+\.[\d]+/);
+                    
+                    if (probMatch) {
+                        const probStr = probMatch[0].replace(/\s+/g, '');
+                        if (i < 2) continue;
+                        const countLine = lines[i-2];
+                        const kMatch = countLine.text.match(/([\d,]+)/);
+
+                        await addLog(`--- 検知スキャン: ${probStr} ---`);
+
+                        if (!kMatch) {
+                            await addLog(`  L ❌回数位置に数値無し (スキップ)`, "text-red-500");
+                            continue;
+                        }
+
+                        // 【双方向チェック：回数から2行下が今の確率行か】
+                        if (!lines[i].text.includes(probStr)) {
+                            await addLog(`  L ❌セット不整合 (距離異常)`, "text-red-500");
+                            continue;
+                        }
+
+                        let kVal = parseInt(kMatch[1].replace(/,/g, ''));
+                        let logColor = countLine.text.includes("回") ? "text-green-400" : "text-yellow-500";
+                        let logLabel = countLine.text.includes("回") ? "[OK] 回数確定" : "⚠️回無し (数値採用)";
+                        await addLog(`  L [回数] ${kVal} ... ${logLabel}`, logColor);
+
+                        masterList.push({ k: kVal, pStr: probStr, p: parseFloat(probStr.match(/[\d.]+/)?.[0] || "0") });
+                    }
+                }
+
+                await addLog(`<br>[CALC] マッピング実行中...`, "text-white font-bold");
+                let lls = { 1:0, 2:0, 5:0, 6:0 };
+                const specialIds = ["vc", "vg", "pf", "nf", "rb_bel", "cbs", "cbh", "b_ba", "b_bb"];
+
+                currentConfig.forEach((conf, idx) => {
+                    const data = masterList[idx];
                     if (data) {
-                        let n = specialIds.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
-                        [1,2,5,6].forEach(s => {
-                            let p = 1 / conf.probs[s];
-                            lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p));
-                        });
-                        addLog(`[MATCH] ${conf.name} (${data.k}回) 適用`);
+                        addLog(`[DATA] ${conf.name.padEnd(12, ' ')} : ${data.k}回 (1/${data.pStr})`);
+                        if (conf.active && data.p > 0) {
+                            let n = specialIds.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
+                            [1,2,5,6].forEach(s => {
+                                let p = 1 / conf.probs[s];
+                                lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p));
+                            });
+                        }
                     } else {
-                        addLog(`[MISS] ${conf.name} ... 欠損`, "text-gray-500");
+                        addLog(`[MISS] ${conf.name.padEnd(12, ' ')} : 欠損`, "text-gray-500");
                     }
                 });
 
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                
                 [1,2,5,6].forEach(s => {
                     let p = ((exps[s] / sumExp) * 100).toFixed(1);
                     document.getElementById(`p${s}`).innerText = `${p}%`;
                     document.getElementById(`b${s}`).style.width = `${p}%`;
-                    addLog(`SETTING ${s}: ${p}%`);
                 });
 
-            } catch (err) {
-                await addLog(`❌ ERROR: ${err.message}`, "text-red-500");
-            }
+            } catch (err) { await addLog(`❌ ERROR: ${err.message}`, "text-red-500"); }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
