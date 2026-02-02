@@ -3,57 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.6</title>
+    <title>L-HANABI & VERSUS Rev 1.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
-        /* 1画面に強制的に収めるためのコアCSS */
-        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 8px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
-        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.8rem; line-height: 1; letter-spacing: -1px; }
-        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 10px; border: 2px solid #3b82f6; cursor: pointer; height: 50px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .main-btn span { font-weight: 900; font-size: 1rem; letter-spacing: 1px; }
-        .result-card { background-color: #0f172a; border-radius: 8px; padding: 6px 10px; border: 1px solid #1e293b; }
-        .bar-bg { background-color: #020617; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 1px; border: 1px solid #1e293b; }
+        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100vw; padding: 12px; overflow: hidden; display: flex; flex-direction: column; box-sizing: border-box; }
+        .kawaii-title { font-family: 'Squada One', cursive; background: linear-gradient(180deg, #00d2ff, #3a7bd5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 10vw; line-height: 1.0; letter-spacing: -1px; }
+        .main-btn { background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%); border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; transition: all 0.2s; height: 72px; display: flex; align-items: center; justify-content: center; }
+        .main-btn span { letter-spacing: 2px; font-weight: 900; font-size: 1.4rem; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 8px; }
+        .bar-bg { background-color: #020617; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.5s; }
-        .log-container { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; margin: 6px 0; }
-        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 6px; padding: 6px; font-family: 'Share Tech Mono', monospace; font-size: 9px; color: #fbcfe8; overflow-y: auto; white-space: pre-wrap; line-height: 1.2; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 4px; padding: 4px 10px; font-size: 10px; border: 1px solid #1e293b; outline: none; }
-        .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 12px; border-radius: 4px; border: 1px solid #3b82f6; font-size: 9px; }
+        .log-container { position: relative; flex-grow: 1; display: flex; flex-direction: column; min-height: 0; width: 100%; margin-bottom: 8px; }
+        .future-log { background-color: #000000; border: 1px solid #00d2ff; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #fbcfe8; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; }
+        .api-area { display: flex; gap: 8px; shrink-0; }
+        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 4px; padding: 8px 16px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
+        .save-btn { background-color: #1e293b; color: #00d2ff; font-weight: bold; padding: 0 20px; border-radius: 4px; border: 1px solid #3b82f6; font-size: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="text-center shrink-0 mb-1">
-        <div class="font-black kawaii-title tracking-tighter uppercase">ぷりんの解析</div>
-        <p class="text-[8px] text-cyan-500 font-bold tracking-[0.2em]">Rev 1.0.6 Compact Edition</p>
+    <div class="text-center shrink-0 mb-4">
+        <div class="font-black kawaii-title uppercase">L-HANABI & VERSUS</div>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.7 Strict UI & Logic</p>
     </div>
 
-    <div class="w-full shrink-0 mb-2 max-w-md mx-auto">
+    <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" class="main-btn w-full text-white">
             <span>ユニメモ解析実行</span>
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*">
     </div>
 
-    <div class="w-full max-w-md mx-auto result-card shrink-0 space-y-1">
-        <div><div class="flex justify-between text-[9px] font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
-        <div><div class="flex justify-between text-[9px] font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
-        <div><div class="flex justify-between text-[9px] font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
-        <div><div class="flex justify-between text-[9px] font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+    <div class="w-full max-w-md mx-auto result-card shrink-0">
+        <div class="mb-3"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
+        <div class="mb-3"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
+        <div><div class="flex justify-between text-xs font-bold text-red-500"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
     </div>
 
     <div class="log-container">
         <div id="log" class="future-log">READY...</div>
     </div>
 
-    <div class="w-full max-w-md mx-auto shrink-0 pb-1 flex gap-2 h-7">
-        <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
+    <div class="w-full max-w-md mx-auto api-area">
+        <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
         <button id="save-key" class="save-btn">SAVE</button>
     </div>
 
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // --- 定義表：聖域 (一文字も変えていません) ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -75,6 +74,7 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
+
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -96,6 +96,7 @@
             { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
             { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
+
         const VERSUS_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -132,7 +133,7 @@
             const key = document.getElementById('api-key').value.trim();
             if (!key) { alert("API KEY REQUIRED"); return; }
             document.getElementById('log').innerHTML = "";
-            await addLog(`[SYSTEM] 解析開始 Rev 1.0.6...`, "text-white font-bold");
+            await addLog(`[SYSTEM] 解析開始 Rev 1.0.7...`, "text-white font-bold");
             
             try {
                 const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
@@ -154,9 +155,8 @@
                     text: r.words.sort((a,b)=>a.boundingPoly.vertices[0].x-b.boundingPoly.vertices[0].x).map(w=>w.description).join(" ")
                 }));
 
-                // 1. RAW DATA (コンパクト表示)
-                await addLog(`[1. RAW DATA]`, "text-white underline");
-                lines.forEach((l, i) => { addLog(`L${i}: ${l.text}`, "text-gray-500"); });
+                await addLog(`[1. RAW DATA LOG]`, "text-white underline");
+                lines.forEach((l, i) => { addLog(`L${i.toString().padStart(2, '0')} | ${l.text}`, "text-gray-400"); });
 
                 const fullText = lines.map(l => l.text).join("");
                 let currentConfig = fullText.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (fullText.match(/VERSUS|バーサス/) ? VERSUS_CONFIG : HANABI_CONFIG);
@@ -167,7 +167,7 @@
                     if (lines[i].text.match(/([\d,]+)G/)) {
                         totalG = parseInt(lines[i].text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                         startIndex = i;
-                        await addLog(`起点: ${totalG}G (L${i})`, "text-cyan-400 font-bold");
+                        await addLog(`<br>[2. SCAN START] 起点: ${totalG}G (Line:${i})`, "text-cyan-400 font-bold underline");
                         break;
                     }
                 }
@@ -178,36 +178,35 @@
                 for (let i = startIndex + 1; i < lines.length; i++) {
                     const probMatch = lines[i].text.match(/1?\s*\/\s*([\d,.-]+|--)/) || lines[i].text.match(/[\d,.-]+\.[\d]+/);
                     if (probMatch) {
-                        const probRaw = probMatch[0];
-                        const probNorm = probRaw.replace(/\s+/g, '');
-                        
-                        // 回数取得 (2個上)
+                        const probStrRaw = probMatch[0];
+                        const probStrNorm = probStrRaw.replace(/\s+/g, '');
+                        await addLog(`[CHECK] L${i} 確率検知: ${probStrRaw}`);
+
                         const targetIdx = i - 2;
                         const countLine = lines[targetIdx];
                         const kMatch = countLine ? countLine.text.match(/([\d,]+)/) : null;
-                        const lineNorm = lines[i].text.replace(/\s+/g, '');
+                        const currentLineNorm = lines[i].text.replace(/\s+/g, '');
 
-                        if (!kMatch || !lineNorm.includes(probNorm)) {
-                            // ⚠️ 不整合でも確率は確保
-                            await addLog(`⚠️不整合 L${i}: ${probRaw} (取得優先)`, "text-yellow-500");
-                            masterList.push({ k: 0, pStr: probNorm, p: parseFloat(probNorm.match(/[\d.]+/)?.[0] || "0"), error: true });
+                        if (!kMatch || !currentLineNorm.includes(probStrNorm)) {
+                            await addLog(`  L ⚠️不整合 L${i}: 確率を優先して取得。`, "text-yellow-500");
+                            masterList.push({ k: 0, pStr: probStrNorm, p: parseFloat(probStrNorm.match(/[\d.]+/)?.[0] || "0") });
                         } else {
                             let kVal = parseInt(kMatch[1].replace(/,/g, ''));
-                            await addLog(`✅ L${i}: 1/${probNorm} (回数:${kVal})`, "text-green-400");
-                            masterList.push({ k: kVal, pStr: probNorm, p: parseFloat(probNorm.match(/[\d.]+/)?.[0] || "0"), error: false });
+                            let logColor = countLine.text.includes("回") ? "text-green-400" : "text-yellow-500";
+                            await addLog(`  L ✅ 成功: L${targetIdx}から回数 ${kVal} を取得`, logColor);
+                            masterList.push({ k: kVal, pStr: probStrNorm, p: parseFloat(probStrNorm.match(/[\d.]+/)?.[0] || "0") });
                         }
                     }
                 }
 
-                // 3. マッピング & 尤度
-                await addLog(`[MAPPING]`, "text-white underline");
+                await addLog(`<br>[3. MAPPING]`, "text-white font-bold underline");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const specialIds = ["vc", "vg", "pf", "nf", "rb_bel", "cbs", "cbh", "b_ba", "b_bb"];
 
                 currentConfig.forEach((conf, idx) => {
                     const data = masterList[idx];
                     if (data) {
-                        addLog(`${conf.name}: ${data.k}回 (1/${data.pStr})`);
+                        addLog(`${conf.name.padEnd(12, ' ')} : ${data.k}回 (1/${data.pStr})`);
                         if (conf.active && data.p > 0) {
                             let n = specialIds.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
                             [1,2,5,6].forEach(s => {
@@ -215,7 +214,7 @@
                                 lls[s] += (data.k * Math.log(p) + (n - data.k) * Math.log(1 - p));
                             });
                         }
-                    }
+                    } else { addLog(`${conf.name.padEnd(12, ' ')} : 欠損`, "text-gray-500"); }
                 });
 
                 const maxLL = Math.max(...Object.values(lls));
@@ -226,9 +225,9 @@
                     document.getElementById(`p${s}`).innerText = `${p}%`;
                     document.getElementById(`b${s}`).style.width = `${p}%`;
                 });
-                await addLog(`COMPLETE.`, "text-cyan-400 font-bold");
+                await addLog(`<br>[COMPLETE]`, "text-cyan-400 font-bold");
 
-            } catch (err) { await addLog(`❌ ${err.message}`, "text-red-500"); }
+            } catch (err) { await addLog(`❌ ERROR: ${err.message}`, "text-red-500"); }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
