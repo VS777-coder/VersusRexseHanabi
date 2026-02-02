@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.7</title>
+    <title>ぷりんの解析 Rev 1.0.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.7 (Logic Refined)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.8 (G-Suffix Trigger)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -127,12 +127,11 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); normal.style.display = 'none'; loader.style.display = 'block';
             logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 1.0.7)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.0.8)...`, true);
 
             let masterUnitList = []; let totalG = 0; let rawFilesData = [];
 
             try {
-                // OCR読込
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
@@ -145,12 +144,11 @@
                     rawFilesData.push({ id: i, lines: lines });
                 }
 
-                // 定義表ヒット位置による並び替え
                 const allTextPre = rawFilesData.map(f => f.lines.map(l=>l.text).join("")).join("");
                 let currentConfig = allTextPre.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (allTextPre.match(/ハナビ|ドン|花火/) ? HANABI_CONFIG : VERSUS_CONFIG);
 
                 rawFilesData.sort((a, b) => {
-                    const hasG = (f) => f.lines.some(l => l.text.includes("総プレイ数")) ? -10000 : 0;
+                    const hasG = (f) => f.lines.some(l => l.text.match(/[\d,]+G/)) ? -10000 : 0;
                     const getPos = (f) => {
                         let scores = [];
                         f.lines.forEach(l => {
@@ -162,7 +160,7 @@
                 });
 
                 await addLog(`--- (1) IMAGE & (2) RAW DATA SCAN ---`, true);
-                let gFoundGlobal = false; // 画像間でも引き継ぐグローバルフラグ
+                let gFoundGlobal = false;
 
                 rawFilesData.forEach(file => {
                     addLog(`[IMAGE:${file.id}] SCANNING START...`, true);
@@ -172,9 +170,9 @@
                     for (let i = 0; i < file.lines.length; i++) {
                         const line = file.lines[i];
                         
-                        // G数検知: ここで見つけたら即座にゲート開放
-                        if (line.text.includes("総プレイ数")) {
-                            let m = line.text.match(/([\d,]+)/);
+                        // 【修正点】G判定の簡略化とフラグ更新の最優先
+                        if (line.text.match(/[\d,]+G/)) {
+                            let m = line.text.match(/([\d,]+)G/);
                             if (m && !gFoundGlobal) { 
                                 totalG = parseInt(m[1].replace(/,/g, '')); 
                                 gFoundGlobal = true; 
@@ -182,13 +180,11 @@
                             }
                         }
 
-                        // ゲートが閉まっている間は全て破棄
                         if (!gFoundGlobal) {
                             if (line.text.match(/1\s*\/\s*[\d,.-]+/)) addLog(`[IGNORE] G未出現のため破棄: ${line.text}`, true);
                             continue;
                         }
 
-                        // ゲート開放後は通常通り3点セット抽出
                         if (line.text.match(/1\s*\/\s*[\d,.-]+/)) {
                             if (i >= 2) {
                                 const probStr = line.text.match(/1\s*\/\s*([\d,.-]+)/)[1].replace(/,/g, '');
@@ -200,7 +196,6 @@
                         }
                     }
 
-                    // 重複排除結合
                     tempUnits.forEach(u => {
                         const isDup = masterUnitList.some(m => m.k === u.k && m.n.substring(0,2) === u.n.substring(0,2));
                         if (!isDup) {
@@ -212,8 +207,7 @@
                     });
                 });
 
-                // マッピング可視化
-                await addLog(`<br>--- (4) DEFINITION MAPPING (Config vs Value) ---`, true);
+                await addLog(`<br>--- (4) DEFINITION MAPPING ---`, true);
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const rts = ['vc', 'vg', 'pf', 'nf', 'rb_bel', 'cbs', 'cbh'];
                 
@@ -223,10 +217,8 @@
                     let mappingLog = `MAP[${i}] ${conf.name.padEnd(10, ' ')} | `;
                     if (data) {
                         const isMatch = data.n.includes(conf.name.substring(0,2));
-                        const colorClass = isMatch ? "" : "text-red-500 font-bold";
-                        mappingLog += `<span class="${colorClass}">${data.k}回 (1/${data.pStr}) ${isMatch ? "" : "[!!名称不一致!!]"}</span>`;
+                        mappingLog += `<span class="${isMatch ? '' : 'text-red-500 font-bold'}">${data.k}回 (1/${data.pStr}) ${isMatch ? '' : '[!!名称不一致!!]'}</span>`;
                         await addLog(mappingLog, true);
-
                         if (conf.active && data.p > 0) {
                             let n = rts.includes(conf.id) ? Math.round(data.k * data.p) : totalG;
                             [1,2,5,6].forEach(s => { 
@@ -253,7 +245,6 @@
                 await addLog(`<br><span class="text-cyan-400">┌──────────────────────────────────┐</span>`, true);
                 await addLog(`<span class="text-cyan-400">│ [FINAL RESULT] ${resSummary.padEnd(17)} │</span>`, true);
                 await addLog(`<span class="text-cyan-400">└──────────────────────────────────┘</span>`, true);
-                await addLog(`--- ANALYSIS COMPLETE ---`, true);
 
             } catch (err) { alert(err.message); } finally { btn.classList.remove('processing'); normal.style.display = 'block'; loader.style.display = 'none'; }
         }
