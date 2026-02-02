@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ぷりんの解析 Rev 1.0.6</title>
+    <title>ぷりんの解析 Rev 1.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="text-center shrink-0 mb-4 px-2">
         <div class="font-black kawaii-title tracking-tighter">L-HANABI & VERSUS</div>
-        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.6 (Position Logic)</p>
+        <p class="text-[10px] text-cyan-500 font-bold uppercase tracking-[0.2em] mt-1">Rev 1.0.7 (Logic Refined)</p>
     </div>
     <div class="w-full shrink-0 mb-4 max-w-md mx-auto">
         <label for="file-input" id="btn-label" class="main-btn w-full text-white text-2xl text-center">
@@ -127,12 +127,12 @@
             if (!key) { alert("API KEY REQUIRED"); return; }
             btn.classList.add('processing'); normal.style.display = 'none'; loader.style.display = 'block';
             logBox.innerText = "";
-            await addLog(`>> BOOTING ANALYZER (Rev 1.0.6)...`, true);
+            await addLog(`>> BOOTING ANALYZER (Rev 1.0.7)...`, true);
 
             let masterUnitList = []; let totalG = 0; let rawFilesData = [];
 
             try {
-                // (1) OCR取得
+                // OCR読込
                 for (let i = 0; i < files.length; i++) {
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
@@ -145,7 +145,7 @@
                     rawFilesData.push({ id: i, lines: lines });
                 }
 
-                // (2) 何枚目か特定ロジック：定義表ヒット位置によるソート
+                // 定義表ヒット位置による並び替え
                 const allTextPre = rawFilesData.map(f => f.lines.map(l=>l.text).join("")).join("");
                 let currentConfig = allTextPre.match(/Lハナビ|スマスロ/) ? L_HANABI_CONFIG : (allTextPre.match(/ハナビ|ドン|花火/) ? HANABI_CONFIG : VERSUS_CONFIG);
 
@@ -154,9 +154,7 @@
                     const getPos = (f) => {
                         let scores = [];
                         f.lines.forEach(l => {
-                            currentConfig.forEach((conf, idx) => {
-                                if (l.text.includes(conf.name.substring(0,2))) scores.push(idx);
-                            });
+                            currentConfig.forEach((conf, idx) => { if (l.text.includes(conf.name.substring(0,2))) scores.push(idx); });
                         });
                         return scores.length > 0 ? (scores.reduce((p,c)=>p+c,0) / scores.length) : 999;
                     };
@@ -164,9 +162,8 @@
                 });
 
                 await addLog(`--- (1) IMAGE & (2) RAW DATA SCAN ---`, true);
-                let gFound = false;
+                let gFoundGlobal = false; // 画像間でも引き継ぐグローバルフラグ
 
-                // (3) 結合処理
                 rawFilesData.forEach(file => {
                     addLog(`[IMAGE:${file.id}] SCANNING START...`, true);
                     file.lines.forEach(l => addLog(`[RAW] Y:${l.y} | ${l.text}`, false));
@@ -175,21 +172,23 @@
                     for (let i = 0; i < file.lines.length; i++) {
                         const line = file.lines[i];
                         
-                        // Gアンカー・ゲート
+                        // G数検知: ここで見つけたら即座にゲート開放
                         if (line.text.includes("総プレイ数")) {
                             let m = line.text.match(/([\d,]+)/);
-                            if (m && !gFound) { 
+                            if (m && !gFoundGlobal) { 
                                 totalG = parseInt(m[1].replace(/,/g, '')); 
-                                gFound = true; 
-                                addLog(`[ANCHOR] G LOCKED: ${totalG}. BEGIN EXTRACTION.`, true);
+                                gFoundGlobal = true; 
+                                addLog(`[ANCHOR] G LOCKED: ${totalG}. GATE OPEN.`, true);
                             }
                         }
-                        if (!gFound) {
+
+                        // ゲートが閉まっている間は全て破棄
+                        if (!gFoundGlobal) {
                             if (line.text.match(/1\s*\/\s*[\d,.-]+/)) addLog(`[IGNORE] G未出現のため破棄: ${line.text}`, true);
                             continue;
                         }
 
-                        // 3点セット抽出
+                        // ゲート開放後は通常通り3点セット抽出
                         if (line.text.match(/1\s*\/\s*[\d,.-]+/)) {
                             if (i >= 2) {
                                 const probStr = line.text.match(/1\s*\/\s*([\d,.-]+)/)[1].replace(/,/g, '');
@@ -201,19 +200,19 @@
                         }
                     }
 
-                    // 重複排除のログ詳細化
+                    // 重複排除結合
                     tempUnits.forEach(u => {
                         const isDup = masterUnitList.some(m => m.k === u.k && m.n.substring(0,2) === u.n.substring(0,2));
                         if (!isDup) {
                             masterUnitList.push(u);
                             addLog(`[SET OK] INDEX:${masterUnitList.length-1} | ${u.k}回 | ${u.n} | 1/${u.pStr}`, false);
                         } else {
-                            addLog(`<span class="text-yellow-500">[SKIP DUP] 不整合回避: ${u.n} (${u.k}回) は重複につき破棄</span>`, true);
+                            addLog(`<span class="text-yellow-500">[SKIP DUP] 重複回避: ${u.n} (${u.k}回)</span>`, true);
                         }
                     });
                 });
 
-                // (4) 定義表マッピング可視化
+                // マッピング可視化
                 await addLog(`<br>--- (4) DEFINITION MAPPING (Config vs Value) ---`, true);
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 const rts = ['vc', 'vg', 'pf', 'nf', 'rb_bel', 'cbs', 'cbh'];
@@ -222,7 +221,6 @@
                     const conf = currentConfig[i];
                     const data = masterUnitList[i];
                     let mappingLog = `MAP[${i}] ${conf.name.padEnd(10, ' ')} | `;
-
                     if (data) {
                         const isMatch = data.n.includes(conf.name.substring(0,2));
                         const colorClass = isMatch ? "" : "text-red-500 font-bold";
@@ -241,12 +239,7 @@
                     }
                 }
 
-                // (5) 尤度計算
-                await addLog(`<br>--- (5) LIKELIHOOD CALC DETAILS ---`, true);
                 const maxLL = Math.max(...Object.values(lls)); 
-                Object.keys(lls).forEach(s => addLog(`S${s} Total Log-Likelihood: ${lls[s].toFixed(2)} ${lls[s]===maxLL?'(MAX)':''}`, false));
-
-                // (6) 結果表示
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)])); 
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0); 
                 let resSummary = "";
@@ -265,7 +258,7 @@
             } catch (err) { alert(err.message); } finally { btn.classList.remove('processing'); normal.style.display = 'block'; loader.style.display = 'none'; }
         }
 
-        async function addLog(msg, isH) { const l = document.getElementById('log'); const e = document.createElement('div'); if (isH) e.innerHTML = msg; else e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(2); }
+        async function addLog(msg, isH) { const l = document.getElementById('log'); const e = document.createElement('div'); if (isH) e.innerHTML = msg; else e.innerText = msg; l.appendChild(e); l.scrollTop = l.scrollHeight; await sleep(1); }
 
         document.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
