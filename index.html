@@ -33,7 +33,7 @@
         </label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
-    <div class="w-full max-md mx-auto result-card">
+    <div class="w-full max-w-md mx-auto result-card">
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-cyan-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-cyan-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-yellow-400"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-400"></div></div></div>
         <div class="mb-4"><div class="flex justify-between text-xs font-bold text-green-400"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-400"></div></div></div>
@@ -43,7 +43,7 @@
         <button id="copy-log" class="copy-btn">COPY LOG ONLY</button>
         <div id="log" class="future-log">READY...</div>
     </div>
-    <div class="w-full max-md mx-auto shrink-0 pb-2 flex gap-2">
+    <div class="w-full max-w-md mx-auto shrink-0 pb-2 flex gap-2">
         <input type="password" id="api-key" class="api-input flex-grow" placeholder="VISION API KEY">
         <button id="save-key" class="save-btn">SAVE</button>
     </div>
@@ -51,7 +51,7 @@
     <script>
         const sleep = ms => new Promise(res => setTimeout(res, ms));
 
-        // 【Rev 1.0.3 完全復元】定義セクション
+        // Rev 1.0.3 Definitions
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -180,7 +180,7 @@
                             const pVal = parseFloat(probStr);
                             const nVal = nameLine.text.trim();
 
-                            // 【厳密判定】数値一致時のみ、名前をチェック
+                            // 数値一致時のみ、名前をチェック
                             const dupIndex = masterUnitList.findIndex(m => m.k === kVal && Math.abs(m.p - pVal) < 0.01);
                             if (dupIndex !== -1) {
                                 if (masterUnitList[dupIndex].n === nVal) {
