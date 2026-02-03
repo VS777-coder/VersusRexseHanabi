@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.3.1</title>
+    <title>ANALYZER Rev 1.3.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.1 (Dot Guard Implemented)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.2 (Sync Debug)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // --- 聖域：定義表 (以前のものを継承) ---
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -71,8 +70,6 @@
             { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
             { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
-
-        // VERSUS, L_HANABI_CONFIG は省略 (必要に応じて同じ構造で配置)
 
         const logArea = document.getElementById('log');
         const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerText=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
@@ -122,7 +119,6 @@
                     }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ") }));
                     
                     lines.forEach(l => {
-                        addLog(`$L-${String(allMergedLines.length).padStart(3, '0')} ${l.text}`, "text-gray-500 text-[9px]");
                         allMergedLines.push(l);
                         fullTxt += l.text + " ";
                         if (l.text.match(/([\d,]+)G/) && totalG === 0) totalG = parseInt(l.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
@@ -130,10 +126,9 @@
                 }
 
                 addLog(`--- (2) MACHINE ---`, "text-cyan-400 underline");
-                let config = null, mName = "", mCode = "";
+                let config = null, mName = "", mCode = "HANABI";
                 const cleanTxt = fullTxt.replace(/\s+/g, "");
-                if (cleanTxt.includes("新ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; mCode = "HANABI"; }
-                // (VERSUS, SMASLO の判定も同様に追加)
+                if (cleanTxt.includes("新ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; }
 
                 if (!config) { addLog(`❌ 機種判定失敗`, "text-red-500 font-bold"); return; }
                 addLog(`Machine: ${mName} / [INIT] BASE: ${totalG}G`);
@@ -146,11 +141,10 @@
                     if (line.text.includes("G")) gSeen = true;
                     if (!gSeen) continue;
 
-                    // 【鉄則】小数点とスラッシュが両方揃っている時のみ確率行とみなす
+                    // 【修正】小数点とスラッシュが揃わない行は「無視」して次へ
                     if (line.text.includes(".") && line.text.includes("/")) {
                         const pRaw = getDenominator(line.text);
                         if (!pRaw) continue; 
-
                         if (slotIdx >= config.length) break;
 
                         let kRaw = getIntOnly(allMergedLines[i - 2]?.text);
@@ -162,37 +156,34 @@
                             return;
                         }
 
-                        const dataKey = `${slotIdx}-${kRaw}-${pRaw}`;
+                        // 【重複排除】数値ペアが既出ならポインタを進めずスキップ
+                        const dataKey = `${kRaw}-${pRaw}`;
                         if (seenData.has(dataKey)) {
-                            addLog(`[SKIP] $L-${i} ${config[slotIdx].name} (Dupe)`, "text-gray-600 text-[8px]");
+                            addLog(`[SKIP] $L-${i} ${config[slotIdx].name} (${kRaw}回/1/${pRaw})`, "text-gray-600 text-[8px]");
                             continue;
                         }
-                        seenData.add(dataKey);
 
                         const item = config[slotIdx];
                         if (item.id === "bb") bbCount = kRaw;
 
-                        // BIG中逆算絶対主義
-                        let kFinal = kRaw;
-                        let nBase = totalG;
+                        let kFinal = kRaw, nBase = totalG;
                         const isBigItem = item.id.startsWith("b_") || ["pf", "nf"].includes(item.id);
 
                         if (item.id === "vc" || item.id === "vg") {
                             nBase = Math.round(kRaw * pRaw);
                         } else if (isBigItem) {
-                            const span = (mCode === "SMASLO" ? 20 : 29);
-                            nBase = bbCount * span;
-                            kFinal = nBase / pRaw; // 逆算値を優先
+                            nBase = bbCount * 29;
+                            kFinal = nBase / pRaw; 
                             addLog(`[CALC] ${item.name}: ${kFinal.toFixed(1)}回に補正`, "text-yellow-400 text-[8px]");
                         }
 
                         results.push({ k: kFinal, n: nBase, active: item.active, probs: item.probs });
-                        addLog(`[CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw})`, "text-green-400 text-[9px]");
-                        slotIdx++;
+                        seenData.add(dataKey);
+                        addLog(`[CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw}) [from L-${sourceIdx}]`, "text-green-400 text-[9px]");
+                        slotIdx++; // 正常確定時のみ次へ
                     }
                 }
 
-                // --- (4) ANALYSIS (省略せず記述) ---
                 addLog(`--- (4) ANALYSIS ---`, "text-cyan-400 underline");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
