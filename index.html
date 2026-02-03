@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.12 (Physical Pointer Only)</title>
+    <title>HANABI & VERSUS Rev 1.2.12 (Physical Integrity Logic)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -118,25 +118,30 @@
 
         const clean = s => s.replace(/[！-～]/g, r => String.fromCharCode(r.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '');
 
-        function getTargetIdx(nameRaw, config) {
-            const n = clean(nameRaw);
-            const mapper = {
-                "bb": ["ビックボーナス", "総BB", "BB"], "don": ["ドンBB"], "red": ["赤七BB"], "red7": ["赤七BB"],
-                "rb": ["レギュラーボーナス", "RB"], "ba": ["風鈴A", "風鈴Ａ", "ベルA", "ベルＡ"],
-                "bb_b": ["風鈴B", "風鈴Ｂ", "ベルB", "ベルＢ"], "ia": ["氷A", "氷Ａ", "並行スイカ"],
-                "sa": ["スイカA", "スイカＡ"], "ca2": ["チェリーA2", "チェリーＡ２", "チェリー"],
-                "cb": ["チェリーB", "チェリーＢ"], "vc": ["中ハズレ", "中はずれ", "HC中ハズレ", "VSチャンス中"],
-                "vg": ["GAME中ハズレ", "ゲーム中ハズレ", "中はずれ", "HG中ハズレ", "VSゲーム中"],
-                "b_ba": ["BIG中風鈴A", "BIG中風鈴Ａ", "平行風鈴"], "b_bb": ["BIG中風鈴B", "BIG中風鈴Ｂ", "斜め風鈴"],
-                "nf": ["斜め風鈴"], "pf": ["平行風鈴"], "cbs": ["チェリー+ベル揃い"], "cbh": ["チェリー+ベルはずれ"]
-            };
-            for (const [id, aliases] of Object.entries(mapper)) {
-                if (aliases.some(a => n === clean(a) || n.includes(clean(a)))) {
-                    const idx = config.findIndex(c => c.id === id);
-                    if (idx !== -1) return idx;
+        // 数値ポインタ(pVal)に基づき定義表のINDEXを特定。文字列による「推測」は行わない。
+        function getTargetIdxByPhysical(pVal, nVal, totalG, finger, config) {
+            let bestIdx = -1;
+            let minDiff = 1.0;
+            const isNormal = Math.abs(nVal - totalG) < (totalG * 0.1);
+            const cleanFinger = finger.replace(/\s+/g, '');
+            const isGassan = cleanFinger.includes("合算") || cleanFinger.includes("計") || cleanFinger.includes("合計");
+
+            for (let i = 0; i < config.length; i++) {
+                const conf = config[i];
+                const isRTBIGItem = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id);
+                // 物理区分（通常時かRT/BIG中か）が不一致ならスキップ
+                if (isNormal === isRTBIGItem) continue;
+
+                // 確率の理論値（設定1）をアンカーとして最も近いスロットを特定
+                const diff = Math.abs(conf.probs[1] - pVal) / conf.probs[1];
+                if (diff < minDiff) {
+                    // 合算フラグがある場合、個別設定差項目(active:true)への割当は物理的に拒否
+                    if (isGassan && conf.active) continue;
+                    minDiff = diff;
+                    bestIdx = i;
                 }
             }
-            return -1;
+            return (minDiff < 0.4) ? bestIdx : -1;
         }
 
         async function processMulti(files) {
@@ -155,7 +160,7 @@
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const raw = json.responses[0]?.textAnnotations;
-                    if(!raw) { addLog(`  -> IMG_${i}: 検出失敗`); continue; }
+                    if(!raw) continue;
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let x = w.boundingPoly.vertices[0].x;
@@ -183,11 +188,10 @@
                 addLog(`(3) 総ゲーム数: ${totalG}G (IMG_${pIdx}より取得)`, "color-3 font-bold");
 
                 let master = currentConfig.map(() => ({ k: 0, p: 0, finger: "" }));
-                addLog(`(4) ポインタ走査詳細 (数学的整合性照合):`, "color-3 font-bold underline");
+                addLog(`(4) ポインタ走査詳細 (物理・数学的整合性照合):`, "color-3 font-bold underline");
 
                 allTexts.forEach((lines, imgIdx) => {
                     for(let i=0; i<lines.length; i++){
-                        // 確率ポインタ(pMatch)を正規化して抽出
                         const pMatch = lines[i].match(/1?\s*\/\s*([\d\s,.-]+)|([\d,.-]+\.[\d\s]+)/);
                         if(pMatch) {
                             let pStr = pMatch[0].replace(/1\s*\/\s*/, '').replace(/\s+/g, '');
@@ -208,34 +212,22 @@
                             }
 
                             if(kVal !== -1) {
-                                // 数学的整合性(G/k=p)のチェック。理論値(config)との比較は一切行わない。
-                                const calcP = totalG / kVal;
-                                const isConsistent = Math.abs(calcP - pVal) < 0.5 || (pVal < 2.0 && Math.abs(calcP - pVal) < 0.2);
-
-                                if (isConsistent) {
-                                    let tIdx = getTargetIdx(finger, currentConfig);
-                                    if(tIdx !== -1) {
-                                        const cleanFinger = finger.replace(/\s+/g, '');
-                                        const isGassan = cleanFinger.includes("合算") || cleanFinger.includes("計") || cleanFinger.includes("合計");
-                                        if (isGassan && currentConfig[tIdx].active) {
-                                            addLog(`  [SKIP] 合算属性につき個別項目を除外: "${finger}"`, "text-[9px] opacity-40");
-                                            continue;
-                                        }
-
-                                        if(master[tIdx].k === 0) {
-                                            master[tIdx] = { k: kVal, p: 1/pVal, finger: finger };
-                                            addLog(`  [ADOPT] ${currentConfig[tIdx].name} (確:${pStr}) -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
-                                        } else if (master[tIdx].k === kVal && master[tIdx].finger === finger) {
-                                            addLog(`  [DUPE] ${currentConfig[tIdx].name} は同一指紋につきスキップ`, "text-[9px] opacity-40");
-                                        } else {
-                                            addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} (確:${pStr}) が既出と矛盾`, "text-red-500 font-bold");
-                                        }
+                                // 物理的分母(N)の算出。RT/BIG中も自動算出。
+                                const nVal = kVal * pVal;
+                                // 物理的分母が「総G数」または「計算上の整合性」を保っているか検証
+                                let tIdx = getTargetIdxByPhysical(pVal, nVal, totalG, finger, currentConfig);
+                                
+                                if(tIdx !== -1) {
+                                    if(master[tIdx].k === 0) {
+                                        master[tIdx] = { k: kVal, p: 1/pVal, finger: finger };
+                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} (確:${pStr}) -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
+                                    } else if (master[tIdx].k === kVal && master[tIdx].finger === finger) {
+                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} は同一指紋につきスキップ`, "text-[9px] opacity-40");
                                     } else {
-                                        addLog(`  [SKIP] 定義外項目(指紋): "${finger}" (確:${pStr})`, "text-[9px] opacity-40");
+                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} (確:${pStr}) が既出と矛盾`, "text-red-500 font-bold");
                                     }
                                 } else {
-                                    // G/k = p が成立しない = 別の項目の数値を拾っている
-                                    addLog(`  [ERROR] 数学的整合性欠如: G/${kVal} != ${pStr} (IMG_${imgIdx})`, "text-red-400 opacity-60");
+                                    addLog(`  [SKIP] 定義外または整合性欠如: "${finger}" (確:${pStr}/逆算N:${Math.round(nVal)})`, "text-[9px] opacity-40");
                                 }
                             } else {
                                 addLog(`  [ERROR] 回数数値欠損 (起点:"${lines[i]}") (IMG_${imgIdx})`, "text-red-400");
@@ -254,6 +246,7 @@
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 currentConfig.forEach((conf, idx) => {
                     if (master[idx].k > 0 && conf.active) {
+                        // RT/BIG中の分母は逆算した物理分母を使用
                         let n = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id) ? Math.round(master[idx].k / master[idx].p) : totalG;
                         let itemImpact = "";
                         [1,2,5,6].forEach(s => {
