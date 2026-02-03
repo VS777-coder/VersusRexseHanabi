@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.12 (Final Logic)</title>
+    <title>HANABI & VERSUS Rev 1.2.12 (Physical Pointer Only)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -116,33 +116,29 @@
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        const clean = s => s.replace(/[！-～]/g, r => String.fromCharCode(r.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '');
-
-        // 文字列による項目特定（合算フィルタ付き排他制御）
-        function getTargetIdx(finger, config) {
-            const n = clean(finger);
-            const isGassan = n.includes("合算") || n.includes("計") || n.includes("合計") || n.includes("総合");
+        // 物理数値マッチング：指紋（間の文字）の解釈を一切廃止。確率ポインタの数値実体のみで特定する。
+        function getTargetIdxByPhysicalProb(probStr, finger, config) {
+            const pVal = parseFloat(probStr);
+            if (isNaN(pVal)) return -1;
             
-            const mapper = {
-                "bb": ["ビックボーナス", "総BB", "BB"], "red": ["赤七BB"], "rb": ["レギュラーボーナス", "RB"],
-                "ba": ["風鈴A", "風鈴Ａ", "ベルA", "ベルＡ"], "bb_b": ["風鈴B", "風鈴Ｂ", "ベルB", "ベルＢ"],
-                "ia": ["氷A", "氷Ａ", "並行スイカ"], "sa": ["スイカA", "スイカＡ"],
-                "ca2": ["チェリーA2", "チェリーＡ２", "チェリー"], "cb": ["チェリーB", "チェリーＢ"],
-                "vc": ["中ハズレ", "中はずれ", "HC中ハズレ", "VSチャンス中"],
-                "vg": ["GAME中ハズレ", "ゲーム中ハズレ", "中はずれ", "HG中ハズレ", "VSゲーム中"],
-                "b_ba": ["BIG中風鈴A", "BIG中風鈴Ａ", "平行風鈴"], "b_bb": ["BIG中風鈴B", "BIG中風鈴Ｂ", "斜め風鈴"],
-                "nf": ["斜め風鈴"], "pf": ["平行風鈴"], "cbs": ["チェリー+ベル揃い"], "cbh": ["チェリー+ベルはずれ"]
-            };
+            // 指紋は「合算」属性判定のみに使用する
+            const cleanFinger = finger.replace(/\s+/g, '');
+            const isGassan = cleanFinger.includes("合算") || cleanFinger.includes("計") || cleanFinger.includes("合");
 
-            for (const [id, aliases] of Object.entries(mapper)) {
-                if (aliases.some(a => n === clean(a) || n.includes(clean(a)))) {
-                    const idx = config.findIndex(c => c.id === id);
-                    if (idx !== -1) {
-                        const conf = config[idx];
-                        // 属性不一致の強制排除：指紋に「合算」があれば、個別項目(active:true)への割り当ては拒否
-                        if (isGassan && conf.active) continue;
-                        return idx;
-                    }
+            for (let i = 0; i < config.length; i++) {
+                const conf = config[i];
+                // 定義表のいずれかの設定の理論値と実戦値(pVal)が近似しているかのみを判定
+                // バラツキを考慮し、理論値の±20%の範囲内であれば同一項目とみなす
+                const match = [1, 2, 5, 6].some(s => {
+                    const theory = conf.probs[s];
+                    if (theory <= 1.5) return Math.abs(theory - pVal) < 0.3; // BIG中風鈴Aなど
+                    return Math.abs(theory - pVal) / theory < 0.20; // 一般項目
+                });
+
+                if (match) {
+                    // 合算フラグがある場合、個別設定差項目(active:true)への割当は拒否
+                    if (isGassan && conf.active) continue;
+                    return i;
                 }
             }
             return -1;
@@ -164,7 +160,7 @@
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const raw = json.responses[0]?.textAnnotations;
-                    if(!raw) { addLog(`  -> IMG_${i}: 検出失敗`); continue; }
+                    if(!raw) { addLog(`  -> IMG_${i}: 文字検出失敗`); continue; }
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let x = w.boundingPoly.vertices[0].x;
@@ -177,7 +173,7 @@
 
                 addLog(`(2) 素の情報ダンプ:`, "color-2 opacity-80");
                 allTexts.forEach((lines, imgIdx) => {
-                    addLog(`  [IMG_${imgIdx} RAW DATA]`, "color-2 underline");
+                    addLog(`  [IMG_${imgIdx} RAW DATA]`, "color-2 underline font-bold");
                     lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
                 });
 
@@ -192,7 +188,7 @@
                 addLog(`(3) 総ゲーム数: ${totalG}G (IMG_${pIdx}より取得)`, "color-3 font-bold");
 
                 let master = currentConfig.map(() => ({ k: 0, p: 0, finger: "" }));
-                addLog(`(4) ポインタ走査詳細:`, "color-3");
+                addLog(`(4) ポインタ走査詳細 (物理数値マッチング):`, "color-3 font-bold underline");
 
                 allTexts.forEach((lines, imgIdx) => {
                     for(let i=0; i<lines.length; i++){
@@ -217,19 +213,20 @@
                             }
 
                             if(kVal !== -1) {
-                                let tIdx = getTargetIdx(finger, currentConfig);
+                                // 間の文字列解釈を100%排除。確率ポインタの数値実体で定義表を特定。
+                                let tIdx = getTargetIdxByPhysicalProb(pStr, finger, currentConfig);
                                 if(tIdx !== -1) {
                                     const prob = 1/(parseFloat(pStr)||1);
                                     if(master[tIdx].k === 0) {
                                         master[tIdx] = { k: kVal, p: prob, finger: finger };
-                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
+                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} (確:${pStr}) -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
                                     } else if (master[tIdx].k === kVal && master[tIdx].finger === finger) {
-                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} (${kVal}回) は同一指紋につきスキップ`, "text-[9px] opacity-40");
+                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} は同一指紋につきスキップ`, "text-[9px] opacity-40");
                                     } else {
-                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} が既出と矛盾(新:${kVal}/旧:${master[tIdx].k})`, "text-red-500 font-bold");
+                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} (確:${pStr}) が既出と矛盾(新:${kVal}/旧:${master[tIdx].k})`, "text-red-500 font-bold");
                                     }
                                 } else {
-                                    addLog(`  [SKIP] 定義外または属性不一致: "${finger}" (確:${pStr})`, "text-[9px] opacity-40");
+                                    addLog(`  [SKIP] 定義表にない確率または合算除外: "${pStr}" (指紋:"${finger}")`, "text-[9px] opacity-40");
                                 }
                             } else {
                                 addLog(`  [ERROR] 回数数値欠損 (起点:"${lines[i]}") (IMG_${imgIdx})`, "text-red-400");
@@ -244,7 +241,7 @@
                     }
                 });
 
-                addLog(`(5) 尤度計算の個別インパクト内訳:`, "color-3 underline");
+                addLog(`(5) 尤度計算の個別インパクト内訳:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 currentConfig.forEach((conf, idx) => {
                     if (master[idx].k > 0 && conf.active) {
@@ -263,7 +260,7 @@
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                addLog(`(6) 最終判定結果:`, "color-3 font-bold");
+                addLog(`(6) 最終判定結果:`, "color-3 font-bold underline");
                 [1,2,5,6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
