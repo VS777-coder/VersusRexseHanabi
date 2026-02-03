@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.30 (Pure Physical)</title>
+    <title>HANABI & VERSUS Rev 1.2.33 (Physical Mastery)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.30 (Pure Physical Logic)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.33 (Physical Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -70,17 +70,44 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
+        const HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+        const VERSUS_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
 
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.30 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.33 ---`);
 
             try {
                 let rawImgs = [];
                 let totalG = 0;
+                let fullTxt = "";
                 for(let i=0; i<files.length; i++){
                     addLog(`[OCR] IMG_${i} 読込中...`, "color-1");
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
@@ -95,13 +122,22 @@
                         return acc;
                     }, []).sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "));
                     
+                    fullTxt += lines.join("");
                     let hasG = lines.some(l => l.match(/[\d,]+G/));
-                    rawImgs.push({ id: i, lines: lines, hasG: hasG });
+                    rawImgs.push({ id: i, lines, hasG });
                     if(hasG && totalG === 0) {
                         const gLine = lines.find(l => l.match(/[\d,]+G/));
                         totalG = parseInt(gLine.match(/([\d,]+)G/)[1].replace(/,/g,''));
                     }
                 }
+
+                // 機種判定の物理分岐
+                let config = L_HANABI_CONFIG;
+                let mName = "新ハナビ (6号機)";
+                if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; }
+                else if (fullTxt.includes("スマスロ")) { config = HANABI_CONFIG; mName = "スマスロハナビ(絶景)"; }
+                document.getElementById('machine-info').innerText = `機種: ${mName}`;
+                addLog(`(1) 判定機種: ${mName}`, "color-3 font-bold");
 
                 addLog(`(2) 生データダンプ:`, "color-2 font-bold");
                 rawImgs.forEach(img => {
@@ -109,10 +145,9 @@
                     img.lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
                 });
 
-                let config = L_HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // --- 順序判定のみに指紋を使う ---
+                // 物理順序の杭打ち（Max INDEX）
                 rawImgs.forEach(img => {
                     let hits = [];
                     img.lines.forEach(line => {
@@ -120,8 +155,6 @@
                     });
                     img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
                 });
-                
-                // Gがある画像を先頭。残りはMax INDEXが小さい順。
                 rawImgs.sort((a,b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
@@ -130,14 +163,14 @@
                 addLog(`(4) 物理順序確定:`, "color-3 underline font-bold");
                 rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (AnchorMax:${img.maxIdx})`, "text-[9px] color-2"));
 
-                // --- 流し込みは一切の指紋を排除して純粋物理 ---
+                // 重複全域チェック流し込み
                 addLog(`(5) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
                 let results = [];
                 let slotIdx = 0;
                 let isTriggered = false;
 
                 rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] IMG_${img.id} スキャン...`, "color-1 text-[9px]");
+                    addLog(`  [SEQ ${seq}] IMG_${img.id} 走査...`, "color-1 text-[9px]");
                     for(let i=0; i<img.lines.length; i++){
                         const line = img.lines[i];
                         if (!isTriggered && line.match(/[\d,]+G/)) { isTriggered = true; continue; }
@@ -145,12 +178,9 @@
                         if (seq > 0) isTriggered = true;
 
                         const clean = line.replace(/\s+/g,'');
-                        const isP = (clean.includes('/') && clean.includes('.')) || clean === "1/-";
-                        
-                        if(isP) {
+                        if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
                             const pStr = clean.replace(/1\//,'');
-                            const isV = pStr.includes('.');
-                            const pVal = isV ? parseFloat(pStr) : 0;
+                            const pVal = clean.includes('.') ? parseFloat(pStr) : 0;
                             let kVal = -1;
                             for (let j=1; j<=2; j++) {
                                 if (i-j >= 0) {
@@ -162,10 +192,10 @@
                             }
 
                             if(kVal !== -1) {
-                                // 同期チェック（物理数値の重複回避）
-                                const last = slotIdx > 0 ? results[slotIdx-1] : null;
-                                if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${slotIdx-1} 重複検出`, "text-[8px] opacity-40");
+                                // 全域照合ロジック
+                                let isDup = results.some(res => res && res.k === kVal && Math.abs(res.pRaw - pVal) < 0.001);
+                                if (isDup) {
+                                    addLog(`    [SYNC] 重複検出につきスキップ: k:${kVal} p:1/${pStr}`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
@@ -174,7 +204,7 @@
                                     results[slotIdx] = {
                                         k: kVal, p: pVal>0?1/pVal:0, pRaw: pVal,
                                         n: (Math.abs(nCalc-totalG) < (totalG*0.1)) ? totalG : nCalc,
-                                        isValid: isV, name: config[slotIdx].name
+                                        isValid: clean.includes('.'), name: config[slotIdx].name
                                     };
                                     addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
                                     slotIdx++;
@@ -184,7 +214,8 @@
                     }
                 });
 
-                addLog(`(6) 尤度インパクト計算:`, "color-3 underline font-bold");
+                // 尤度計算
+                addLog(`(6) 尤度インパクト詳細計算ログ:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
