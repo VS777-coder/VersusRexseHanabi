@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.27 (Max Index Reverse)</title>
+    <title>HANABI & VERSUS Rev 1.2.28 (Full Config)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.27 (Max Index Anchor)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.28 (Full Definition Recovery)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -118,7 +118,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.27 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.28 ---`);
 
             try {
                 let rawImgs = [];
@@ -154,7 +154,8 @@
                 let config = L_HANABI_CONFIG;
                 const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
                 if(fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
-                else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) config = HANABI_CONFIG;
+                else if(fullTxt.includes("ハナビ絶景") || fullTxt.includes("新ハナビ")) config = L_HANABI_CONFIG;
+                else if(fullTxt.includes("ハナビ")) config = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
                 // --- 1. 最大インデックスによる画像ソート ---
@@ -166,8 +167,6 @@
                     });
                     img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
                 });
-
-                // ソート：Gがあるものは最優先、残りは最大INDEXの昇順
                 rawImgs.sort((a,b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
@@ -197,13 +196,16 @@
                             const isV = pStr.includes('.');
                             const pVal = isV ? parseFloat(pStr) : 0;
                             let kVal = -1;
-                            if(i >= 2) {
-                                const kMatch = img.lines[i-2].match(/([\d,]+)/);
-                                if(kMatch && !img.lines[i-2].includes('/')) kVal = parseInt(kMatch[1].replace(/,/g,''));
+                            for (let j=1; j<=2; j++) {
+                                if (i-j >= 0) {
+                                    const kMatch = img.lines[i-j].match(/([\d,]+)/);
+                                    if (kMatch && !img.lines[i-j].includes('/')) {
+                                        kVal = parseInt(kMatch[1].replace(/,/g,'')); break;
+                                    }
+                                }
                             }
 
                             if(kVal !== -1) {
-                                // 物理Sync: 直前の数値と同じなら進まない
                                 const last = currentSlotIdx > 0 ? results[currentSlotIdx-1] : null;
                                 if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
                                     addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複検出`, "text-[8px] opacity-40");
