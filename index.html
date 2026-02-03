@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.55</title>
+    <title>HANABI & VERSUS Rev 1.2.58</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.55 (Physical Anchor Fix)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.58 (Physical Lockdown)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -118,14 +118,14 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.55 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.58 ---`);
 
             try {
                 let rawImgs = [];
                 let totalG = 0;
                 let fullTxt = "";
 
-                // (1) 複数画像取り込み
+                // (1) 複数画像情報の取り込み
                 addLog(`(1) 複数画像情報の取り込み:`, "color-3 underline font-bold");
                 for(let i=0; i<files.length; i++){
                     addLog(`  [OCR] IMG_${i} 読込中...`, "color-1");
@@ -147,15 +147,25 @@
                     if (gLine && totalG === 0) totalG = parseInt(gLine.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                 }
 
+                // --- 重要：指示通りの優先順位による機種判定 ---
                 let config = L_HANABI_CONFIG;
                 let mName = "新ハナビ (6号機)";
-                if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; }
-                else if (fullTxt.includes("スマスロ")) { config = HANABI_CONFIG; mName = "スマスロハナビ(絶景)"; }
-                document.getElementById('machine-info').innerText = `機種: ${mName}`;
-                addLog(`(1.5) 判定機種: ${mName} / 総ゲーム数: ${totalG}G`, "color-3 font-bold");
+                if (fullTxt.includes("スマスロ")) { 
+                    config = HANABI_CONFIG; mName = "スマスロハナビ"; 
+                } else if (fullTxt.includes("バーサス")) { 
+                    config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; 
+                } else if (fullTxt.includes("ハナビ")) {
+                    config = L_HANABI_CONFIG; mName = "新ハナビ (6号機)";
+                }
 
-                // (2) 順序判定
-                addLog(`\n(2) 画像の順序判定のログ:`, "color-3 underline font-bold");
+                addLog(`\n==== 機種判定結果 ====`, "text-yellow-400 font-bold");
+                addLog(`決定機種: ${mName}`, "text-yellow-400 underline");
+                addLog(`総ゲーム数: ${totalG}G`, "text-white");
+                addLog(`======================\n`, "text-yellow-400");
+                document.getElementById('machine-info').innerText = `機種: ${mName}`;
+
+                // (2) 画像の順序判定のログ
+                addLog(`(2) 画像の順序判定のログ:`, "color-3 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
                     img.lines.forEach(line => { config.forEach((c, idx) => { if (line.includes(c.name.substring(0, 2))) matchedIndices.push(idx); }); });
@@ -165,60 +175,47 @@
                 rawImgs.sort((a, b) => { if (a.hasG && !b.hasG) return -1; if (!a.hasG && b.hasG) return 1; return a.minIdx - b.minIdx; });
                 rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx})`, "text-[9px] color-2"));
 
-                // (3) 生値
+                // (3) OCRの生値
                 addLog(`\n(3) OCRの生値:`, "color-3 underline font-bold");
                 rawImgs.forEach((img, seq) => {
                     addLog(`  [SEQ ${seq}] IMG_${img.id} RAW DATA:`, "text-[10px] color-1 underline");
                     img.lines.forEach(l => addLog(`    | ${l}`, "text-[8px] opacity-60 color-1"));
                 });
 
-                // (4) 配列生成
+                // (4) 配列生成時のログ
                 addLog(`\n(4) 配列生成時のログ:`, "color-3 underline font-bold");
                 let results = [];
                 let slotIdx = 0;
-                let isTriggered = false;
-
                 rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] スロットマッピング開始...`, "color-1 text-[9px]");
-                    let imgTrigger = false;
+                    let imgTrigger = (seq > 0);
                     img.lines.forEach((line, i) => {
-                        if (line.match(/[\d,]+G/)) { imgTrigger = true; isTriggered = true; return; }
-                        if (seq === 0 && !imgTrigger) return;
-                        if (seq > 0) imgTrigger = true;
-
+                        if (line.match(/[\d,]+G/)) { imgTrigger = true; return; }
+                        if (!imgTrigger) return;
                         const clean = line.replace(/\s+/g, '');
                         if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
                             let kVal = -1;
-                            // ★【物理絶対固定：j=1(名称)を殺す】2行上優先、保険で3行上。
+                            // ★物理固定：j=1(名称)を殺してj=2,3だけを見る
                             for (let j of [2, 3]) {
                                 const target = img.lines[i - j];
-                                if (target) {
-                                    const kMatch = target.match(/([\d,]+)/);
-                                    if (kMatch) { kVal = parseInt(kMatch[1].replace(/,/g, '')); break; }
+                                if (target && target.match(/([\d,]+)/)) {
+                                    kVal = parseInt(target.match(/([\d,]+)/)[1].replace(/,/g, '')); break;
                                 }
                             }
-
                             if (kVal !== -1 && slotIdx < config.length) {
                                 const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                // 重複チェック
-                                let isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - pVal) < 0.001);
-                                if (isDup && rawImgs.length > 1) {
-                                    addLog(`    [SKIP] 重複排除: k:${kVal}`, "text-[8px] opacity-40");
-                                } else {
-                                    results[slotIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: totalG, isValid: clean.includes('.'), name: config[slotIdx].name };
-                                    addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} (Physical Hit)`, "color-2 text-[9px] font-bold");
-                                    slotIdx++;
-                                }
+                                results[slotIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: totalG, isValid: clean.includes('.'), name: config[slotIdx].name };
+                                addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal}`, "color-2 text-[9px] font-bold");
+                                slotIdx++;
                             }
                         }
                     });
                 });
 
-                // (5) 定義確認
+                // (5) 定義表の項目名：取れた回数：取れた確率
                 addLog(`\n(5) 定義表の項目名：取れた回数：取れた確率:`, "color-3 underline font-bold");
-                results.forEach((res, idx) => { if(res) addLog(`  - ${res.name}: ${res.k}回 (1/${(1/res.p).toFixed(1)})`, "text-[9px] color-2"); });
+                results.forEach((res) => { if(res) addLog(`  - ${res.name}: ${res.k}回 (1/${(1/res.p).toFixed(1)})`, "text-[9px] color-2"); });
 
-                // (6) 尤度計算
+                // (6) 尤度計算、強度、ギャップ
                 addLog(`\n(6) 尤度計算、強度、ギャップ:`, "color-3 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
@@ -231,11 +228,11 @@
                     }
                 });
 
-                // (7) 最終判別
+                // (7) 判別結果
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a, b) => a + b, 0);
-                addLog(`\n(7) 最終判別結果:`, "color-3 underline font-bold");
+                addLog(`\n(7) 判別結果:`, "color-3 underline font-bold");
                 [1, 2, 5, 6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
