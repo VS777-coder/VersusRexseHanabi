@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.25 (G-Hybrid Sync)</title>
+    <title>HANABI & VERSUS Rev 1.2.27 (Max Index Reverse)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.25 (Hybrid Sync Master)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.27 (Max Index Anchor)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -118,7 +118,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.25 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.27 ---`);
 
             try {
                 let rawImgs = [];
@@ -147,7 +147,7 @@
 
                 addLog(`(2) 生データダンプ:`, "color-2 font-bold");
                 rawImgs.forEach(img => {
-                    addLog(`  [IMG_${img.id} RAW DATA] ${img.hasG ? '(★G有)' : ''}`, "color-2 underline");
+                    addLog(`  [IMG_${img.id} RAW DATA] ${img.hasG ? '(★起点画像)' : ''}`, "color-2 underline");
                     img.lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
                 });
 
@@ -157,22 +157,23 @@
                 else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) config = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // --- 1. ハイブリッドソートロジック ---
-                addLog(`(4) 画像順序確定プロセス:`, "color-3 underline font-bold");
+                // --- 1. 最大インデックスによる画像ソート ---
+                addLog(`(4) 画像順序確定プロセス (Max Index Anchor):`, "color-3 underline font-bold");
                 rawImgs.forEach(img => {
                     let hits = [];
                     img.lines.forEach(line => {
                         config.forEach((c, idx) => { if (line.includes(c.name.substring(0,2))) hits.push(idx); });
                     });
-                    img.avgIdx = hits.length > 0 ? hits.reduce((a,b)=>a+b,0)/hits.length : 99;
+                    img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
                 });
 
+                // ソート：Gがあるものは最優先、残りは最大INDEXの昇順
                 rawImgs.sort((a,b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
-                    return a.avgIdx - b.avgIdx;
+                    return a.maxIdx - b.maxIdx;
                 });
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (Avg:${img.avgIdx.toFixed(1)})`, "text-[9px] color-2"));
+                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MaxSlot:${img.maxIdx})`, "text-[9px] color-2"));
 
                 // --- 2. 物理流し込み (Sync判定付き) ---
                 addLog(`(5) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
@@ -224,7 +225,7 @@
                     }
                 });
 
-                // --- 3. 計算プロセスの詳細ログ出し ---
+                // --- 3. 尤度インパクト詳細計算 ---
                 addLog(`(6) 尤度インパクト詳細計算ログ:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
