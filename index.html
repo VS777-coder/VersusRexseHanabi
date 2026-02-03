@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.80</title>
+    <title>ANALYZER Rev 1.2.95</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.80 (Physical Sync Logic)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.95 (Logical Debug)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -50,6 +50,50 @@
 
     <script>
         // --- 聖域：定義表 ---
+        const HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+
+        const VERSUS_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
+
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -71,7 +115,20 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
-        // --- 他の機種定義（HANABI_CONFIG, VERSUS_CONFIG）は省略または適宜挿入 ---
+
+        // 補助関数：数値掃除ロジック 🧹
+        const getDenominator = (str) => {
+            if (!str || !str.includes('/')) return null;
+            const parts = str.split('/');
+            const denomStr = parts[parts.length - 1].replace(/[^0-9.]/g, '');
+            return denomStr ? parseFloat(denomStr) : null;
+        };
+
+        const getIntOnly = (str) => {
+            if (!str) return null;
+            const clean = str.replace(/[^0-9]/g, '');
+            return clean ? parseInt(clean) : null;
+        };
 
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
@@ -82,140 +139,127 @@
             addLog(`>> BOOTING ANALYZER...`, "text-blue-500 font-bold");
 
             try {
-                let rawImgs = [];
+                let allMergedLines = [];
                 let fullTxt = "";
                 let totalG = 0;
 
-                // (1) 画像の情報ダンプ
-                addLog(`--- (1) IMAGE INFO ---`, "text-cyan-400 underline");
-                addLog(`Total Files: ${files.length}枚`);
-
+                addLog(`--- (1) OCR SCANNING ---`, "text-cyan-400 underline");
                 for(let i=0; i<files.length; i++){
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ 
-                            requests: [{ 
-                                image: { content: base64 }, 
-                                features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] 
-                            }] 
-                        }) 
+                        method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) 
                     });
                     const json = await resp.json();
                     const raw = json.responses[0]?.textAnnotations;
                     if(!raw) continue;
 
-                    // (3) 各画像のOCRダンプ
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let x = w.boundingPoly.vertices[0].x;
                         let row = acc.find(r => r.y === y);
                         if (row) row.words.push({x, text: w.description}); else acc.push({ y, words: [{x, text: w.description}] });
                         return acc;
-                    }, []).sort((a,b)=>a.y-b.y).map((r, idx) => {
-                        const txt = r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ");
-                        // X, Y座標付きのダンプ
-                        const xMin = Math.min(...r.words.map(w => w.x));
-                        return { y: r.y, text: txt, x: xMin };
+                    }, []).sort((a,b)=>a.y-b.y).map((r, idx) => ({
+                        y: r.y, text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), x: Math.min(...r.words.map(w => w.x))
+                    }));
+                    lines.forEach((l, idx) => {
+                        addLog(`$L-${String(allMergedLines.length).padStart(3, '0')} ${l.text}`, "text-gray-500 text-[9px]");
+                        allMergedLines.push(l);
+                        fullTxt += l.text + " ";
+                        if (l.text.match(/([\d,]+)G/) && totalG === 0) totalG = parseInt(l.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                     });
-
-                    rawImgs.push({ id: i, lines });
-                    fullTxt += lines.map(l => l.text).join("\n") + "\n";
                 }
 
-                // (2) 順序特定と機種判定
-                addLog(`--- (2) MACHINE & ORDER ---`, "text-cyan-400 underline");
-                let config = L_HANABI_CONFIG; // デフォルト
-                let mName = "新ハナビ (6号機)";
-                if (fullTxt.includes("スマスロ")) { mName = "スマスロハナビ"; } 
-                else if (fullTxt.includes("バーサス")) { mName = "バーサスリヴァイズ"; }
-                addLog(`Machine: ${mName}`);
+                // --- (2) MACHINE DETERMINATION & VALIDATION ❌ ---
+                addLog(`--- (2) MACHINE ---`, "text-cyan-400 underline");
+                let config = null;
+                let mName = "";
+                let mCode = "";
 
-                // (3) OCR RAW DUMP
-                addLog(`--- (3) OCR RAW DUMP ---`, "text-cyan-400 underline");
-                rawImgs.sort((a, b) => {
-                    const aG = a.lines.some(l => l.text.match(/[\d,]+G/));
-                    const bG = b.lines.some(l => l.text.match(/[\d,]+G/));
-                    return aG ? -1 : bG ? 1 : 0;
-                });
+                if (fullTxt.includes("新ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ (6号機)"; mCode = "HANABI"; }
+                else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; mCode = "VERSUS"; }
+                else if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
 
-                let allMergedLines = [];
-                rawImgs.forEach(img => {
-                    addLog(`[IMG_${img.id}] Dump:`, "text-gray-500 font-bold");
-                    img.lines.forEach((l, idx) => {
-                        addLog(`$L-${String(idx).padStart(3, '0')} [X:${String(l.x).padStart(3, ' ')} Y:${String(l.y).padStart(3, ' ')}] ${l.text}`, "text-gray-400 text-[9px]");
-                        allMergedLines.push(l);
-                        if (l.text.match(/([\d,]+)G/) && totalG === 0) {
-                            totalG = parseInt(l.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                        }
-                    });
-                });
-                addLog(`[INIT] BASE: ${totalG}G 🆗`, "text-green-400 font-bold");
+                if (!config) {
+                    addLog(`❌ 機種判定失敗：キーワード（新ハナビ・バーサス・スマスロ）が見つかりません`, "text-red-500 font-bold");
+                    return; 
+                }
+                addLog(`Machine: ${mName} 🆗`);
+                addLog(`[INIT] BASE: ${totalG}G`, "text-green-400");
 
-                // (4) (5) 物理同期スキャン
-                addLog(`--- (4)(5) DATA SYNC & VALIDATE ---`, "text-cyan-400 underline");
-                let results = new Array(config.length).fill(null);
+                // --- (4)(5) DATA SYNC & VALIDATE 🏗️ ---
+                addLog(`--- (4)(5) DATA SYNC ---`, "text-cyan-400 underline");
+                let results = [];
                 let slotIdx = 0;
                 let bbCount = 0;
-                let gSeen = false;
 
                 allMergedLines.forEach((line, i) => {
-                    if (line.text.includes("G")) gSeen = true;
-                    if (!gSeen) return;
-
-                    // 🧬 小数点とスラッシュをフックにする
                     if (line.text.includes(".") && line.text.includes("/")) {
-                        // 分母の狙い撃ち
-                        const matchP = line.text.match(/\/.*(\d[\d\s]*\.[\d\s]*\d)/);
-                        
-                        if (!matchP) {
-                            addLog(`[ERROR] ❌ 分母抽出失敗: ${line.text}`, "text-red-500");
-                            slotIdx++; // 失敗してもスロットは進める（物理同期）
-                            return;
+                        const pRaw = getDenominator(line.text);
+                        if (!pRaw || !config[slotIdx]) { slotIdx++; return; }
+
+                        // 2行/3行ルールで整数取得
+                        let kRaw = getIntOnly(allMergedLines[i - 2]?.text);
+                        let checkStatus = "";
+                        if (kRaw === null) {
+                            kRaw = getIntOnly(allMergedLines[i - 3]?.text);
+                            if (kRaw === null) checkStatus = "❌";
+                        } else if (!allMergedLines[i - 2].text.includes("回")) {
+                            checkStatus = "⚠️";
                         }
 
-                        const pRaw = parseFloat(matchP[1].replace(/\s+/g, ''));
                         const item = config[slotIdx];
-                        
-                        // 2行上の回数を確認
-                        const targetKLine = allMergedLines[i - 2];
-                        let kRaw = -1;
-                        if (targetKLine && targetKLine.text.match(/([\d,]+)/)) {
-                            kRaw = parseInt(targetKLine.text.match(/([\d,]+)/)[1].replace(/,/g, ''));
-                        }
+                        if (item.id === "bb") bbCount = kRaw || 0;
 
-                        // 検算と補正
+                        // 逆算ロジック
                         let nBase = totalG;
-                        // ※ここでRT中やBIG中のnBase分岐が必要（定義表IDに基づく）
-                        if (item && item.id === "bb") bbCount = kRaw;
+                        if (item.id === "vc" || item.id === "vg") nBase = Math.round((kRaw || 0) * pRaw);
+                        else if (item.id.startsWith("b_") || ["pf", "nf", "cbs", "cbh"].includes(item.id)) {
+                            let span = (mCode === "SMASLO") ? 20 : (mCode === "VERSUS") ? 25 : 29;
+                            nBase = bbCount * span;
+                        }
 
                         let kFinal = kRaw;
                         const kExpected = nBase / pRaw;
-                        if (kRaw === -1 || Math.abs(kRaw - kExpected) / kExpected > 0.1) {
+                        if (kRaw === null || Math.abs(kRaw - kExpected) / kExpected > 0.1) {
                             kFinal = kExpected;
-                            addLog(`[補正] ${item?.name || "未知"}: 逆算値 ${kFinal.toFixed(1)}を採用 (OCR:${kRaw})`, "text-red-400 text-[9px]");
+                            addLog(`[補正] ${item.name}: ${kFinal.toFixed(1)} (OCR:${kRaw})`, "text-red-400 text-[9px]");
                         } else {
-                            addLog(`[確定] ${item?.name || "未知"}: ${kRaw}回 (1/${pRaw})`, "text-green-400 text-[9px]");
+                            addLog(`[確定] ${item.name}: ${kRaw}回 ${checkStatus}`, "text-green-400 text-[9px]");
                         }
 
-                        if (item) {
-                            results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs };
-                        }
+                        results.push({ k: kFinal, n: nBase, active: item.active, probs: item.probs });
                         slotIdx++;
                     }
                 });
 
-                // (6) 尤度計算 & (7) 結果
-                addLog(`--- (6) LIKELIHOOD ANALYSIS ---`, "text-cyan-400 underline");
-                // ※ ここに尤度計算ロジックが入る
-
+                // --- (6)(7) ANALYSIS ---
+                addLog(`--- (6)(7) RESULT ---`, "text-cyan-400 underline");
+                let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
+                results.forEach(res => {
+                    if (res.active && res.n > 0) {
+                        [1, 2, 5, 6].forEach(s => {
+                            let tp = 1 / res.probs[s];
+                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                        });
+                    }
+                });
+                const maxLL = Math.max(...Object.values(lls));
+                const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
+                const sumExp = Object.values(exps).reduce((a, b) => a + b, 0);
+                [1, 2, 5, 6].forEach(s => {
+                    let prob = (exps[s] / sumExp) * 100;
+                    document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
+                    document.getElementById(`b${s}`).style.width = `${prob}%`;
+                    addLog(`設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
+                });
                 addLog(`>> ANALYSIS COMPLETE.`, "text-blue-500 font-bold");
-
-            } catch (err) { addLog(`❌ FATAL ERROR: ${err.message}`, "text-red-600 font-bold"); }
+            } catch (err) { addLog(`❌ FATAL: ${err.message}`, "text-red-600"); }
         }
 
-        // イベントリスナー等
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('API KEY SAVED'); };
         document.getElementById('file-input').onchange = e => { if (e.target.files.length > 0) processMulti(e.target.files); };
+        window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
     </script>
 </body>
 </html>
