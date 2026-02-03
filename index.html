@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.28 (Full Config)</title>
+    <title>HANABI & VERSUS Rev 1.2.29 (Physical Anchor)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.28 (Full Definition Recovery)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.29 (Physical Anchor Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -118,7 +118,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.28 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.29 ---`);
 
             try {
                 let rawImgs = [];
@@ -154,11 +154,11 @@
                 let config = L_HANABI_CONFIG;
                 const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
                 if(fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
-                else if(fullTxt.includes("ハナビ絶景") || fullTxt.includes("新ハナビ")) config = L_HANABI_CONFIG;
+                else if(fullTxt.includes("新ハナビ") || fullTxt.includes("絶景")) config = L_HANABI_CONFIG;
                 else if(fullTxt.includes("ハナビ")) config = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // --- 1. 最大インデックスによる画像ソート ---
+                // --- 1. 最大INDEXによる画像ソート (G優先) ---
                 addLog(`(4) 画像順序確定プロセス (Max Index Anchor):`, "color-3 underline font-bold");
                 rawImgs.forEach(img => {
                     let hits = [];
@@ -167,6 +167,8 @@
                     });
                     img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
                 });
+                
+                // ソート: hasG(SEQ0) -> 残りはmaxIdxの昇順
                 rawImgs.sort((a,b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
@@ -174,7 +176,7 @@
                 });
                 rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MaxSlot:${img.maxIdx})`, "text-[9px] color-2"));
 
-                // --- 2. 物理流し込み (Sync判定付き) ---
+                // --- 2. 物理流し込み (Sync同期付き) ---
                 addLog(`(5) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
                 let results = [];
                 let currentSlotIdx = 0;
@@ -206,9 +208,10 @@
                             }
 
                             if(kVal !== -1) {
+                                // 物理Sync: 直前のデータと同じなら進まない
                                 const last = currentSlotIdx > 0 ? results[currentSlotIdx-1] : null;
                                 if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複検出`, "text-[8px] opacity-40");
+                                    addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複検出につき待機`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
