@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.17 (Absolute Sync)</title>
+    <title>HANABI & VERSUS Rev 1.2.17 (Absolute Physical Sync)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -76,7 +76,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -154,21 +154,22 @@
                 else if(fullDump.includes("スマスロ") || fullDump.includes("絶景")) currentConfig = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                let resultsList = []; // 【グローバル変数】全画像で共有する物理スロット
+                let resultsList = []; // 【重要】全画像共通の物理スロット
 
                 addLog(`(4) 物理スロット配分詳細 (Absolute Sync):`, "color-3 font-bold underline");
 
                 allTexts.forEach((lines, imgIdx) => {
                     let isAfterG = false;
-                    let imgPointer = 0; // その画像内での有効データの出現順
+                    let imgPointer = 0; // 各画像内での有効データの出現順
 
                     for(let i=0; i<lines.length; i++){
+                        // Gが出るまで無視
                         if (!isAfterG && lines[i].match(/[\d,]+G/)) { isAfterG = true; continue; }
                         if (!isAfterG) continue;
 
                         const cleanLine = lines[i].replace(/\s+/g, '');
-                        // 物理ルール： (1/ かつ ドットあり) OR (完全に 1/-)
-                        const isPPointer = (cleanLine.includes('1/') && cleanLine.includes('.')) || cleanLine === "1/-";
+                        // 物理条件：(スラッシュあり かつ ドットあり) OR (完全に1/-)
+                        const isPPointer = (cleanLine.includes('/') && cleanLine.includes('.')) || cleanLine === "1/-";
                         
                         if(isPPointer) {
                             const pStr = cleanLine.replace(/1\//, '');
@@ -187,8 +188,8 @@
                                     const conf = currentConfig[targetIdx];
                                     const existing = resultsList[targetIdx];
 
-                                    // 同期チェック: すでに有効なドット付きデータがあれば上書き禁止
-                                    if (existing && existing.isValid && isPValid && existing.k === kVal) {
+                                    // 同期チェック: すでに有効なドット付きデータが確定済みなら、後の画像での上書きを拒否
+                                    if (existing && existing.isValid && existing.k === kVal) {
                                         addLog(`  [SYNC] SLOT ${targetIdx} (${conf.name}) 同期中...`, "text-[9px] opacity-40");
                                     } else {
                                         const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
