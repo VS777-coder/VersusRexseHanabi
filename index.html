@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.29 (Physical Anchor)</title>
+    <title>HANABI & VERSUS Rev 1.2.30 (Pure Physical)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.29 (Physical Anchor Sync)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.30 (Pure Physical Logic)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -70,55 +70,13 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
-        const HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
-            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
-        ];
-        const VERSUS_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
-            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
-        ];
 
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.29 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.30 ---`);
 
             try {
                 let rawImgs = [];
@@ -147,19 +105,14 @@
 
                 addLog(`(2) 生データダンプ:`, "color-2 font-bold");
                 rawImgs.forEach(img => {
-                    addLog(`  [IMG_${img.id} RAW DATA] ${img.hasG ? '(★起点画像)' : ''}`, "color-2 underline");
+                    addLog(`  [IMG_${img.id} RAW DATA] ${img.hasG ? '(★起点)' : ''}`, "color-2 underline");
                     img.lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
                 });
 
                 let config = L_HANABI_CONFIG;
-                const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
-                if(fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
-                else if(fullTxt.includes("新ハナビ") || fullTxt.includes("絶景")) config = L_HANABI_CONFIG;
-                else if(fullTxt.includes("ハナビ")) config = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // --- 1. 最大INDEXによる画像ソート (G優先) ---
-                addLog(`(4) 画像順序確定プロセス (Max Index Anchor):`, "color-3 underline font-bold");
+                // --- 順序判定のみに指紋を使う ---
                 rawImgs.forEach(img => {
                     let hits = [];
                     img.lines.forEach(line => {
@@ -168,22 +121,23 @@
                     img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
                 });
                 
-                // ソート: hasG(SEQ0) -> 残りはmaxIdxの昇順
+                // Gがある画像を先頭。残りはMax INDEXが小さい順。
                 rawImgs.sort((a,b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
                     return a.maxIdx - b.maxIdx;
                 });
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MaxSlot:${img.maxIdx})`, "text-[9px] color-2"));
+                addLog(`(4) 物理順序確定:`, "color-3 underline font-bold");
+                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (AnchorMax:${img.maxIdx})`, "text-[9px] color-2"));
 
-                // --- 2. 物理流し込み (Sync同期付き) ---
+                // --- 流し込みは一切の指紋を排除して純粋物理 ---
                 addLog(`(5) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
                 let results = [];
-                let currentSlotIdx = 0;
+                let slotIdx = 0;
                 let isTriggered = false;
 
                 rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] IMG_${img.id} スキャン中...`, "color-1 text-[9px]");
+                    addLog(`  [SEQ ${seq}] IMG_${img.id} スキャン...`, "color-1 text-[9px]");
                     for(let i=0; i<img.lines.length; i++){
                         const line = img.lines[i];
                         if (!isTriggered && line.match(/[\d,]+G/)) { isTriggered = true; continue; }
@@ -208,30 +162,29 @@
                             }
 
                             if(kVal !== -1) {
-                                // 物理Sync: 直前のデータと同じなら進まない
-                                const last = currentSlotIdx > 0 ? results[currentSlotIdx-1] : null;
+                                // 同期チェック（物理数値の重複回避）
+                                const last = slotIdx > 0 ? results[slotIdx-1] : null;
                                 if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複検出につき待機`, "text-[8px] opacity-40");
+                                    addLog(`    [SYNC] SLOT ${slotIdx-1} 重複検出`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
-                                if (currentSlotIdx < config.length) {
+                                if (slotIdx < config.length) {
                                     const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                    results[currentSlotIdx] = {
+                                    results[slotIdx] = {
                                         k: kVal, p: pVal>0?1/pVal:0, pRaw: pVal,
                                         n: (Math.abs(nCalc-totalG) < (totalG*0.1)) ? totalG : nCalc,
-                                        isValid: isV, name: config[currentSlotIdx].name
+                                        isValid: isV, name: config[slotIdx].name
                                     };
-                                    addLog(`    [SLOT ${currentSlotIdx}] ${config[currentSlotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
-                                    currentSlotIdx++;
+                                    addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
+                                    slotIdx++;
                                 }
                             }
                         }
                     }
                 });
 
-                // --- 3. 尤度インパクト詳細計算 ---
-                addLog(`(6) 尤度インパクト詳細計算ログ:`, "color-3 underline font-bold");
+                addLog(`(6) 尤度インパクト計算:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
