@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.14 (Final Physical)</title>
+    <title>HANABI & VERSUS Rev 1.2.15 (Physical Counter)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.14 (Physical Pointer Only)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.15 (Global Slot Index)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.14 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.15 ---`);
 
             try {
                 let allTexts = [];
@@ -152,65 +152,66 @@
                 const fullDump = allTexts.flat().join("");
                 if(fullDump.includes("バーサス")) currentConfig = VERSUS_CONFIG;
                 else if(fullDump.includes("スマスロ") || fullDump.includes("絶景")) currentConfig = HANABI_CONFIG;
-                addLog(`(3) 総ゲーム数: ${totalG}G (機種: ${fullDump.includes("バーサス") ? "VERSUS" : "HANABI"})`, "color-3 font-bold");
+                addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                let masterData = []; 
-                addLog(`(4) ポインタ走査詳細 (物理整合性照合):`, "color-3 font-bold underline");
+                let results = {}; 
+                let globalSlotIdx = 0; // 【物理カウンター主導】画像を跨ぐ物理インデックス
+
+                addLog(`(4) 物理スロット配分詳細:`, "color-3 font-bold underline");
 
                 allTexts.forEach((lines, imgIdx) => {
+                    // 各画像開始時、ポインタ位置（slot）の「上書き」を可能にするため、画像内のローカルカウンタを管理する
+                    let imgSlotPointer = 0; 
                     for(let i=0; i<lines.length; i++){
                         const pMatch = lines[i].match(/1?\s*\/\s*([\d\s,.-]+)|([\d,.-]+\.[\d\s]+)/);
                         if(pMatch) {
                             let pStr = pMatch[0].replace(/1\s*\/\s*/, '').replace(/\s+/g, '');
-                            if(!pStr.includes('.')) continue;
-                            const pVal = parseFloat(pStr);
+                            const isPValid = pStr.includes('.');
+                            const pVal = isPValid ? parseFloat(pStr) : NaN;
+
                             let kVal = -1; let finger = "";
                             if(i >= 2) {
                                 const kMatch = lines[i-2].match(/([\d,]+)/);
                                 if(kMatch) { kVal = parseInt(kMatch[1].replace(/,/g,'')); finger = lines[i-1]; }
                             }
+
                             if(kVal !== -1) {
-                                const nCalc = Math.round(kVal * pVal);
-                                const isNormal = Math.abs(nCalc - totalG) < (totalG * 0.05);
-                                const isDupe = masterData.some(d => d.k === kVal && d.p === pVal && d.finger === finger);
-                                if (!isDupe) {
-                                    masterData.push({ k: kVal, p: pVal, n: isNormal ? totalG : nCalc, finger: finger });
-                                    addLog(`  [FOUND] k:${kVal} p:1/${pVal} N:${isNormal ? totalG : nCalc} (Finger: ${finger})`, "color-2 font-bold");
-                                } else {
-                                    addLog(`  [DUPE] k:${kVal} p:1/${pVal} スキップ`, "text-[9px] opacity-40");
+                                // 現在のグローバル位置 + この画像内での出現順
+                                const targetIdx = imgSlotPointer; 
+                                if (targetIdx < currentConfig.length) {
+                                    const conf = currentConfig[targetIdx];
+                                    
+                                    // 既にデータがあるかチェック（画像跨ぎの上書き判定）
+                                    const isUpdate = results[conf.id] && (!results[conf.id].isValid && isPValid);
+                                    const isNew = !results[conf.id];
+
+                                    if (isNew || isUpdate) {
+                                        const nCalc = isPValid ? Math.round(kVal * pVal) : totalG;
+                                        const isNormal = Math.abs(nCalc - totalG) < (totalG * 0.1);
+                                        
+                                        results[conf.id] = { 
+                                            k: kVal, 
+                                            p: isPValid ? 1/pVal : 0, 
+                                            n: isNormal ? totalG : nCalc, 
+                                            isValid: isPValid,
+                                            finger: finger 
+                                        };
+                                        addLog(`  [SLOT ${targetIdx}] ${conf.name} <- k:${kVal} p:1/${pStr} ${isUpdate ? "(UPDATE)" : "(NEW)"}`, "color-2");
+                                    }
+                                    imgSlotPointer++;
+                                    if(imgSlotPointer > globalSlotIdx) globalSlotIdx = imgSlotPointer;
                                 }
                             }
                         }
                     }
                 });
 
-                let results = {};
-                let configIdx = 0;
-                masterData.forEach((data) => {
-                    while (configIdx < currentConfig.length) {
-                        const conf = currentConfig[configIdx];
-                        const isSpecial = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id);
-                        const isNormal = data.n === totalG;
-                        const fingerClean = data.finger.replace(/\s+/g, '');
-                        const isGassan = fingerClean.includes("合算") || fingerClean.includes("計");
-
-                        if (isNormal !== isSpecial) {
-                            if (isGassan && conf.active) { configIdx++; continue; }
-                            results[conf.id] = data;
-                            addLog(`  [ADOPT] ${conf.name} <- k:${data.k} p:1/${data.p}`, "color-2");
-                            configIdx++;
-                            return;
-                        }
-                        configIdx++;
-                    }
-                });
-
                 addLog(`(5) 尤度インパクト内訳:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 Object.keys(results).forEach(id => {
+                    const res = results[id];
                     const conf = currentConfig.find(c => c.id === id);
-                    if (conf && conf.active) {
-                        const res = results[id];
+                    if (conf && conf.active && res.isValid) {
                         let itemImpact = "";
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / conf.probs[s];
