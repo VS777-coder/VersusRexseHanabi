@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.39 (Holy Config Integration)</title>
+    <title>HANABI & VERSUS Rev 1.2.43</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-label" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.39 (Holy Config)</div>
+        <div id="machine-label" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.43 (Auto Sequence)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -76,7 +76,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.39 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.43 ---`);
 
             try {
                 let rawImgs = [];
@@ -149,35 +149,31 @@
                 }
 
                 let config = L_HANABI_CONFIG;
-                if (fullTxt.includes("バーサス") || fullTxt.includes("VERSUS")) {
-                    config = VERSUS_CONFIG;
-                } else if (fullTxt.includes("スマスロ")) {
-                    config = HANABI_CONFIG;
-                }
+                if (fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
+                else if (fullTxt.includes("スマスロ")) config = HANABI_CONFIG;
 
+                // --- 画像の物理順序を先に整える ---
                 rawImgs.forEach(img => {
                     let hits = [];
                     img.lines.forEach(line => {
                         config.forEach((c, idx) => { if (line.includes(c.name.substring(0,2))) hits.push(idx); });
                     });
-                    img.maxIdx = hits.length > 0 ? Math.max(...hits) : -1;
+                    img.minIdx = hits.length > 0 ? Math.min(...hits) : 999;
                 });
-                
-                rawImgs.sort((a,b) => {
+                rawImgs.sort((a, b) => {
                     if (a.hasG && !b.hasG) return -1;
                     if (!a.hasG && b.hasG) return 1;
-                    return a.maxIdx - b.maxIdx;
+                    return a.minIdx - b.minIdx;
                 });
+                addLog(`(1) 画像順序確定 (物理ソート完了)`);
 
-                addLog(`(1) 物理順序確定 (Anchor Logic):`, "color-3 underline font-bold");
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MaxIdx:${img.maxIdx})`, "text-[9px] color-2"));
-
+                // --- あとは元のロジックで1枚ずつ回す ---
                 let results = [];
-                let highWaterMark = -1;
+                let slotIdx = -1;
                 let isTriggered = false;
 
                 rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] IMG_${img.id} 物理同期開始...`, "color-1 text-[9px]");
+                    addLog(`  [SEQ ${seq}] IMG_${img.id} 解析中...`, "text-[9px]");
                     img.lines.forEach((line, i) => {
                         if (!isTriggered && line.match(/[\d,]+G/)) { isTriggered = true; return; }
                         if (!isTriggered && seq === 0) return;
@@ -198,24 +194,22 @@
                             }
 
                             if(kVal !== -1) {
-                                let anchorSlot = results.findIndex(res => 
-                                    res && res.k === kVal && Math.abs(res.pRaw - pVal) < 0.001
-                                );
-
-                                if (anchorSlot !== -1) {
-                                    highWaterMark = Math.max(highWaterMark, anchorSlot);
-                                    addLog(`    [ANCHOR] SLOT ${anchorSlot} 同期 (Duplicate Check)`, "text-[8px] opacity-40");
+                                // 配列内を全件走査して重複チェック (以前の成功ロジック)
+                                let anchor = results.findIndex(r => r && r.k === kVal && Math.abs(r.pRaw - pVal) < 0.001);
+                                if (anchor !== -1) {
+                                    slotIdx = Math.max(slotIdx, anchor);
+                                    addLog(`    [SYNC] SLOT ${anchor} 同期`, "text-[8px] opacity-40");
                                 } else {
-                                    let nextSlot = highWaterMark + 1;
-                                    if (nextSlot < config.length) {
+                                    let next = slotIdx + 1;
+                                    if (next < config.length) {
                                         const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                        results[nextSlot] = {
+                                        results[next] = {
                                             k: kVal, p: pVal>0?1/pVal:0, pRaw: pVal,
                                             n: (Math.abs(nCalc-totalG) < (totalG*0.1)) ? totalG : nCalc,
-                                            isValid: clean.includes('.'), name: config[nextSlot].name
+                                            isValid: clean.includes('.'), name: config[next].name
                                         };
-                                        addLog(`    [SLOT ${nextSlot}] ${config[nextSlot].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
-                                        highWaterMark = nextSlot;
+                                        addLog(`    [SLOT ${next}] ${config[next].name} <- k:${kVal}`, "color-2 text-[9px]");
+                                        slotIdx = next;
                                     }
                                 }
                             }
@@ -223,6 +217,7 @@
                     });
                 });
 
+                // 尤度計算
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
@@ -233,7 +228,6 @@
                         });
                     }
                 });
-
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
@@ -243,11 +237,17 @@
                     document.getElementById(`b${s}`).style.width = `${prob}%`;
                     addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
                 });
-
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500 font-bold"); }
         }
 
-        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('API KEY SAVED'); };
+        document.getElementById('copy-log').onclick = () => {
+            const text = document.getElementById('log').innerText;
+            navigator.clipboard.writeText(text).then(() => alert('LOG COPIED'));
+        };
+        document.getElementById('save-key').onclick = () => {
+            localStorage.setItem('v_key', document.getElementById('api-key').value.trim());
+            alert('API KEY SAVED');
+        };
         document.getElementById('file-input').onchange = e => { if (e.target.files.length > 0) processMulti(e.target.files); };
         window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
     </script>
