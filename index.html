@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.46 (Universal Sync)</title>
+    <title>HANABI & VERSUS Rev 1.2.49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-label" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.46 (Universal Sync)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.49 (Sanctuary Lockdown)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        // --- 聖域：定義表 ---
+        // --- 聖域：定義表 (2026.02.03 Restore) ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.46 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.49 ---`);
 
             try {
                 let rawImgs = [];
@@ -143,22 +143,18 @@
                     fullTxt += lines.join("");
                     let hasG = lines.some(l => l.match(/[\d,]+G/));
                     rawImgs.push({ id: i, lines, hasG });
+                    const gLine = lines.find(l => l.match(/[\d,]+G/));
+                    if (gLine && totalG === 0) totalG = parseInt(gLine.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                 }
 
                 let config = L_HANABI_CONFIG;
-                if (fullTxt.includes("バーサス") || fullTxt.includes("VERSUS")) config = VERSUS_CONFIG;
-                else if (fullTxt.includes("スマスロ")) config = HANABI_CONFIG;
+                let mName = "新ハナビ (6号機)";
+                if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; }
+                else if (fullTxt.includes("スマスロ")) { config = HANABI_CONFIG; mName = "スマスロハナビ(絶景)"; }
+                document.getElementById('machine-info').innerText = `機種: ${mName}`;
+                addLog(`(1) 判定機種: ${mName} / 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // (1) 総ゲーム数(G)の絶対先取りスキャン
-                rawImgs.forEach(img => {
-                    const gLine = img.lines.find(l => l.match(/[\d,]+G/));
-                    if (gLine && totalG === 0) {
-                        totalG = parseInt(gLine.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                    }
-                });
-                addLog(`(1) 総ゲーム数確定: ${totalG}G`, "color-3 font-bold");
-
-                // (2) 重心ソート (MinIdx判定)
+                // 重心ソート (画像の物理的並び替え)
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
                     img.lines.forEach(line => {
@@ -172,19 +168,17 @@
                     return a.minIdx - b.minIdx;
                 });
 
-                addLog(`(2) 物理順序復元完了:`, "color-3 underline");
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx})`, "text-[9px] color-2"));
-
-                // (3) 物理スロット流し込み
                 let results = [];
-                let slotIdx = 0;
-                let isTriggered = false;
+                let globalPointer = 0;
 
                 rawImgs.forEach((img, seq) => {
                     addLog(`  [SEQ ${seq}] IMG_${img.id} 走査中...`, "color-1 text-[9px]");
+                    let isTriggered = false;
+                    
                     img.lines.forEach((line, i) => {
                         if (line.match(/[\d,]+G/)) { isTriggered = true; return; }
-                        if (!isTriggered) return;
+                        if (seq === 0 && !isTriggered) return;
+                        if (seq > 0) isTriggered = true;
 
                         const clean = line.replace(/\s+/g, '');
                         if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
@@ -201,25 +195,39 @@
                             }
 
                             if (kVal !== -1) {
+                                // 物理重心ワープ：周辺行から役名を特定
+                                let currentLineHits = [];
+                                for(let scan=-2; scan<=0; scan++){
+                                    if(i+scan >= 0) {
+                                        config.forEach((c, idx) => {
+                                            if (img.lines[i+scan].includes(c.name.substring(0, 2))) currentLineHits.push(idx);
+                                        });
+                                    }
+                                }
+                                
+                                let absoluteIdx = currentLineHits.length > 0 ? Math.min(...currentLineHits) : globalPointer;
+                                
+                                // 重複排除 (数値ペア一致)
                                 let isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - pVal) < 0.001);
                                 if (isDup) {
                                     addLog(`    [SKIP] 重複: k:${kVal}`, "text-[8px] opacity-40");
-                                } else if (slotIdx < config.length) {
+                                    globalPointer = Math.max(globalPointer, absoluteIdx);
+                                } else if (absoluteIdx < config.length) {
                                     const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                    results[slotIdx] = {
+                                    results[absoluteIdx] = {
                                         k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal,
                                         n: (Math.abs(nCalc - totalG) < (totalG * 0.15)) ? totalG : nCalc,
-                                        isValid: clean.includes('.'), name: config[slotIdx].name
+                                        isValid: clean.includes('.'), name: config[absoluteIdx].name
                                     };
-                                    addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 text-[9px] font-bold");
-                                    slotIdx++;
+                                    addLog(`    [SLOT ${absoluteIdx}] ${config[absoluteIdx].name} <- k:${kVal}`, "color-2 text-[9px] font-bold");
+                                    globalPointer = absoluteIdx + 1;
                                 }
                             }
                         }
                     });
                 });
 
-                // (4) 尤度インパクト計算
+                // 尤度計算
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
