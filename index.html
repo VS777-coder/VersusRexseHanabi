@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.12</title>
+    <title>HANABI & VERSUS Rev 1.2.12 (Debug Enhanced)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -51,7 +51,7 @@
     </div>
 
     <script>
-        // --- 聖域：定義表（省略なし） ---
+        // --- 聖域：定義表 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -152,17 +152,20 @@
             const key = document.getElementById('api-key').value.trim();
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
-            if (!key) { addLog("API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`[START] Rev 1.2.12`);
+            if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
+            addLog(`--- START ANALYSIS Rev 1.2.12 ---`);
+            addLog(`(1) 複数枚画像の情報: ${files.length}枚を検出`);
 
             try {
                 let allTexts = [];
                 for(let i=0; i<files.length; i++){
+                    addLog(`[OCR] IMG_${i} を処理中...`, "color-1");
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const raw = json.responses[0]?.textAnnotations;
-                    if(!raw) continue;
+                    if(!raw) { addLog(`  -> IMG_${i}: 文字を検出できませんでした。`, "text-red-400"); continue; }
+                    
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let x = w.boundingPoly.vertices[0].x;
@@ -170,18 +173,31 @@
                         if (row) row.words.push({x, text: w.description}); else acc.push({ y, words: [{x, text: w.description}] });
                         return acc;
                     }, []).sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "));
+                    
+                    addLog(`(2) IMG_${i} 素の情報:`, "color-2 opacity-80");
+                    lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-60 color-2"));
                     allTexts.push(lines);
                 }
 
+                addLog(`(3) 順序・配列割り付け処理開始`, "color-3");
                 let currentConfig = L_HANABI_CONFIG; 
-                const firstLine = allTexts[0].join("");
-                if(firstLine.includes("バーサス")) currentConfig = VERSUS_CONFIG;
-                else if(firstLine.includes("スマスロ") || firstLine.includes("絶景")) currentConfig = HANABI_CONFIG;
+                const fullDump = allTexts.flat().join("");
+                if(fullDump.includes("バーサス")) {
+                    currentConfig = VERSUS_CONFIG; addLog(`  -> 機種判定: VERSUS REVISE`);
+                } else if(fullDump.includes("スマスロ") || fullDump.includes("絶景")) {
+                    currentConfig = HANABI_CONFIG; addLog(`  -> 機種判定: HANABI ZEKKEI/SMASLO`);
+                } else {
+                    addLog(`  -> 機種判定: SHIN HANABI (Default)`);
+                }
 
                 const pIdx = allTexts.findIndex(lines => lines.some(l => l.match(/[\d,]+G/)));
-                if (pIdx === -1) throw new Error("G-COUNT NOT FOUND");
-                const totalG = parseInt(allTexts[pIdx].find(l => l.match(/[\d,]+G/)).match(/([\d,]+)G/)[1].replace(/,/g, ''));
+                if (pIdx === -1) throw new Error("G-COUNT (総プレイ数) が見つかりません。");
+                const totalGMatch = allTexts[pIdx].find(l => l.match(/[\d,]+G/)).match(/([\d,]+)G/);
+                const totalG = parseInt(totalGMatch[1].replace(/,/g, ''));
+                addLog(`  -> 総プレイ数: ${totalG}G (IMG_${pIdx}より取得)`);
+
                 let master = currentConfig.map(() => ({ k: 0, p: 0 }));
+                addLog(`(4) 定義表とデータの照合ログ:`, "color-3");
 
                 allTexts.forEach((lines, imgIdx) => {
                     for(let i=0; i<lines.length; i++){
@@ -195,42 +211,56 @@
                                 if(tIdx !== -1) {
                                     if(master[tIdx].k === 0) {
                                         master[tIdx] = { k: kVal, p: 1/(parseFloat(pStr)||1) };
-                                        addLog(`[ADOPT] ${currentConfig[tIdx].name} <- ${lines[i-1]} (IMG_${imgIdx})`, "color-2");
+                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} -> ${kVal}回 (IMG_${imgIdx})`, "color-2");
                                     } else if (master[tIdx].k === kVal) {
-                                        addLog(`[DUPE] ${currentConfig[tIdx].name} OK (IMG_${imgIdx})`, "color-1 opacity-50");
+                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} (${kVal}回) は既出のためスキップ`, "text-[9px] opacity-40");
                                     } else {
-                                        addLog(`⚠️ ERROR: ${currentConfig[tIdx].name} CONFLICT`, "text-red-500");
+                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} が以前のデータ (${master[tIdx].k}) と矛盾します`, "text-red-500");
                                     }
+                                } else {
+                                    addLog(`  [SKIP] 未知の項目名: "${lines[i-1]}"`, "text-[9px] opacity-30");
                                 }
                             }
                         }
                     }
                 });
 
+                addLog(`(5) 尤度計算のGAP/強度内訳:`, "color-3");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 currentConfig.forEach((conf, idx) => {
                     if (master[idx].k > 0 && conf.active) {
                         let n = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id) ? Math.round(master[idx].k / master[idx].p) : totalG;
+                        let itemImpact = "";
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / conf.probs[s];
-                            lls[s] += (master[idx].k * Math.log(tp) + (n - master[idx].k) * Math.log(1 - tp));
+                            let itemLL = (master[idx].k * Math.log(tp) + (n - master[idx].k) * Math.log(1 - tp));
+                            lls[s] += itemLL;
+                            itemImpact += `設定${s}:${itemLL.toFixed(2)} `;
                         });
+                        addLog(`  - ${conf.name}(${master[idx].k}/${n}): ${itemImpact}`, "text-[9px] color-1");
                     }
                 });
 
                 const maxLL = Math.max(...Object.values(lls));
+                addLog(`  -> Max Log-Likelihood: ${maxLL.toFixed(4)}`, "text-[9px] opacity-70");
+
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
+
+                addLog(`(6) 判別結果算出完了`, "color-3");
                 [1,2,5,6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
                     document.getElementById(`b${s}`).style.width = `${prob}%`;
+                    addLog(`  設定${s}: ${prob.toFixed(2)}%`, `bar-${s}`);
                 });
-            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500"); }
+
+            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500"); console.error(err); }
         }
 
         document.getElementById('copy-log').addEventListener('click', () => {
             navigator.clipboard.writeText(document.getElementById('log').innerText);
+            alert('LOG COPIED');
         });
         document.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
