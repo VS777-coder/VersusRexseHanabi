@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.4.1</title>
+    <title>ANALYZER Rev 1.4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.4.1 (Physical Lockdown)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.4.3 (Blind Physical Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -40,7 +40,7 @@
         <div><div class="flex justify-between text-[12px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
     </div>
     <div class="log-container">
-        <button id="copy-log" class="copy-btn">COPY</button>
+        <button id="copy-log" class="copy-btn">COPY LOG</button>
         <div id="log" class="future-log">READY...</div>
     </div>
     <div class="api-footer">
@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        // --- 聖域：指示された定義表を完全固定 ---
+        // --- 指示された定義表を完全固定 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -76,7 +76,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -117,6 +117,17 @@
         const logArea = document.getElementById('log');
         const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
         
+        // (0) ログコピーボタンの挙動
+        document.getElementById('copy-log').onclick = () => {
+            const range = document.createRange();
+            range.selectNode(logArea);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            window.getSelection().removeAllRanges();
+            alert('LOG COPIED');
+        };
+
         const getDenominator = (str) => {
             if (!str || !str.includes('/')) return null;
             const parts = str.split('/');
@@ -128,17 +139,12 @@
             const clean = str.replace(/[^0-9]/g, '');
             return clean ? parseInt(clean) : null;
         };
-        const isTargetMatch = (context, targetName) => {
-            if (!targetName) return true;
-            const clean = context.replace(/\s+/g, "");
-            return clean.includes(targetName.substring(0, 2));
-        };
 
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = "";
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.4.1 ---`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.4.3...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let totalG = 0; let fullTxt = "";
@@ -162,7 +168,7 @@
                     lines.forEach(l => { fullTxt += l.text + " "; if (l.text.match(/([\d,]+)G/) && totalG === 0) totalG = parseInt(l.text.match(/([\d,]+)G/)[1].replace(/,/g, '')); });
                 }
 
-                // (2) 順序・機種判定
+                // (2) 判定処理
                 addLog(`\n(2) 画像の順序・機種判定処理:`, "text-cyan-400 underline font-bold");
                 let config = L_HANABI_CONFIG; let mName = "新ハナビ"; let mCode = "HANABI";
                 if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
@@ -178,59 +184,80 @@
                     img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
                 });
 
-                // (4) 仮想配列作成 (物理同期)
+                // (4) 仮想配列作成 (盲目的物理同期)
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
-                let results = [], slotIdx = 0, bbCount = 0, gSeen = false, seenData = new Set();
+                let results = [], bbCount = 0, gSeen = false, seenData = new Set();
+                
                 rawImgs.forEach(img => {
+                    // 各画像冒頭で一度だけ minIdx 判定 (Rev 1.2.58 の思想)
+                    let slotIdx = 0;
+                    let matchedIndices = [];
+                    img.lines.forEach(line => {
+                        config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) matchedIndices.push(idx); });
+                    });
+                    if (matchedIndices.length > 0) slotIdx = Math.min(...matchedIndices);
+                    addLog(`  [IMG_${img.id}] 同期開始点: SLOT[${slotIdx}]`, "text-blue-400 text-[9px]");
+
                     img.lines.forEach((line, i) => {
                         if (line.text.includes("G")) gSeen = true;
                         if (!gSeen) return;
+
                         if (line.text.includes(".") && line.text.includes("/")) {
                             const pRaw = getDenominator(line.text);
                             if (!pRaw) return;
-                            const context = (img.lines[i-1]?.text || "") + (img.lines[i-2]?.text || "") + (img.lines[i-3]?.text || "");
                             const item = config[slotIdx]; if (!item) return;
 
-                            if (!isTargetMatch(context, item.name)) {
-                                addLog(`    [SKIP] L-${i} 座席不一致 (待機:${item.name} / 看板:${context})`, "text-gray-500 text-[8px]");
+                            let kRaw = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
+                            const看板文字 = (img.lines[i-1]?.text || "") + (img.lines[i-2]?.text || "");
+
+                            if (kRaw === null) {
+                                addLog(`    ⚠️ L-${i} ${item.name} 回数欠落のためスキップ`, "text-red-400 text-[8px]");
                                 return;
                             }
-                            let kRaw = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
-                            if (kRaw === null) { addLog(`    ⚠️ L-${i} ${item.name} 回数欠落`, "text-red-400 text-[8px]"); return; }
                             
+                            // 重複判定: 座席番号(slotIdx) + 回数 + 確率
                             const dataKey = `S${slotIdx}-K${kRaw}-P${pRaw}`;
-                            if (seenData.has(dataKey)) { addLog(`    [SKIP] L-${i} SLOT[${slotIdx}] 重複`, "text-gray-700 text-[8px]"); return; }
+                            if (seenData.has(dataKey)) {
+                                addLog(`    [SKIP] L-${i} SLOT[${slotIdx}] 重複 (看板:${看板文字})`, "text-gray-700 text-[8px]");
+                                slotIdx++; // 座席は進める
+                                return;
+                            }
                             
                             if (item.id === "bb") bbCount = kRaw;
                             let kFinal = kRaw, nBase = totalG;
+                            const isBigItem = item.id.startsWith("b_") || ["pf","nf"].includes(item.id);
                             if (item.id === "vc" || item.id === "vg") nBase = Math.round(kRaw * pRaw);
-                            else if (item.id.startsWith("b_") || ["pf","nf"].includes(item.id)) {
-                                nBase = bbCount * (mCode === "SMASLO" ? 20 : 29);
-                                kFinal = nBase / pRaw;
-                                addLog(`    [CALC] ${item.name}: 補正 ${kFinal.toFixed(1)}回`, "text-yellow-600 text-[8px]");
+                            else if (isBigItem) {
+                                const span = (mCode === "SMASLO" ? 20 : 29);
+                                nBase = bbCount * span; kFinal = nBase / pRaw;
+                                addLog(`    [CALC] ${item.name}: 逆算 ${kFinal.toFixed(1)}回`, "text-yellow-600 text-[8px]");
                             }
-                            results.push({ k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs });
+
+                            results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs };
                             seenData.add(dataKey);
-                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw})`, "text-green-600 text-[9px]");
-                            slotIdx++;
+                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw}) [看板:${看板文字}]`, "text-green-600 text-[9px]");
+                            slotIdx++; 
                         }
                     });
                 });
 
-                // (5) 当て込み
-                addLog(`\n(5) 定義表への当て込み:`, "text-cyan-400 underline font-bold");
-                results.forEach(res => addLog(`  - ${res.name}: ${res.k.toFixed(1)}回 (1/${(res.n/res.k).toFixed(1)})`));
+                // (5) 定義表当て込み
+                addLog(`\n(5) 定義表への当て込み（最終データ）:`, "text-cyan-400 underline font-bold");
+                results.forEach((res, idx) => {
+                    if (res) addLog(`  - SLOT[${idx}] ${res.name}: ${res.k.toFixed(1)}回 (1/${(res.n/res.k).toFixed(1)})`);
+                });
 
                 // (6) 尤度計算
-                addLog(`\n(6) 尤度計算・強度:`, "text-cyan-400 underline font-bold");
+                addLog(`\n(6) 尤度計算・強度詳細:`, "text-cyan-400 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
-                    if (res.active && res.k > 0) {
+                    if (res && res.active && res.k > 0) {
                         [1, 2, 5, 6].forEach(s => {
                             let tp = 1 / res.probs[s];
-                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                            let score = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                            lls[s] += score;
                         });
-                        addLog(`  - ${res.name} 計算済`, "text-[8px] text-gray-500");
+                        addLog(`  - ${res.name} 計算完了`, "text-[8px] text-gray-500");
                     }
                 });
 
@@ -244,7 +271,7 @@
                     addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s} font-bold`);
                 });
 
-            } catch (err) { addLog(`❌ FATAL: ${err.stack}`, "text-red-600"); }
+            } catch (err) { addLog(`❌ FATAL ERROR: ${err.stack}`, "text-red-600"); }
         }
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('SAVED'); };
         document.getElementById('file-input').onchange = e => { if (e.target.files.length > 0) processMulti(e.target.files); };
