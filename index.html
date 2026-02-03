@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.51</title>
+    <title>HANABI & VERSUS Rev 1.2.52</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.51 (Final Stability)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.52 (Pure Physical)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // --- 聖域：定義表 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -120,15 +119,13 @@
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
             
-            addLog(`--- START ANALYSIS Rev 1.2.51 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.52 ---`);
 
             try {
                 let rawImgs = [];
                 let totalG = 0;
                 let fullTxt = "";
 
-                // (1) 複数画像情報の取り込み
-                addLog(`(1) 画像情報取り込み開始...`, "color-3 underline");
                 for(let i=0; i<files.length; i++){
                     addLog(`  [OCR] IMG_${i} 読込中...`, "color-1");
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
@@ -152,120 +149,70 @@
                 let config = L_HANABI_CONFIG;
                 if (fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
                 else if (fullTxt.includes("スマスロ")) config = HANABI_CONFIG;
+                addLog(`(1) 総ゲーム数: ${totalG}G`, "color-3 underline font-bold");
 
-                // (2) 順序判定ログ
-                addLog(`\n(2) 画像順序判定:`, "color-3 underline");
-                rawImgs.forEach(img => {
-                    let matchedIndices = [];
-                    img.lines.forEach(line => {
-                        config.forEach((c, idx) => { if (line.includes(c.name.substring(0, 2))) matchedIndices.push(idx); });
-                    });
-                    img.minIdx = matchedIndices.length > 0 ? Math.min(...matchedIndices) : 999;
-                    img.hasG = img.lines.some(l => l.match(/[\d,]+G/));
-                });
-                rawImgs.sort((a, b) => {
-                    if (a.hasG && !b.hasG) return -1;
-                    if (!a.hasG && b.hasG) return 1;
-                    return a.minIdx - b.minIdx;
-                });
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx})`, "text-[9px] color-2"));
-
-                // (3) OCR生値
-                addLog(`\n(3) OCR生値ダンプ:`, "color-3 underline");
-                rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] IMG_${img.id} RAW DATA:`, "text-[10px] color-1 opacity-60");
-                    img.lines.forEach(l => addLog(`    | ${l}`, "text-[8px] opacity-40"));
-                });
-
-                // (4) 配列生成ログ
-                addLog(`\n(4) 配列生成・物理マッピング:`, "color-3 underline");
                 let results = [];
-                
-                if (rawImgs.length === 1) {
-                    addLog(`  [SINGLE MODE] G起点順次マッピング開始`, "color-2 font-bold");
-                    let isTriggered = false;
-                    let slotIdx = 0;
-                    rawImgs[0].lines.forEach((line, i) => {
-                        if (line.match(/[\d,]+G/)) { isTriggered = true; return; }
-                        if (!isTriggered) return;
-                        const clean = line.replace(/\s+/g, '');
-                        if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
-                            let kVal = -1;
-                            for (let j = 1; j <= 3; j++) {
-                                const kMatch = rawImgs[0].lines[i - j]?.match(/([\d,]+)/);
-                                if (kMatch && !rawImgs[0].lines[i-j].includes('/')) { kVal = parseInt(kMatch[1].replace(/,/g, '')); break; }
-                            }
-                            if (kVal !== -1 && slotIdx < config.length) {
-                                const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                results[slotIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: totalG, isValid: clean.includes('.'), name: config[slotIdx].name };
-                                addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal}`, "color-2 text-[9px]");
-                                slotIdx++;
+                let slotIdx = 0;
+                let isTriggered = false;
+
+                addLog(`\n(4) 配列生成・物理マッピング:`, "color-3 underline font-bold");
+
+                // 文字列を一切無視し、G起点から「独立した数値」と「1/分母」のペアのみを順次拾う
+                rawImgs[0].lines.forEach((line, i) => {
+                    if (line.match(/[\d,]+G/)) { isTriggered = true; return; }
+                    if (!isTriggered) return;
+
+                    const clean = line.replace(/\s+/g, '');
+                    const isProbLine = (clean.includes('/') && clean.includes('.')) || clean === "1/-";
+
+                    if (isProbLine) {
+                        let kVal = -1;
+                        // 回数を探す：周辺4行から「純粋な数値（回数）」を抽出
+                        for (let j = 1; j <= 4; j++) {
+                            const target = rawImgs[0].lines[i - j];
+                            if (!target) continue;
+                            const kMatch = target.match(/([\d,]+)/);
+                            if (kMatch) {
+                                // 役名に含まれる1や2を排除するため、「回」が含まれているか、数値のみの行を優先
+                                if (target.includes('回') || /^\s*[\d,]+\s*$/.test(target)) {
+                                    kVal = parseInt(kMatch[1].replace(/,/g, ''));
+                                    break;
+                                }
                             }
                         }
-                    });
-                } else {
-                    addLog(`  [MULTI MODE] 画像間物理マージ開始`, "color-2 font-bold");
-                    let globalPointer = 0;
-                    rawImgs.forEach((img, seq) => {
-                        let isImgTriggered = false;
-                        img.lines.forEach((line, i) => {
-                            if (line.match(/[\d,]+G/)) { isImgTriggered = true; return; }
-                            if (seq === 0 && !isImgTriggered) return;
-                            if (seq > 0) isImgTriggered = true;
-                            const clean = line.replace(/\s+/g, '');
-                            if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
-                                let kVal = -1;
-                                for (let j = 1; j <= 3; j++) {
-                                    const kMatch = img.lines[i - j]?.match(/([\d,]+)/);
-                                    if (kMatch && !img.lines[i-j].includes('/')) { kVal = parseInt(kMatch[1].replace(/,/g, '')); break; }
-                                }
-                                if (kVal !== -1) {
-                                    let currentHits = [];
-                                    for(let scan=-2; scan<=0; scan++) {
-                                        if(i+scan>=0) config.forEach((c, idx) => { if(img.lines[i+scan].includes(c.name.substring(0,2))) currentHits.push(idx); });
-                                    }
-                                    let absoluteIdx = currentHits.length > 0 ? Math.min(...currentHits) : globalPointer;
-                                    if (absoluteIdx < globalPointer && seq > 0) absoluteIdx = globalPointer; // 逆走禁止
-                                    
-                                    let isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - (clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0)) < 0.001);
-                                    if (isDup) {
-                                        addLog(`    [SKIP] 重複: k:${kVal}`, "text-[8px] opacity-30");
-                                    } else if (absoluteIdx < config.length) {
-                                        const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                        results[absoluteIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: totalG, isValid: clean.includes('.'), name: config[absoluteIdx].name };
-                                        addLog(`    [SLOT ${absoluteIdx}] ${config[absoluteIdx].name} <- k:${kVal}`, "color-2 text-[9px]");
-                                        globalPointer = absoluteIdx + 1;
-                                    }
-                                }
-                            }
-                        });
-                    });
-                }
 
-                // (5) 定義確認
+                        if (kVal !== -1 && slotIdx < config.length) {
+                            const pStr = clean.replace(/1\//, '');
+                            const pVal = clean.includes('.') ? parseFloat(pStr) : 0;
+                            const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
+                            
+                            results[slotIdx] = { 
+                                k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, 
+                                n: (Math.abs(nCalc - totalG) < (totalG * 0.15)) ? totalG : nCalc, 
+                                isValid: clean.includes('.'), name: config[slotIdx].name 
+                            };
+                            addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 text-[9px] font-bold");
+                            slotIdx++;
+                        }
+                    }
+                });
+
                 addLog(`\n(5) 定義マッピング最終確認:`, "color-3 underline");
                 results.forEach((res, idx) => {
                     if(res) addLog(`  - ${res.name}: ${res.k}回 (1/${(1/res.p).toFixed(1)})`, "text-[9px] color-2");
                 });
 
-                // (6) 尤度詳細
-                addLog(`\n(6) 尤度計算詳細:`, "color-3 underline");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
                     if (c && c.active && res.isValid) {
-                        let impacts = {};
                         [1, 2, 5, 6].forEach(s => {
                             let tp = 1 / c.probs[s];
-                            let imp = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
-                            lls[s] += imp; impacts[s] = imp;
+                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                         });
-                        let gap = Math.max(...Object.values(impacts)) - Math.min(...Object.values(impacts));
-                        addLog(`  - ${res.name}: Gap:${gap.toFixed(2)} [1:${impacts[1].toFixed(1)} 2:${impacts[2].toFixed(1)} 5:${impacts[5].toFixed(1)} 6:${impacts[6].toFixed(1)}]`, "text-[8px] color-1");
                     }
                 });
 
-                // (7) 最終結果
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a, b) => a + b, 0);
