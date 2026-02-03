@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.54</title>
+    <title>HANABI & VERSUS Rev 1.2.55</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.54 (Final Log System)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.55 (Physical Anchor Fix)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // --- 聖域：定義表 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -76,7 +75,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -119,15 +118,14 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            
-            addLog(`--- START ANALYSIS Rev 1.2.54 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.55 ---`);
 
             try {
                 let rawImgs = [];
                 let totalG = 0;
                 let fullTxt = "";
 
-                // (1) 複数画像情報の取り込み
+                // (1) 複数画像取り込み
                 addLog(`(1) 複数画像情報の取り込み:`, "color-3 underline font-bold");
                 for(let i=0; i<files.length; i++){
                     addLog(`  [OCR] IMG_${i} 読込中...`, "color-1");
@@ -150,120 +148,99 @@
                 }
 
                 let config = L_HANABI_CONFIG;
-                if (fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
-                else if (fullTxt.includes("スマスロ")) config = HANABI_CONFIG;
+                let mName = "新ハナビ (6号機)";
+                if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; }
+                else if (fullTxt.includes("スマスロ")) { config = HANABI_CONFIG; mName = "スマスロハナビ(絶景)"; }
+                document.getElementById('machine-info').innerText = `機種: ${mName}`;
+                addLog(`(1.5) 判定機種: ${mName} / 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // (2) 画像の順序判定ログ
+                // (2) 順序判定
                 addLog(`\n(2) 画像の順序判定のログ:`, "color-3 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
-                    img.lines.forEach(line => {
-                        config.forEach((c, idx) => { if (line.includes(c.name.substring(0, 2))) matchedIndices.push(idx); });
-                    });
+                    img.lines.forEach(line => { config.forEach((c, idx) => { if (line.includes(c.name.substring(0, 2))) matchedIndices.push(idx); }); });
                     img.minIdx = matchedIndices.length > 0 ? Math.min(...matchedIndices) : 999;
                     img.hasG = img.lines.some(l => l.match(/[\d,]+G/));
                 });
-                rawImgs.sort((a, b) => {
-                    if (a.hasG && !b.hasG) return -1;
-                    if (!a.hasG && b.hasG) return 1;
-                    return a.minIdx - b.minIdx;
-                });
-                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx}, hasG:${img.hasG})`, "text-[9px] color-2"));
+                rawImgs.sort((a, b) => { if (a.hasG && !b.hasG) return -1; if (!a.hasG && b.hasG) return 1; return a.minIdx - b.minIdx; });
+                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx})`, "text-[9px] color-2"));
 
-                // (3) OCRの生値
+                // (3) 生値
                 addLog(`\n(3) OCRの生値:`, "color-3 underline font-bold");
                 rawImgs.forEach((img, seq) => {
                     addLog(`  [SEQ ${seq}] IMG_${img.id} RAW DATA:`, "text-[10px] color-1 underline");
                     img.lines.forEach(l => addLog(`    | ${l}`, "text-[8px] opacity-60 color-1"));
                 });
 
-                // (4) 配列生成時のログ
+                // (4) 配列生成
                 addLog(`\n(4) 配列生成時のログ:`, "color-3 underline font-bold");
                 let results = [];
-                let isTriggered = false;
                 let slotIdx = 0;
-                let globalPointer = 0;
+                let isTriggered = false;
 
-                const processSingleOrMulti = (imgList) => {
-                    imgList.forEach((img, seq) => {
-                        addLog(`  [SEQ ${seq}] 走査中...`, "color-1 text-[9px]");
-                        let imgTrigger = false;
-                        img.lines.forEach((line, i) => {
-                            if (line.match(/[\d,]+G/)) { imgTrigger = true; isTriggered = true; return; }
-                            if (seq === 0 && !imgTrigger) return;
-                            if (seq > 0) imgTrigger = true;
+                rawImgs.forEach((img, seq) => {
+                    addLog(`  [SEQ ${seq}] スロットマッピング開始...`, "color-1 text-[9px]");
+                    let imgTrigger = false;
+                    img.lines.forEach((line, i) => {
+                        if (line.match(/[\d,]+G/)) { imgTrigger = true; isTriggered = true; return; }
+                        if (seq === 0 && !imgTrigger) return;
+                        if (seq > 0) imgTrigger = true;
 
-                            const clean = line.replace(/\s+/g, '');
-                            if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
-                                let kVal = -1;
-                                // ★【物理絶対ルール】2行上を最優先、次に3行上。1行上は名称ノイズのため最後に。
-                                const search = [2, 3, 1];
-                                for (let j of search) {
-                                    const target = img.lines[i - j];
-                                    if (target) {
-                                        const kMatch = target.match(/([\d,]+)/);
-                                        if (kMatch) {
-                                            // j=1（名称）の場合は数字だけの行以外は認めないガード
-                                            if (j === 1 && !/^\s*[\d,]+\s*$/.test(target) && !target.includes('回')) continue;
-                                            kVal = parseInt(kMatch[1].replace(/,/g, '')); break;
-                                        }
-                                    }
-                                }
-
-                                if (kVal !== -1) {
-                                    // 複数枚の時のための重複排除
-                                    let isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - (clean.includes('.') ? parseFloat(clean.replace(/1\//,'')) : 0)) < 0.001);
-                                    if (isDup && imgList.length > 1) {
-                                        addLog(`    [SKIP] 重複: k:${kVal}`, "text-[8px] opacity-30");
-                                    } else if (slotIdx < config.length) {
-                                        const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                        results[slotIdx] = { 
-                                            k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, 
-                                            n: totalG, isValid: clean.includes('.'), name: config[slotIdx].name 
-                                        };
-                                        addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal}`, "color-2 text-[9px] font-bold");
-                                        slotIdx++;
-                                    }
+                        const clean = line.replace(/\s+/g, '');
+                        if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
+                            let kVal = -1;
+                            // ★【物理絶対固定：j=1(名称)を殺す】2行上優先、保険で3行上。
+                            for (let j of [2, 3]) {
+                                const target = img.lines[i - j];
+                                if (target) {
+                                    const kMatch = target.match(/([\d,]+)/);
+                                    if (kMatch) { kVal = parseInt(kMatch[1].replace(/,/g, '')); break; }
                                 }
                             }
-                        });
-                    });
-                };
-                processSingleOrMulti(rawImgs);
 
-                // (5) 定義表の項目名：取れた回数：取れた確率
-                addLog(`\n(5) 定義表の項目名：取れた回数：取れた確率:`, "color-3 underline font-bold");
-                results.forEach((res, idx) => {
-                    if(res) addLog(`  - ${res.name}: ${res.k}回 (1/${(1/res.p).toFixed(1)})`, "text-[9px] color-2");
+                            if (kVal !== -1 && slotIdx < config.length) {
+                                const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
+                                // 重複チェック
+                                let isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - pVal) < 0.001);
+                                if (isDup && rawImgs.length > 1) {
+                                    addLog(`    [SKIP] 重複排除: k:${kVal}`, "text-[8px] opacity-40");
+                                } else {
+                                    results[slotIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: totalG, isValid: clean.includes('.'), name: config[slotIdx].name };
+                                    addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} (Physical Hit)`, "color-2 text-[9px] font-bold");
+                                    slotIdx++;
+                                }
+                            }
+                        }
+                    });
                 });
 
-                // (6) 尤度計算、強度、ギャップ
+                // (5) 定義確認
+                addLog(`\n(5) 定義表の項目名：取れた回数：取れた確率:`, "color-3 underline font-bold");
+                results.forEach((res, idx) => { if(res) addLog(`  - ${res.name}: ${res.k}回 (1/${(1/res.p).toFixed(1)})`, "text-[9px] color-2"); });
+
+                // (6) 尤度計算
                 addLog(`\n(6) 尤度計算、強度、ギャップ:`, "color-3 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
                     if (c && c.active && res.isValid) {
-                        let impacts = {};
                         [1, 2, 5, 6].forEach(s => {
                             let tp = 1 / c.probs[s];
-                            let impact = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
-                            lls[s] += impact; impacts[s] = impact;
+                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                         });
-                        let gap = Math.max(...Object.values(impacts)) - Math.min(...Object.values(impacts));
-                        addLog(`  - ${res.name}: Gap:${gap.toFixed(2)} [1:${impacts[1].toFixed(1)} 2:${impacts[2].toFixed(1)} 5:${impacts[5].toFixed(1)} 6:${impacts[6].toFixed(1)}]`, "text-[8px] color-1");
                     }
                 });
 
-                // (7) 判別結果
+                // (7) 最終判別
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a, b) => a + b, 0);
-                addLog(`\n(7) 判別結果:`, "color-3 underline font-bold");
+                addLog(`\n(7) 最終判別結果:`, "color-3 underline font-bold");
                 [1, 2, 5, 6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
                     document.getElementById(`b${s}`).style.width = `${prob}%`;
-                    addLog(`  設定${s}: ${prob.toFixed(2)}% (LL:${lls[s].toFixed(1)})`, `set-${s}`);
+                    addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
                 });
 
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500 font-bold"); }
