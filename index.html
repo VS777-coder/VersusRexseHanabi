@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.64</title>
+    <title>HANABI & VERSUS Rev 1.2.65</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.64 (No More Degrade)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.65 (Physical Sync Lock)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // --- 聖域：不変の定義表 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -119,7 +118,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.64 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.65 ---`);
 
             try {
                 let rawImgs = [];
@@ -170,15 +169,15 @@
                 addLog(`\n(3) 生値ダンプ:`, "color-3 underline");
                 rawImgs.forEach((img, s) => { addLog(`  [SEQ ${s}] IMG_${img.id}:`, "text-[9px]"); img.lines.forEach(l => addLog(`    | ${l}`, "text-[8px] opacity-40")); });
 
-                // (4) 配列生成 & 逆算（1枚でも複数でも動く一本化ロジック）
+                // (4) 配列生成（デグレード完全修正：物理インデックス同期）
                 addLog(`\n(4) 配列生成ログ:`, "color-3 underline font-bold");
                 let results = new Array(config.length).fill(null);
-                let slotIdx = 0;
                 let bbCount = 0;
-                let lastKP = "";
 
                 rawImgs.forEach((img, seq) => {
+                    let slotIdxForImg = 0; // 画像内でのスロット位置
                     let gSeen = (seq > 0); 
+
                     img.lines.forEach((line, i) => {
                         if (line.match(/[\d,]+G/)) { gSeen = true; return; }
                         if (!gSeen) return;
@@ -193,17 +192,16 @@
 
                             if (kVal !== -1) {
                                 const pRaw = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                const currentKP = `${kVal}-${pRaw}`;
                                 
-                                // 重複ガード（直前と全く同じならスキップ）
-                                if (currentKP === lastKP && rawImgs.length > 1) {
-                                    addLog(`  [SKIP] 重複検知: k:${kVal}`, "text-[8px] opacity-30");
-                                    return;
+                                // 画像を跨いだ絶対インデックスを特定するため、現在のスロットから順に「空き」か「同一データ」を探す
+                                let targetSlot = -1;
+                                for (let s = 0; s < config.length; s++) {
+                                    if (!results[s]) { targetSlot = s; break; } // 未登録ならここ
+                                    if (results[s].k === kVal && Math.abs(results[s].pRaw - pRaw) < 0.001) { targetSlot = s; break; } // 同一データなら上書き（同期）
                                 }
-                                lastKP = currentKP;
 
-                                if (slotIdx < config.length) {
-                                    const item = config[slotIdx];
+                                if (targetSlot !== -1) {
+                                    const item = config[targetSlot];
                                     if (item.id === "bb") bbCount = kVal;
                                     
                                     let nBase = totalG;
@@ -213,21 +211,19 @@
                                         nBase = bbCount * span;
                                     }
 
-                                    results[slotIdx] = { k: kVal, n: nBase, pRaw: pRaw, name: item.name, isValid: pRaw > 0 };
-                                    addLog(`  [SLOT ${slotIdx}] ${item.name} <- k:${kVal} / n:${nBase}`, "color-2 text-[9px]");
-                                    slotIdx++;
+                                    results[targetSlot] = { k: kVal, n: nBase, pRaw: pRaw, name: item.name, isValid: pRaw > 0 };
+                                    addLog(`  [IMG_${img.id}] -> SLOT ${targetSlot} (${item.name}) <- k:${kVal}`, "color-2 text-[9px]");
                                 }
                             }
                         }
                     });
                 });
 
-                // (5) 定義確認
+                // (5〜7)
                 addLog(`\n(5) 解析値一覧:`, "color-3 underline");
                 results.forEach(res => { if(res) addLog(`  - ${res.name}: k=${res.k}, n=${res.n}`, "text-[9px] color-2"); });
 
-                // (6) 尤度計算
-                addLog(`\n(6) 尤度詳細（Gap）:`, "color-3 underline font-bold");
+                addLog(`\n(6) 尤度詳細:`, "color-3 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach((res, idx) => {
                     if (!res) return;
@@ -244,7 +240,6 @@
                     }
                 });
 
-                // (7) 最終
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a, b) => a + b, 0);
