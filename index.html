@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.22 (Physical Absolute)</title>
+    <title>HANABI & VERSUS Rev 1.2.23 (Final Absolute)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.22 (Physical Mastery)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.23 (Final Physical Order)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -71,7 +71,6 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
-        // 他機種も同様に保持
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -120,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.22 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.23 ---`);
 
             try {
                 let rawImgs = [];
@@ -143,36 +142,40 @@
                     if(gL && totalG === 0) totalG = parseInt(gL.match(/([\d,]+)G/)[1].replace(/,/g,''));
                 }
 
-                let currentConfig = L_HANABI_CONFIG;
+                addLog(`(2) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
+                let config = L_HANABI_CONFIG;
                 const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
-                if(fullTxt.includes("バーサス")) currentConfig = VERSUS_CONFIG;
-                else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) currentConfig = HANABI_CONFIG;
+                if(fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
+                else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) config = HANABI_CONFIG;
 
-                // --- 1. 統計的ソート（順序のみ確定） ---
+                // --- 1. 統計的ソート（指紋平均INDEX算出） ---
+                addLog(`(3) 指紋による画像順序の確定:`, "color-3 underline font-bold");
                 rawImgs.forEach(img => {
                     let hitIndices = [];
                     img.lines.forEach(line => {
-                        currentConfig.forEach((conf, idx) => {
+                        config.forEach((conf, idx) => {
                             if (line.includes(conf.name.substring(0,2))) hitIndices.push(idx);
                         });
                     });
                     img.avgIdx = hitIndices.length > 0 ? hitIndices.reduce((a,b)=>a+b,0)/hitIndices.length : 99;
-                    addLog(`  - IMG_${img.id}: 指紋ヒット ${hitIndices.length}件 / 平均座標 ${img.avgIdx.toFixed(1)}`, "text-[9px] color-2");
+                    addLog(`  - IMG_${img.id}: 指紋ヒット ${hitIndices.length} / 平均座標 ${img.avgIdx.toFixed(1)}`, "text-[9px] color-2");
                 });
                 rawImgs.sort((a,b) => a.avgIdx - b.avgIdx);
 
-                // --- 2. 物理スロット流し込み（同期とINDEX継続） ---
-                addLog(`(4) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
+                // --- 2. 物理流し込み（画像順 + 同期） ---
+                addLog(`(4) 物理スロット流し込み (Final Sequential Fill):`, "color-3 underline font-bold");
                 let results = [];
-                let globalSlotIdx = 0;
-                let globalTriggered = false;
+                let currentSlotIdx = 0;
+                let isGTriggered = false;
 
                 rawImgs.forEach((img, seq) => {
                     addLog(`  [SEQ ${seq}] IMG_${img.id} 走査中...`, "color-1 text-[9px]");
                     for(let i=0; i<img.lines.length; i++){
                         const line = img.lines[i];
-                        if (!globalTriggered && line.match(/[\d,]+G/)) { globalTriggered = true; continue; }
-                        if (!globalTriggered) continue;
+                        // 1枚目はG以降、2枚目以降は最初から
+                        if (!isGTriggered && line.match(/[\d,]+G/)) { isGTriggered = true; continue; }
+                        if (!isGTriggered && seq === 0) continue; 
+                        if (seq > 0) isGTriggered = true; // 2枚目以降なら強制ON
 
                         const clean = line.replace(/\s+/g,'');
                         const isP = (clean.includes('/') && clean.includes('.')) || clean === "1/-";
@@ -180,46 +183,46 @@
                         if(isP) {
                             const pStr = clean.replace(/1\//,'');
                             const isV = pStr.includes('.');
-                            const pV = isV ? parseFloat(pStr) : 0;
-                            let kV = -1;
+                            const pVal = isV ? parseFloat(pStr) : 0;
+                            let kVal = -1;
                             if(i >= 2) {
                                 const kLine = img.lines[i-2];
                                 if (kLine && !kLine.includes('/')) {
-                                    const kM = kLine.match(/([\d,]+)/);
-                                    if(kM) kV = parseInt(kM[1].replace(/,/g,''));
+                                    const kMatch = kLine.match(/([\d,]+)/);
+                                    if(kMatch) kVal = parseInt(kMatch[1].replace(/,/g,''));
                                 }
                             }
 
-                            if(kV !== -1) {
+                            if(kVal !== -1) {
                                 // 同期判定：直前のスロットと同じ数値ならスキップ
-                                const last = globalSlotIdx > 0 ? results[globalSlotIdx-1] : null;
-                                if (last && last.k === kV && Math.abs(last.pRaw - pV) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${globalSlotIdx-1} と重複につきスルー`, "text-[8px] opacity-40");
+                                const last = currentSlotIdx > 0 ? results[currentSlotIdx-1] : null;
+                                if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
+                                    addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複につき同期`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
-                                if (globalSlotIdx < currentConfig.length) {
-                                    const conf = currentConfig[globalSlotIdx];
-                                    const nC = pV > 0 ? Math.round(kV * pV) : totalG;
-                                    const isN = Math.abs(nC - totalG) < (totalG * 0.1);
-                                    results[globalSlotIdx] = {
-                                        k: kV, p: pV > 0 ? 1/pV : 0, pRaw: pV,
-                                        n: isN ? totalG : (pV > 0 ? nC : totalG),
+                                if (currentSlotIdx < config.length) {
+                                    const conf = config[currentSlotIdx];
+                                    const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
+                                    const isN = Math.abs(nCalc - totalG) < (totalG * 0.1);
+                                    results[currentSlotIdx] = {
+                                        k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal,
+                                        n: isN ? totalG : nCalc,
                                         isValid: isV, name: conf.name
                                     };
-                                    addLog(`    [SLOT ${globalSlotIdx}] ${conf.name} <- k:${kV} p:1/${pStr}`, "color-2 font-bold text-[9px]");
-                                    globalSlotIdx++;
+                                    addLog(`    [SLOT ${currentSlotIdx}] ${conf.name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
+                                    currentSlotIdx++;
                                 }
                             }
                         }
                     }
                 });
 
-                // --- 3. 尤度計算 ---
+                // --- 3. 尤度インパクト計算 ---
                 addLog(`(5) 尤度インパクト内訳:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
-                    const conf = currentConfig.find(c => c.name === res.name);
+                    const conf = config.find(c => c.name === res.name);
                     if (conf && conf.active && res.isValid) {
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / conf.probs[s];
