@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.16 (Global Sync)</title>
+    <title>HANABI & VERSUS Rev 1.2.17 (Absolute Sync)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.16 (Sync Integrity)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.17 (Absolute Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -76,7 +76,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.16 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.17 ---`);
 
             try {
                 let allTexts = [];
@@ -154,21 +154,21 @@
                 else if(fullDump.includes("スマスロ") || fullDump.includes("絶景")) currentConfig = HANABI_CONFIG;
                 addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                let resultsList = []; // 最終的なスロット配列
+                let resultsList = []; // 【グローバル変数】全画像で共有する物理スロット
 
-                addLog(`(4) 物理スロット配分詳細 (Sync Mode):`, "color-3 font-bold underline");
+                addLog(`(4) 物理スロット配分詳細 (Absolute Sync):`, "color-3 font-bold underline");
 
                 allTexts.forEach((lines, imgIdx) => {
                     let isAfterG = false;
-                    let imgLocalSlotIdx = 0; 
+                    let imgPointer = 0; // その画像内での有効データの出現順
 
                     for(let i=0; i<lines.length; i++){
-                        if (!isAfterG && lines[i].includes('G')) { isAfterG = true; continue; }
+                        if (!isAfterG && lines[i].match(/[\d,]+G/)) { isAfterG = true; continue; }
                         if (!isAfterG) continue;
 
                         const cleanLine = lines[i].replace(/\s+/g, '');
-                        // 条件：ドットがある OR 完全に "1/-" である
-                        const isPPointer = cleanLine.includes('.') || cleanLine === "1/-";
+                        // 物理ルール： (1/ かつ ドットあり) OR (完全に 1/-)
+                        const isPPointer = (cleanLine.includes('1/') && cleanLine.includes('.')) || cleanLine === "1/-";
                         
                         if(isPPointer) {
                             const pStr = cleanLine.replace(/1\//, '');
@@ -182,29 +182,29 @@
                             }
 
                             if(kVal !== -1) {
-                                // 同期判定
-                                if (resultsList[imgLocalSlotIdx]) {
-                                    const existing = resultsList[imgLocalSlotIdx];
-                                    if (existing.k === kVal && existing.p === (pVal ? 1/pVal : 0)) {
-                                        addLog(`  [SYNC] SLOT ${imgLocalSlotIdx} 同期中...`, "text-[9px] opacity-40");
-                                        imgLocalSlotIdx++;
-                                        continue;
+                                const targetIdx = imgPointer; 
+                                if (targetIdx < currentConfig.length) {
+                                    const conf = currentConfig[targetIdx];
+                                    const existing = resultsList[targetIdx];
+
+                                    // 同期チェック: すでに有効なドット付きデータがあれば上書き禁止
+                                    if (existing && existing.isValid && isPValid && existing.k === kVal) {
+                                        addLog(`  [SYNC] SLOT ${targetIdx} (${conf.name}) 同期中...`, "text-[9px] opacity-40");
+                                    } else {
+                                        const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
+                                        const isNormal = Math.abs(nCalc - totalG) < (totalG * 0.1);
+                                        
+                                        resultsList[targetIdx] = {
+                                            k: kVal,
+                                            p: pVal > 0 ? 1/pVal : 0,
+                                            n: isNormal ? totalG : (pVal > 0 ? nCalc : totalG),
+                                            isValid: isPValid,
+                                            name: conf.name
+                                        };
+                                        addLog(`  [SLOT ${targetIdx}] ${conf.name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold");
                                     }
+                                    imgPointer++;
                                 }
-                                
-                                // 新規/更新
-                                const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                const isNormal = Math.abs(nCalc - totalG) < (totalG * 0.1);
-                                
-                                resultsList[imgLocalSlotIdx] = {
-                                    k: kVal,
-                                    p: pVal > 0 ? 1/pVal : 0,
-                                    n: isNormal ? totalG : (pVal > 0 ? nCalc : totalG),
-                                    isValid: pVal > 0,
-                                    name: currentConfig[imgLocalSlotIdx]?.name || "Unknown"
-                                };
-                                addLog(`  [SLOT ${imgLocalSlotIdx}] ${resultsList[imgLocalSlotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2");
-                                imgLocalSlotIdx++;
                             }
                         }
                     }
