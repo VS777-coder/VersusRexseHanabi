@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.36 (Global Master)</title>
+    <title>HANABI & VERSUS Rev 1.2.37 (Anchor Sync)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-label" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.36 (Master Data)</div>
+        <div id="machine-label" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.37 (Anchor Absolute Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -76,7 +76,7 @@
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.36 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.37 ---`);
 
             try {
                 let rawImgs = [];
@@ -148,7 +148,6 @@
                     }
                 }
 
-                // 機種判別：スマスロ優先
                 let config = L_HANABI_CONFIG;
                 let mName = "新ハナビ (6号機)";
                 if (fullTxt.includes("バーサス") || fullTxt.includes("VERSUS")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; }
@@ -156,15 +155,6 @@
                 document.getElementById('machine-label').innerText = `機種: ${mName}`;
                 addLog(`(1) 判定機種: ${mName}`, "color-3 font-bold");
 
-                addLog(`(2) 生データダンプ:`, "color-2 font-bold");
-                rawImgs.forEach(img => {
-                    addLog(`  [IMG_${img.id} RAW DATA] ${img.hasG ? '(★起点)' : ''}`, "color-2 underline");
-                    img.lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
-                });
-
-                addLog(`(3) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
-
-                // 指紋による順序確定
                 rawImgs.forEach(img => {
                     let hits = [];
                     img.lines.forEach(line => {
@@ -178,12 +168,13 @@
                     return a.maxIdx - b.maxIdx;
                 });
 
-                addLog(`(4) 物理順序確定:`, "color-3 underline font-bold");
+                addLog(`(2) 物理順序確定:`, "color-3 underline font-bold");
                 rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MaxIdx:${img.maxIdx})`, "text-[9px] color-2"));
 
-                addLog(`(5) Global Sync (全域照合) 流し込み:`, "color-3 underline font-bold");
+                // --- ここからアンカー式 Sync ---
+                addLog(`(3) アンカー同期・物理流し込み詳細:`, "color-3 underline font-bold");
                 let results = [];
-                let slotIdx = 0;
+                let highWaterMark = -1; // どこまで埋まったかの最高記録
                 let isTriggered = false;
 
                 rawImgs.forEach((img, seq) => {
@@ -209,29 +200,36 @@
                             }
 
                             if(kVal !== -1) {
-                                // 指示通り：results配列の0番目から走査して重複チェック
-                                let isDup = results.some(res => res && res.k === kVal && Math.abs(res.pRaw - pVal) < 0.001);
-                                if (isDup) {
-                                    addLog(`    [SKIP] 重複(k:${kVal} p:1/${pStr}) を弾きました`, "text-[8px] opacity-40");
+                                // 1. 全域からアンカー検索
+                                let anchorSlot = results.findIndex(res => 
+                                    res && res.k === kVal && Math.abs(res.pRaw - pVal) < 0.001
+                                );
+
+                                if (anchorSlot !== -1) {
+                                    // 既知の杭を発見。そこを基準にする。
+                                    highWaterMark = Math.max(highWaterMark, anchorSlot);
+                                    addLog(`    [ANCHOR] SLOT ${anchorSlot} に同期しました: k:${kVal}`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
-                                if (slotIdx < config.length) {
+                                // 2. 新規データ：現在の最大杭の次に格納
+                                let nextSlot = highWaterMark + 1;
+                                if (nextSlot < config.length) {
                                     const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                    results[slotIdx] = {
+                                    results[nextSlot] = {
                                         k: kVal, p: pVal>0?1/pVal:0, pRaw: pVal,
                                         n: (Math.abs(nCalc-totalG) < (totalG*0.1)) ? totalG : nCalc,
-                                        isValid: clean.includes('.'), name: config[slotIdx].name
+                                        isValid: clean.includes('.'), name: config[nextSlot].name
                                     };
-                                    addLog(`    [SLOT ${slotIdx}] ${config[slotIdx].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
-                                    slotIdx++;
+                                    addLog(`    [SLOT ${nextSlot}] ${config[nextSlot].name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
+                                    highWaterMark = nextSlot;
                                 }
                             }
                         }
                     }
                 });
 
-                addLog(`(6) 尤度計算インパクト:`, "color-3 underline font-bold");
+                addLog(`(4) 尤度計算インパクト:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 results.forEach(res => {
                     const c = config.find(x => x.name === res.name);
@@ -250,7 +248,6 @@
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                addLog(`(7) 最終判定結果:`, "color-3 font-bold underline");
                 [1,2,5,6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
