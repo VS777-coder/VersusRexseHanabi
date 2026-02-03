@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.21 (Anchor Sync)</title>
+    <title>HANABI & VERSUS Rev 1.2.22 (Physical Absolute)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.21 (Anchor Sync)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.22 (Physical Mastery)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -71,12 +71,13 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
+        // 他機種も同様に保持
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
             { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
             { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
@@ -119,7 +120,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.21 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.22 ---`);
 
             try {
                 let rawImgs = [];
@@ -142,14 +143,12 @@
                     if(gL && totalG === 0) totalG = parseInt(gL.match(/([\d,]+)G/)[1].replace(/,/g,''));
                 }
 
-                addLog(`(2) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
                 let currentConfig = L_HANABI_CONFIG;
                 const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
                 if(fullTxt.includes("バーサス")) currentConfig = VERSUS_CONFIG;
                 else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) currentConfig = HANABI_CONFIG;
 
-                // --- 1. アンカー特定 (最小INDEXによるソート) ---
-                addLog(`(3) 指紋による座標特定（判定ログ）:`, "color-3 underline font-bold");
+                // --- 1. 統計的ソート（順序のみ確定） ---
                 rawImgs.forEach(img => {
                     let hitIndices = [];
                     img.lines.forEach(line => {
@@ -157,24 +156,21 @@
                             if (line.includes(conf.name.substring(0,2))) hitIndices.push(idx);
                         });
                     });
-                    // 最も上にある指紋を「锚（アンカー）」とする
-                    img.minIdx = hitIndices.length > 0 ? Math.min(...hitIndices) : 99;
-                    addLog(`  - IMG_${img.id}: 指紋ヒット ${hitIndices.length}件 / 最上部座標 ${img.minIdx}`, "text-[9px] color-2");
+                    img.avgIdx = hitIndices.length > 0 ? hitIndices.reduce((a,b)=>a+b,0)/hitIndices.length : 99;
+                    addLog(`  - IMG_${img.id}: 指紋ヒット ${hitIndices.length}件 / 平均座標 ${img.avgIdx.toFixed(1)}`, "text-[9px] color-2");
                 });
-                rawImgs.sort((a,b) => a.minIdx - b.minIdx);
+                rawImgs.sort((a,b) => a.avgIdx - b.avgIdx);
 
-                // --- 2. 確定順序による物理流し込み ---
-                addLog(`(4) 確定順序による物理流し込み詳細:`, "color-3 underline font-bold");
-                let results = []; 
+                // --- 2. 物理スロット流し込み（同期とINDEX継続） ---
+                addLog(`(4) 物理スロット流し込み詳細:`, "color-3 underline font-bold");
+                let results = [];
                 let globalSlotIdx = 0;
-                let globalTriggered = false; // Gが見つかったかどうかのグローバル管理
+                let globalTriggered = false;
 
-                rawImgs.forEach((img, imgSeq) => {
-                    addLog(`  [SEQUENCE ${imgSeq}] IMG_${img.id} 走査開始 (Anchor:${img.minIdx})`, "color-1 text-[9px]");
-
+                rawImgs.forEach((img, seq) => {
+                    addLog(`  [SEQ ${seq}] IMG_${img.id} 走査中...`, "color-1 text-[9px]");
                     for(let i=0; i<img.lines.length; i++){
                         const line = img.lines[i];
-                        // 1枚目であろうとなかろうと、Gが見つかった時点でトリガーON
                         if (!globalTriggered && line.match(/[\d,]+G/)) { globalTriggered = true; continue; }
                         if (!globalTriggered) continue;
 
@@ -195,10 +191,10 @@
                             }
 
                             if(kV !== -1) {
-                                // 同期判定（重複スキップ）
-                                const prev = globalSlotIdx > 0 ? results[globalSlotIdx-1] : null;
-                                if (prev && prev.k === kV && Math.abs(prev.pRaw - pV) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${globalSlotIdx-1} 重複スキップ`, "text-[8px] opacity-40");
+                                // 同期判定：直前のスロットと同じ数値ならスキップ
+                                const last = globalSlotIdx > 0 ? results[globalSlotIdx-1] : null;
+                                if (last && last.k === kV && Math.abs(last.pRaw - pV) < 0.001) {
+                                    addLog(`    [SYNC] SLOT ${globalSlotIdx-1} と重複につきスルー`, "text-[8px] opacity-40");
                                     continue;
                                 }
 
