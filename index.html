@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.12 (Refined Logic)</title>
+    <title>HANABI & VERSUS Rev 1.2.12 (Prob-Pointer Logic)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -116,25 +116,19 @@
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
-        const clean = s => s.replace(/[！-～]/g, r => String.fromCharCode(r.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '');
+        // 確率数値による物理的マッチング。文字列解釈は「合算」属性判定のみに使用。
+        function getTargetIdxByProb(probStr, finger, config) {
+            const pVal = parseFloat(probStr);
+            const cleanFinger = finger.replace(/\s+/g, '');
+            const isGassan = cleanFinger.includes("合算") || cleanFinger.includes("計") || cleanFinger.includes("合");
 
-        function getTargetIdx(nameRaw, config) {
-            const n = clean(nameRaw);
-            const mapper = {
-                "bb": ["ビックボーナス", "総BB", "BB"], "red": ["赤七BB"], "rb": ["レギュラーボーナス", "RB"],
-                "ba": ["風鈴A", "風鈴Ａ", "ベルA", "ベルＡ"], "bb_b": ["風鈴B", "風鈴Ｂ", "ベルB", "ベルＢ"],
-                "ia": ["氷A", "氷Ａ", "並行スイカ"], "sa": ["スイカA", "スイカＡ"],
-                "ca2": ["チェリーA2", "チェリーＡ２", "チェリー"], "cb": ["チェリーB", "チェリーＢ"],
-                "vc": ["中ハズレ", "中はずれ", "HC中ハズレ", "VSチャンス中"],
-                "vg": ["GAME中ハズレ", "ゲーム中ハズレ", "中はずれ", "HG中ハズレ", "VSゲーム中"],
-                "b_ba": ["BIG中風鈴A", "BIG中風鈴Ａ", "平行風鈴"], "b_bb": ["BIG中風鈴B", "BIG中風鈴Ｂ", "斜め風鈴"],
-                "nf": ["斜め風鈴"], "pf": ["平行風鈴"], "cbs": ["チェリー+ベル揃い"], "cbh": ["チェリー+ベルはずれ"]
-            };
-            for (const [id, aliases] of Object.entries(mapper)) {
-                if (aliases.some(a => n === clean(a) || n.includes(clean(a)))) {
-                    if (id === "ib" && n !== "氷B" && n !== "氷Ｂ") continue;
-                    const idx = config.findIndex(c => c.id === id);
-                    if (idx !== -1) return idx;
+            for (let i = 0; i < config.length; i++) {
+                const conf = config[i];
+                // 設定1の確率と近似値(誤差0.1以内)で一致するか物理チェック
+                if (Math.abs(conf.probs[1] - pVal) < 0.1) {
+                    // 指紋に「合算」があれば、個別項目(active:true)は絶対に返さない
+                    if (isGassan && conf.active) continue;
+                    return i;
                 }
             }
             return -1;
@@ -146,6 +140,7 @@
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
             addLog(`--- START ANALYSIS Rev 1.2.12 ---`);
+            addLog(`(1) 複数枚画像の情報: ${files.length}枚を検出`);
 
             try {
                 let allTexts = [];
@@ -155,7 +150,7 @@
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const raw = json.responses[0]?.textAnnotations;
-                    if(!raw) continue;
+                    if(!raw) { addLog(`  -> IMG_${i}: 文字検出失敗`, "text-red-400"); continue; }
                     const lines = raw.slice(1).reduce((acc, w) => {
                         let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                         let x = w.boundingPoly.vertices[0].x;
@@ -166,7 +161,12 @@
                     allTexts.push(lines);
                 }
 
-                addLog(`(2) 素の情報ダンプ完了`, "color-2 opacity-60");
+                addLog(`(2) 素の情報ダンプ:`, "color-2 opacity-80");
+                allTexts.forEach((lines, imgIdx) => {
+                    addLog(`  [IMG_${imgIdx} RAW DATA]`, "color-2 opacity-100 underline");
+                    lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
+                });
+
                 let currentConfig = L_HANABI_CONFIG;
                 const fullDump = allTexts.flat().join("");
                 if(fullDump.includes("バーサス")) currentConfig = VERSUS_CONFIG;
@@ -175,94 +175,94 @@
                 const pIdx = allTexts.findIndex(lines => lines.some(l => l.match(/[\d,]+G/)));
                 if (pIdx === -1) throw new Error("G-COUNT NOT FOUND");
                 const totalG = parseInt(allTexts[pIdx].find(l => l.match(/[\d,]+G/)).match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                addLog(`(3) 総ゲーム数: ${totalG}G (IMG_${pIdx})`, "color-3");
+                addLog(`(3) 総ゲーム数: ${totalG}G (IMG_${pIdx})`, "color-3 font-bold");
 
                 let master = currentConfig.map(() => ({ k: 0, p: 0, finger: "" }));
-                addLog(`(4) ポインタ走査開始:`, "color-3");
+                addLog(`(4) ポインタ走査詳細 (物理数値マッチング):`, "color-3");
 
                 allTexts.forEach((lines, imgIdx) => {
                     for(let i=0; i<lines.length; i++){
-                        // 確率ポインタを起点にする
                         const pMatch = lines[i].match(/1?\s*\/\s*([\d,.-]+|--)/) || lines[i].match(/[\d,.-]+\.[\d]+/);
                         if(pMatch) {
                             const pStr = pMatch[0].replace(/1\s*\/\s*/, '').replace(/\s+/g, '');
-                            // 【ガード】小数点がない確率はゴミ判定
                             if(!pStr.includes('.')) {
-                                addLog(`  [ERROR] 小数点欠損のため破棄: "${lines[i]}" (IMG_${imgIdx})`, "text-red-400 opacity-50");
+                                addLog(`  [ERROR] 小数点欠損のため破棄: "${lines[i]}" (IMG_${imgIdx})`, "text-red-400 opacity-60");
                                 continue;
                             }
-
-                            // 遡って回数ポインタ(数値)を探す
                             let kVal = -1;
                             let finger = "";
                             if(i >= 2) {
                                 const kMatch = lines[i-2].match(/([\d,]+)/);
                                 if(kMatch) {
                                     kVal = parseInt(kMatch[1].replace(/,/g,''));
-                                    finger = lines[i-1]; // 間の文字列を指紋にする
+                                    finger = lines[i-1];
                                     if(!lines[i-2].includes("回")) {
-                                        addLog(`  [ALERT] "回"欠損につき数値を強制採用: ${kVal} (IMG_${imgIdx})`, "text-yellow-500 opacity-70");
+                                        addLog(`  [ALERT] "回"欠損につき数値を強制採用: ${kVal} (IMG_${imgIdx})`, "text-yellow-500 opacity-80");
                                     }
                                 }
                             }
 
                             if(kVal !== -1) {
-                                let tIdx = getTargetIdx(finger, currentConfig);
+                                // 文字列解釈(getTargetIdx)を廃止し、確率数値(getTargetIdxByProb)でマッチング
+                                let tIdx = getTargetIdxByProb(pStr, finger, currentConfig);
                                 if(tIdx !== -1) {
                                     const prob = 1/(parseFloat(pStr)||1);
-                                    // 重複判定: 指紋(間の文字列)と数値の両方を見る
                                     if(master[tIdx].k === 0) {
                                         master[tIdx] = { k: kVal, p: prob, finger: finger };
-                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} -> ${kVal}回 (IMG_${imgIdx})`, "color-2");
+                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} (キー確:${pStr}) -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
                                     } else if (master[tIdx].k === kVal && master[tIdx].finger === finger) {
-                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} は取得済みにつきスキップ`, "text-[9px] opacity-40");
+                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} は同一指紋につきスキップ`, "text-[9px] opacity-40");
                                     } else {
-                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} のデータが重複・矛盾します`, "text-red-500");
+                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} (確:${pStr}) が既出データと矛盾`, "text-red-500 font-bold");
                                     }
                                 } else {
-                                    addLog(`  [SKIP] 定義外項目: "${finger}"`, "text-[9px] opacity-30");
+                                    addLog(`  [SKIP] 定義表にない確率または合算ポインタ: "${pStr}" (指紋:"${finger}")`, "text-[9px] opacity-40");
                                 }
                             } else {
-                                addLog(`  [ERROR] 回数数値欠損: "${lines[i]}" (IMG_${imgIdx})`, "text-red-400");
+                                addLog(`  [ERROR] 回数数値欠損 (起点:"${lines[i]}") (IMG_${imgIdx})`, "text-red-400");
                             }
                         }
                     }
                 });
 
-                // データ揃いチェック
                 currentConfig.forEach((conf, idx) => {
                     if(conf.active && master[idx].k === 0) {
-                        addLog(`  [MISSING] ${conf.name} が抽出できませんでした`, "text-red-500 font-bold");
+                        addLog(`  [MISSING] ${conf.name} が抽出できませんでした`, "text-red-500");
                     }
                 });
 
-                addLog(`(5) 尤度計算詳細:`, "color-3");
+                addLog(`(5) 尤度計算の個別インパクト内訳:`, "color-3 underline");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
                 currentConfig.forEach((conf, idx) => {
                     if (master[idx].k > 0 && conf.active) {
                         let n = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id) ? Math.round(master[idx].k / master[idx].p) : totalG;
+                        let itemImpact = "";
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / conf.probs[s];
-                            lls[s] += (master[idx].k * Math.log(tp) + (n - master[idx].k) * Math.log(1 - tp));
+                            let val = (master[idx].k * Math.log(tp) + (n - master[idx].k) * Math.log(1 - tp));
+                            lls[s] += val;
+                            itemImpact += `設定${s}:${val.toFixed(2)} `;
                         });
+                        addLog(`  - ${conf.name}(${master[idx].k}/${n}): ${itemImpact}`, "text-[9px] color-1");
                     }
                 });
 
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                addLog(`(6) 最終判定:`, "color-3");
+                addLog(`(6) 最終判定結果:`, "color-3 font-bold");
                 [1,2,5,6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
                     document.getElementById(`b${s}`).style.width = `${prob}%`;
-                    addLog(`  設定${s}: ${prob.toFixed(2)}%`);
+                    addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
                 });
-            } catch (err) { addLog(`❌ FATAL ERROR: ${err.message}`, "text-red-500"); }
+            } catch (err) { addLog(`❌ FATAL ERROR: ${err.message}`, "text-red-500 font-bold"); }
         }
 
         document.getElementById('copy-log').addEventListener('click', () => {
             navigator.clipboard.writeText(document.getElementById('log').innerText);
+            alert('LOG COPIED');
         });
         document.addEventListener('DOMContentLoaded', () => {
             const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
