@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.23 (Final Absolute)</title>
+    <title>HANABI & VERSUS Rev 1.2.23 (Master Index Mapping)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.23 (Final Physical Order)</div>
+        <div class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.23 (Master Index Mapping)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,6 @@
     </div>
 
     <script>
-        // --- 聖域：定義表 ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -142,87 +141,80 @@
                     if(gL && totalG === 0) totalG = parseInt(gL.match(/([\d,]+)G/)[1].replace(/,/g,''));
                 }
 
-                addLog(`(2) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
-                let config = L_HANABI_CONFIG;
+                let currentConfig = L_HANABI_CONFIG;
                 const fullTxt = rawImgs.map(d=>d.lines.join("")).join("");
-                if(fullTxt.includes("バーサス")) config = VERSUS_CONFIG;
-                else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) config = HANABI_CONFIG;
+                if(fullTxt.includes("バーサス")) currentConfig = VERSUS_CONFIG;
+                else if(fullTxt.includes("スマスロ") || fullTxt.includes("絶景")) currentConfig = HANABI_CONFIG;
+                addLog(`(2) 総ゲーム数: ${totalG}G`, "color-3 font-bold");
 
-                // --- 1. 統計的ソート（指紋平均INDEX算出） ---
-                addLog(`(3) 指紋による画像順序の確定:`, "color-3 underline font-bold");
-                rawImgs.forEach(img => {
-                    let hitIndices = [];
-                    img.lines.forEach(line => {
-                        config.forEach((conf, idx) => {
-                            if (line.includes(conf.name.substring(0,2))) hitIndices.push(idx);
-                        });
-                    });
-                    img.avgIdx = hitIndices.length > 0 ? hitIndices.reduce((a,b)=>a+b,0)/hitIndices.length : 99;
-                    addLog(`  - IMG_${img.id}: 指紋ヒット ${hitIndices.length} / 平均座標 ${img.avgIdx.toFixed(1)}`, "text-[9px] color-2");
-                });
-                rawImgs.sort((a,b) => a.avgIdx - b.avgIdx);
-
-                // --- 2. 物理流し込み（画像順 + 同期） ---
-                addLog(`(4) 物理スロット流し込み (Final Sequential Fill):`, "color-3 underline font-bold");
                 let results = [];
-                let currentSlotIdx = 0;
-                let isGTriggered = false;
+                let isGFoundGlobal = false;
 
-                rawImgs.forEach((img, seq) => {
-                    addLog(`  [SEQ ${seq}] IMG_${img.id} 走査中...`, "color-1 text-[9px]");
-                    for(let i=0; i<img.lines.length; i++){
-                        const line = img.lines[i];
-                        // 1枚目はG以降、2枚目以降は最初から
-                        if (!isGTriggered && line.match(/[\d,]+G/)) { isGTriggered = true; continue; }
-                        if (!isGTriggered && seq === 0) continue; 
-                        if (seq > 0) isGTriggered = true; // 2枚目以降なら強制ON
+                addLog(`(3) 配列番号マッピング開始:`, "color-3 underline font-bold");
+
+                rawImgs.forEach(img => {
+                    let activeIndex = -1;
+                    addLog(`  [IMG_${img.id}] スキャン中...`, "color-1 text-[9px]");
+
+                    img.lines.forEach((line, i) => {
+                        // Gのトリガーチェック
+                        if (!isGFoundGlobal && line.match(/[\d,]+G/)) { isGFoundGlobal = true; }
 
                         const clean = line.replace(/\s+/g,'');
-                        const isP = (clean.includes('/') && clean.includes('.')) || clean === "1/-";
-                        
-                        if(isP) {
+
+                        // 1. 定義表の項目名とのマッチング（指紋によるINDEX固定）
+                        currentConfig.forEach((conf, idx) => {
+                            // 項目名の最初の2文字以上が一致、かつ確率ポインタ（1/）を含まない行
+                            if (clean.length > 1 && conf.name.includes(clean) && !clean.includes('1/')) {
+                                activeIndex = idx;
+                            }
+                        });
+
+                        // 2. 確率ポインタの検出と格納
+                        const isPointer = (clean.includes('/') && clean.includes('.')) || clean === "1/-";
+                        if (isPointer && activeIndex !== -1) {
+                            // Gが見つかる前かつ配列番号0付近なら無視する（1枚目ルール）
+                            if (!isGFoundGlobal && activeIndex < 5) return;
+
                             const pStr = clean.replace(/1\//,'');
                             const isV = pStr.includes('.');
-                            const pVal = isV ? parseFloat(pStr) : 0;
-                            let kVal = -1;
-                            if(i >= 2) {
-                                const kLine = img.lines[i-2];
-                                if (kLine && !kLine.includes('/')) {
-                                    const kMatch = kLine.match(/([\d,]+)/);
-                                    if(kMatch) kVal = parseInt(kMatch[1].replace(/,/g,''));
+                            const pV = isV ? parseFloat(pStr) : 0;
+                            let kV = -1;
+
+                            // 回数(k)の取得（直近2行を遡る）
+                            for (let j = 1; j <= 2; j++) {
+                                if (i - j >= 0) {
+                                    const prevLine = img.lines[i-j];
+                                    if (prevLine && !prevLine.includes('/')) {
+                                        const kM = prevLine.match(/([\d,]+)/);
+                                        if (kM) { kV = parseInt(kM[1].replace(/,/g,'')); break; }
+                                    }
                                 }
                             }
 
-                            if(kVal !== -1) {
-                                // 同期判定：直前のスロットと同じ数値ならスキップ
-                                const last = currentSlotIdx > 0 ? results[currentSlotIdx-1] : null;
-                                if (last && last.k === kVal && Math.abs(last.pRaw - pVal) < 0.001) {
-                                    addLog(`    [SYNC] SLOT ${currentSlotIdx-1} 重複につき同期`, "text-[8px] opacity-40");
-                                    continue;
-                                }
-
-                                if (currentSlotIdx < config.length) {
-                                    const conf = config[currentSlotIdx];
-                                    const nCalc = pVal > 0 ? Math.round(kVal * pVal) : totalG;
-                                    const isN = Math.abs(nCalc - totalG) < (totalG * 0.1);
-                                    results[currentSlotIdx] = {
-                                        k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal,
+                            if (kV !== -1) {
+                                // 同一スロットへの上書き判定（小数点ありを優先）
+                                const existing = results[activeIndex];
+                                if (!existing || (!existing.isValid && isV)) {
+                                    const nC = pV > 0 ? Math.round(kV * pV) : totalG;
+                                    const isN = Math.abs(nC - totalG) < (totalG * 0.1);
+                                    results[activeIndex] = {
+                                        k: kV, p: pV > 0 ? 1/pV : 0, pRaw: pV,
                                         n: isN ? totalG : nCalc,
-                                        isValid: isV, name: conf.name
+                                        isValid: isV, name: currentConfig[activeIndex].name
                                     };
-                                    addLog(`    [SLOT ${currentSlotIdx}] ${conf.name} <- k:${kVal} p:1/${pStr}`, "color-2 font-bold text-[9px]");
-                                    currentSlotIdx++;
+                                    addLog(`    [INDEX ${activeIndex}] ${currentConfig[activeIndex].name} <- k:${kV} p:1/${pStr}`, "color-2 text-[9px]");
                                 }
                             }
                         }
-                    }
+                    });
                 });
 
-                // --- 3. 尤度インパクト計算 ---
-                addLog(`(5) 尤度インパクト内訳:`, "color-3 underline font-bold");
+                // --- 尤度計算 ---
+                addLog(`(4) 尤度インパクト計算:`, "color-3 underline font-bold");
                 let lls = { 1:0, 2:0, 5:0, 6:0 };
-                results.forEach(res => {
-                    const conf = config.find(c => c.name === res.name);
+                results.forEach((res, idx) => {
+                    const conf = currentConfig[idx];
                     if (conf && conf.active && res.isValid) {
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / conf.probs[s];
@@ -235,7 +227,7 @@
                 const maxLL = Math.max(...Object.values(lls));
                 const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
                 const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                addLog(`(6) 最終判定結果:`, "color-3 font-bold underline");
+                addLog(`(5) 最終判定結果:`, "color-3 font-bold underline");
                 [1,2,5,6].forEach(s => {
                     let prob = (exps[s] / sumExp) * 100;
                     document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
