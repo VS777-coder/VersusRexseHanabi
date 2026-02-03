@@ -3,284 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.12 (Physical Integrity Logic)</title>
+    <title>HANABI & VERSUS Rev 1.2.14 (Physical Pointer)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .header-area { flex-shrink: 0; text-align: center; margin-bottom: 8px; }
-        .kawaii-title { font-family: 'Squada One', cursive; color: #3b82f6; font-size: 2.2rem; line-height: 1.0; }
-        .ver-text { font-size: 10px; color: #3b82f6; font-weight: bold; margin-top: 4px; }
-        .main-btn { background-color: #1e3a8a; border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 85px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 12px; }
-        .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fff; }
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 12px; flex-shrink: 0; }
-        .bar-bg { background-color: #020617; height: 12px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #3b82f6; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; }
-        .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 4px; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 10px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
-        .save-btn { background-color: #1e293b; color: #3b82f6; font-weight: bold; padding: 0 16px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 11px; cursor: pointer; }
-        .color-1 { color: #f472b6 !important; } .color-2 { color: #bef264 !important; } .color-3 { color: #fde047 !important; } .set-1 { color: #22d3ee; } .bar-1 { background-color: #22d3ee; } .set-2 { color: #facc15; } .bar-2 { background-color: #facc15; } .set-5 { color: #4ade80; } .bar-5 { background-color: #4ade80; } .set-6 { color: #f87171; } .bar-6 { background-color: #f87171; }
+        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; margin: 0; padding: 12px; display: flex; flex-direction: column; overflow: hidden; }
+        .kawaii-title { font-family: 'Squada One', cursive; color: #3b82f6; font-size: 2.2rem; line-height: 1.0; text-align: center; }
+        .main-btn { background-color: #1e3a8a; border: 2px solid #3b82f6; border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; margin: 8px 0; cursor: pointer; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 8px; }
+        .bar-bg { background-color: #020617; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.4s; }
+        .future-log { background-color: #000; border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; flex-grow: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #4ade80; }
+        .api-input { background-color: #0f172a; color: #fff; border: 1px solid #1e293b; padding: 8px; font-size: 12px; flex-grow: 1; border-radius: 4px; }
+        .set-1 { color: #22d3ee; } .bar-1 { background-color: #22d3ee; }
+        .set-2 { color: #facc15; } .bar-2 { background-color: #facc15; }
+        .set-5 { color: #4ade80; } .bar-5 { background-color: #4ade80; }
+        .set-6 { color: #f87171; } .bar-6 { background-color: #f87171; }
     </style>
 </head>
 <body>
-    <div class="header-area">
-        <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div class="ver-text">Rev 1.2.12</div>
-    </div>
-    <div class="shrink-0">
-        <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
-        <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
-    </div>
+    <div class="kawaii-title uppercase">HANABI & VERSUS</div>
+    <div class="text-center text-[10px] text-blue-500 font-bold mb-2">Rev 1.2.14 (Pointer Priority)</div>
+
+    <label for="file-input" class="main-btn"><span>ユニメモ画像解析</span></label>
+    <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
+
     <div id="result-area" class="result-card">
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><div class="flex justify-between text-[11px] set-1"><span>設定1</span><span id="p1">-</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
+            <div><div class="flex justify-between text-[11px] set-2"><span>設定2</span><span id="p2">-</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
+            <div><div class="flex justify-between text-[11px] set-5"><span>設定5</span><span id="p5">-</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
+            <div><div class="flex justify-between text-[11px] set-6"><span>設定6</span><span id="p6">-</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
+        </div>
     </div>
-    <div class="log-container">
-        <button id="copy-log" class="copy-btn">COPY</button>
-        <div id="log" class="future-log color-1">READY...</div>
-    </div>
-    <div class="api-footer">
+
+    <div id="log" class="future-log">READY...</div>
+
+    <div class="flex gap-2 mt-2">
         <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
-        <button id="save-key" class="save-btn">SAVE</button>
+        <button id="save-key" class="bg-blue-900 px-4 rounded text-[11px]">SAVE</button>
     </div>
 
     <script>
-        // --- 聖域：定義表（変更不可） ---
-        const L_HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
-            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "red7", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
-            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
-            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
-            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
-            { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
-            { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
-        ];
-        const HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
-            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
-        ];
-        const VERSUS_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
-            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        const CONFIG_NEW_HANABI = [
+            { id: "don_bb", name: "ドンBB", active: false },
+            { id: "red7_bb", name: "赤七BB", active: false },
+            { id: "bb_total", name: "BB合算", active: true, probs: {1: 287.4, 2: 277.7, 5: 268.6, 6: 256.0} },
+            { id: "rb_total", name: "RB", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 282.5} },
+            { id: "f_gassan", name: "風鈴合算", active: false },
+            { id: "f_a", name: "風鈴A", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "f_b", name: "風鈴B", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_gassan", name: "氷合算", active: false },
+            { id: "i_a", name: "氷A", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "i_b", name: "氷B", active: false },
+            { id: "c_gassan", name: "チェリー合算", active: false },
+            { id: "c_a1", name: "チェリーA1", active: false },
+            { id: "c_a2", name: "チェリーA2", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "c_b", name: "チェリーB", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "hc_hazure", name: "HCハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "hg_hazure", name: "HGハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "bb_parallel", name: "BIG中平行", active: false },
+            { id: "bb_slant", name: "BIG中斜め", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
-        const clean = s => s.replace(/[！-～]/g, r => String.fromCharCode(r.charCodeAt(0) - 0xFEE0)).replace(/\s+/g, '');
+        async function processAnalysis(files) {
+            const key = document.getElementById('api-key').value;
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML = "--- START ANALYSIS Rev 1.2.14 ---\n";
+            const addLog = (m) => { logDiv.innerText += m + "\n"; logDiv.scrollTop = logDiv.scrollHeight; };
 
-        // 数値ポインタ(pVal)に基づき定義表のINDEXを特定。文字列による「推測」は行わない。
-        function getTargetIdxByPhysical(pVal, nVal, totalG, finger, config) {
-            let bestIdx = -1;
-            let minDiff = 1.0;
-            const isNormal = Math.abs(nVal - totalG) < (totalG * 0.1);
-            const cleanFinger = finger.replace(/\s+/g, '');
-            const isGassan = cleanFinger.includes("合算") || cleanFinger.includes("計") || cleanFinger.includes("合計");
-
-            for (let i = 0; i < config.length; i++) {
-                const conf = config[i];
-                const isRTBIGItem = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id);
-                // 物理区分（通常時かRT/BIG中か）が不一致ならスキップ
-                if (isNormal === isRTBIGItem) continue;
-
-                // 確率の理論値（設定1）をアンカーとして最も近いスロットを特定
-                const diff = Math.abs(conf.probs[1] - pVal) / conf.probs[1];
-                if (diff < minDiff) {
-                    // 合算フラグがある場合、個別設定差項目(active:true)への割当は物理的に拒否
-                    if (isGassan && conf.active) continue;
-                    minDiff = diff;
-                    bestIdx = i;
-                }
-            }
-            return (minDiff < 0.4) ? bestIdx : -1;
-        }
-
-        async function processMulti(files) {
-            const key = document.getElementById('api-key').value.trim();
-            const logArea = document.getElementById('log'); logArea.innerHTML = "";
-            const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
-            if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.12 ---`);
-            addLog(`(1) 複数枚画像の情報: ${files.length}枚を検出`);
+            let totalG = 0;
+            let masterData = []; // {k, p, finger, imgIdx}
 
             try {
-                let allTexts = [];
-                for(let i=0; i<files.length; i++){
-                    addLog(`[OCR] IMG_${i} 読込中...`, "color-1");
-                    const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(files[i]); });
-                    const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
-                    const json = await resp.json();
-                    const raw = json.responses[0]?.textAnnotations;
-                    if(!raw) continue;
-                    const lines = raw.slice(1).reduce((acc, w) => {
-                        let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
-                        let x = w.boundingPoly.vertices[0].x;
-                        let row = acc.find(r => r.y === y);
-                        if (row) row.words.push({x, text: w.description}); else acc.push({ y, words: [{x, text: w.description}] });
-                        return acc;
-                    }, []).sort((a,b)=>a.y-b.y).map(r => r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "));
-                    allTexts.push(lines);
-                }
+                for (let i = 0; i < files.length; i++) {
+                    addLog(`[OCR] IMG_${i} 読込中...`);
+                    const base64 = await new Promise(r => { const reader = new FileReader(); reader.onload = e => r(e.target.result.split(',')[1]); reader.readAsDataURL(files[i]); });
+                    const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                        method: 'POST',
+                        body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
+                    });
+                    const json = await res.json();
+                    const lines = json.responses[0].fullTextAnnotation.text.split('\n');
 
-                addLog(`(2) 素の情報ダンプ:`, "color-2 opacity-80");
-                allTexts.forEach((lines, imgIdx) => {
-                    addLog(`  [IMG_${imgIdx} RAW DATA]`, "color-2 underline font-bold");
-                    lines.forEach(l => addLog(`  | ${l}`, "text-[9px] opacity-70 color-2"));
-                });
+                    // 総プレイ数取得
+                    if (totalG === 0) {
+                        const gLine = lines.find(l => l.includes('G'));
+                        if (gLine) totalG = parseInt(gLine.replace(/[^0-9]/g, ''));
+                    }
 
-                let currentConfig = L_HANABI_CONFIG;
-                const fullDump = allTexts.flat().join("");
-                if(fullDump.includes("バーサス")) currentConfig = VERSUS_CONFIG;
-                else if(fullDump.includes("スマスロ") || fullDump.includes("絶景")) currentConfig = HANABI_CONFIG;
+                    // 3点セット（回数・指紋・確率）の抽出
+                    for (let j = 0; j < lines.length; j++) {
+                        if (lines[j].includes('/') && lines[j].includes('.')) {
+                            const pStr = lines[j].match(/1\s*\/\s*([\d.]+)/)?.[1] || lines[j].match(/([\d.]+)/)?.[1];
+                            const kLine = lines[j - 2];
+                            const finger = lines[j - 1];
 
-                const pIdx = allTexts.findIndex(lines => lines.some(l => l.match(/[\d,]+G/)));
-                if (pIdx === -1) throw new Error("G-COUNT NOT FOUND");
-                const totalG = parseInt(allTexts[pIdx].find(l => l.match(/[\d,]+G/)).match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                addLog(`(3) 総ゲーム数: ${totalG}G (IMG_${pIdx}より取得)`, "color-3 font-bold");
-
-                let master = currentConfig.map(() => ({ k: 0, p: 0, finger: "" }));
-                addLog(`(4) ポインタ走査詳細 (物理・数学的整合性照合):`, "color-3 font-bold underline");
-
-                allTexts.forEach((lines, imgIdx) => {
-                    for(let i=0; i<lines.length; i++){
-                        const pMatch = lines[i].match(/1?\s*\/\s*([\d\s,.-]+)|([\d,.-]+\.[\d\s]+)/);
-                        if(pMatch) {
-                            let pStr = pMatch[0].replace(/1\s*\/\s*/, '').replace(/\s+/g, '');
-                            if(!pStr.includes('.')) {
-                                addLog(`  [ERROR] 小数点欠損につき破棄: "${lines[i]}" (IMG_${imgIdx})`, "text-red-400 opacity-60");
-                                continue;
-                            }
-                            const pVal = parseFloat(pStr);
-
-                            let kVal = -1;
-                            let finger = "";
-                            if(i >= 2) {
-                                const kMatch = lines[i-2].match(/([\d,]+)/);
-                                if(kMatch) {
-                                    kVal = parseInt(kMatch[1].replace(/,/g,''));
-                                    finger = lines[i-1];
-                                }
-                            }
-
-                            if(kVal !== -1) {
-                                // 物理的分母(N)の算出。RT/BIG中も自動算出。
-                                const nVal = kVal * pVal;
-                                // 物理的分母が「総G数」または「計算上の整合性」を保っているか検証
-                                let tIdx = getTargetIdxByPhysical(pVal, nVal, totalG, finger, currentConfig);
+                            if (pStr && kLine && kLine.includes('回')) {
+                                const kVal = parseInt(kLine.replace(/[^0-9]/g, ''));
+                                const pVal = parseFloat(pStr);
                                 
-                                if(tIdx !== -1) {
-                                    if(master[tIdx].k === 0) {
-                                        master[tIdx] = { k: kVal, p: 1/pVal, finger: finger };
-                                        addLog(`  [ADOPT] ${currentConfig[tIdx].name} (確:${pStr}) -> ${kVal}回 (IMG_${imgIdx})`, "color-2 font-bold");
-                                    } else if (master[tIdx].k === kVal && master[tIdx].finger === finger) {
-                                        addLog(`  [DUPE] ${currentConfig[tIdx].name} は同一指紋につきスキップ`, "text-[9px] opacity-40");
-                                    } else {
-                                        addLog(`  ⚠️ CONFLICT: ${currentConfig[tIdx].name} (確:${pStr}) が既出と矛盾`, "text-red-500 font-bold");
-                                    }
+                                // 重複チェック: 確率kと回数pが一致するかを最優先
+                                const isDupe = masterData.some(d => d.k === kVal && d.p === pVal);
+                                if (!isDupe) {
+                                    masterData.push({ k: kVal, p: pVal, finger: finger, imgIdx: i });
+                                    addLog(`  [FOUND] k:${kVal} p:1/${pVal} (Finger: ${finger})`);
                                 } else {
-                                    addLog(`  [SKIP] 定義外または整合性欠如: "${finger}" (確:${pStr}/逆算N:${Math.round(nVal)})`, "text-[9px] opacity-40");
+                                    // 確率・回数が同じでも指紋が全然違う場合のみ別データと検討するが、基本はポインタ優先でスキップ
+                                    addLog(`  [SKIP] 重複(k:${kVal} p:1/${pVal})`);
                                 }
-                            } else {
-                                addLog(`  [ERROR] 回数数値欠損 (起点:"${lines[i]}") (IMG_${imgIdx})`, "text-red-400");
                             }
                         }
                     }
-                });
+                }
 
-                currentConfig.forEach((conf, idx) => {
-                    if(conf.active && master[idx].k === 0) {
-                        addLog(`  [MISSING] ${conf.name} が抽出できませんでした`, "text-red-500 font-bold");
+                addLog(`(3) 総ゲーム数: ${totalG}G`);
+                addLog(`(4) ポインタ走査・スロット割当:`);
+
+                let results = {};
+                let slotIdx = 0;
+
+                // 抽出したmasterDataを、定義表の上から順に割り当てる
+                masterData.forEach((data, dIdx) => {
+                    while (slotIdx < CONFIG_NEW_HANABI.length) {
+                        const conf = CONFIG_NEW_HANABI[slotIdx];
+                        // 物理的計算チェック（通常時G数と矛盾しないか）
+                        const nCalc = data.k * data.p;
+                        const isNormal = Math.abs(nCalc - totalG) < (totalG * 0.05);
+                        
+                        // 特殊区間（HC/HG/BIG中）の項目かどうかの判定
+                        const isSpecial = ["hc_hazure", "hg_hazure", "bb_parallel", "bb_slant"].includes(conf.id);
+
+                        if (isNormal !== isSpecial) {
+                            results[conf.id] = { k: data.k, p: data.p, n: Math.round(nCalc) };
+                            addLog(`  [ADOPT] Slot[${slotIdx}] ${conf.name} <- k:${data.k} p:1/${data.p}`);
+                            slotIdx++;
+                            return;
+                        }
+                        addLog(`  [NEXT] Slot[${slotIdx}] ${conf.name} スキップ (計算不一致)`);
+                        slotIdx++;
                     }
                 });
 
-                addLog(`(5) 尤度計算の個別インパクト内訳:`, "color-3 underline font-bold");
-                let lls = { 1:0, 2:0, 5:0, 6:0 };
-                currentConfig.forEach((conf, idx) => {
-                    if (master[idx].k > 0 && conf.active) {
-                        // RT/BIG中の分母は逆算した物理分母を使用
-                        let n = ["vc","vg","b_ba","b_bb","nf","pf","cbs","cbh"].includes(conf.id) ? Math.round(master[idx].k / master[idx].p) : totalG;
-                        let itemImpact = "";
-                        [1,2,5,6].forEach(s => {
-                            let tp = 1 / conf.probs[s];
-                            let val = (master[idx].k * Math.log(tp) + (n - master[idx].k) * Math.log(1 - tp));
-                            lls[s] += val;
-                            itemImpact += `設定${s}:${val.toFixed(2)} `;
+                // 尤度計算
+                let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
+                CONFIG_NEW_HANABI.forEach(conf => {
+                    if (results[conf.id] && conf.active) {
+                        const res = results[conf.id];
+                        [1, 2, 5, 6].forEach(s => {
+                            const tp = 1 / conf.probs[s];
+                            lls[s] += res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp);
                         });
-                        addLog(`  - ${conf.name}(${master[idx].k}/${n}): ${itemImpact}`, "text-[9px] color-1");
                     }
                 });
 
                 const maxLL = Math.max(...Object.values(lls));
-                const exps = Object.fromEntries(Object.entries(lls).map(([s, l]) => [s, Math.exp(l - maxLL)]));
-                const sumExp = Object.values(exps).reduce((a,b)=>a+b, 0);
-                addLog(`(6) 最終判定結果:`, "color-3 font-bold underline");
-                [1,2,5,6].forEach(s => {
-                    let prob = (exps[s] / sumExp) * 100;
-                    document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`;
-                    document.getElementById(`b${s}`).style.width = `${prob}%`;
-                    addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
+                const sumExp = Object.values(lls).reduce((a, b) => a + Math.exp(b - maxLL), 0);
+                [1, 2, 5, 6].forEach(s => {
+                    const prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
+                    document.getElementById(`p${s}`).innerText = prob.toFixed(2) + "%";
+                    document.getElementById(`b${s}`).style.width = prob + "%";
                 });
-            } catch (err) { addLog(`❌ FATAL ERROR: ${err.message}`, "text-red-500 font-bold"); }
+                addLog(`(6) 解析完了`);
+
+            } catch (e) {
+                addLog(`❌ ERROR: ${e.message}`);
+            }
         }
 
-        document.getElementById('copy-log').addEventListener('click', () => {
-            navigator.clipboard.writeText(document.getElementById('log').innerText);
-            alert('LOG COPIED');
-        });
-        document.addEventListener('DOMContentLoaded', () => {
-            const saved = localStorage.getItem('v_key'); if (saved) document.getElementById('api-key').value = saved;
-            document.getElementById('file-input').addEventListener('change', e => { if (e.target.files.length > 0) processMulti(e.target.files); });
-            document.getElementById('save-key').addEventListener('click', () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('API KEY SAVED'); });
-        });
+        document.getElementById('file-input').onchange = e => processAnalysis(e.target.files);
+        document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert('SAVED'); };
+        window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
     </script>
 </body>
 </html>
