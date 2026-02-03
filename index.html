@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.3.6</title>
+    <title>ANALYZER Rev 1.3.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.6 (Fixed Sync)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.7 (Anchor Sync)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -130,9 +130,17 @@
             return clean ? parseFloat(clean) : null;
         };
         const getIntOnly = (str) => {
-            if (!str) return null;
+            if (!str || str.includes('/')) return null; // 1/15 から 115 を作らないための防波堤
             const clean = str.replace(/[^0-9]/g, '');
             return clean ? parseInt(clean) : null;
+        };
+
+        const findSlotByAnchor = (context, currentIdx, config) => {
+            const cleanContext = context.replace(/\s+/g, "");
+            for (let i = 0; i < config.length; i++) {
+                if (cleanContext.includes(config[i].name.substring(0, 2))) return i;
+            }
+            return currentIdx;
         };
 
         async function processMulti(files) {
@@ -187,10 +195,14 @@
                     if (line.text.includes("G")) gSeen = true;
                     if (!gSeen) continue;
 
-                    // ドットとスラッシュ両方必須（玉突き防止）
                     if (line.text.includes(".") && line.text.includes("/")) {
                         const pRaw = getDenominator(line.text);
                         if (!pRaw) continue; 
+
+                        // ★アンカーによるポインタ修正
+                        const context = (allMergedLines[i-1]?.text || "") + (allMergedLines[i-2]?.text || "") + (allMergedLines[i-3]?.text || "");
+                        slotIdx = findSlotByAnchor(context, slotIdx, config);
+
                         if (slotIdx >= config.length) break;
 
                         let kRaw = getIntOnly(allMergedLines[i - 2]?.text);
@@ -198,11 +210,10 @@
                         if (kRaw === null) { kRaw = getIntOnly(allMergedLines[i - 3]?.text); sourceIdx = i - 3; }
 
                         if (kRaw === null) {
-                            addLog(`❌ [L-${i}] ${config[slotIdx].name} 回数取得不可。ポインタを温存して続行。`, "text-red-400 text-[8px]");
+                            addLog(`⚠️ [L-${i}] 回数取得不可のためポインタ維持でスキップ。`, "text-gray-500 text-[8px]");
                             continue;
                         }
 
-                        // 重複キーに SLOT番号 を絶対含める（赤七/氷B救済）
                         const dataKey = `SLOT${slotIdx}-K${kRaw}-P${pRaw}`;
                         if (seenData.has(dataKey)) {
                             addLog(`[SKIP] $L-${i} SLOT[${slotIdx}] 重複検知。`, "text-gray-600 text-[8px]");
