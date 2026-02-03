@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.3.2</title>
+    <title>ANALYZER Rev 1.3.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.2 (Sync Debug)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.3.4 (Full Config Recovery)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,6 +49,7 @@
     </div>
 
     <script>
+        // --- 聖域：3機種完全定義表 ---
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -69,6 +70,50 @@
             { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
             { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
             { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+        ];
+
+        const VERSUS_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+        ];
+
+        const L_HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red7", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
+            { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
+            { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
         const logArea = document.getElementById('log');
@@ -126,9 +171,11 @@
                 }
 
                 addLog(`--- (2) MACHINE ---`, "text-cyan-400 underline");
-                let config = null, mName = "", mCode = "HANABI";
+                let config = null, mName = "", mCode = "";
                 const cleanTxt = fullTxt.replace(/\s+/g, "");
-                if (cleanTxt.includes("新ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; }
+                if (cleanTxt.includes("新ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; mCode = "HANABI"; }
+                else if (cleanTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサスリヴァイズ"; mCode = "VERSUS"; }
+                else if (cleanTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
 
                 if (!config) { addLog(`❌ 機種判定失敗`, "text-red-500 font-bold"); return; }
                 addLog(`Machine: ${mName} / [INIT] BASE: ${totalG}G`);
@@ -141,7 +188,6 @@
                     if (line.text.includes("G")) gSeen = true;
                     if (!gSeen) continue;
 
-                    // 【修正】小数点とスラッシュが揃わない行は「無視」して次へ
                     if (line.text.includes(".") && line.text.includes("/")) {
                         const pRaw = getDenominator(line.text);
                         if (!pRaw) continue; 
@@ -152,19 +198,19 @@
                         if (kRaw === null) { kRaw = getIntOnly(allMergedLines[i - 3]?.text); sourceIdx = i - 3; }
 
                         if (kRaw === null) {
-                            addLog(`❌ [L-${i}] ${config[slotIdx].name} 回数欠落のため中断`, "text-red-500");
+                            addLog(`❌ [L-${i}] ${config[slotIdx].name} 回数欠落のため中断。`, "text-red-500");
                             return;
                         }
 
-                        // 【重複排除】数値ペアが既出ならポインタを進めずスキップ
-                        const dataKey = `${kRaw}-${pRaw}`;
+                        // 重複キーに SLOT番号 を絶対含める
+                        const dataKey = `SLOT${slotIdx}-K${kRaw}-P${pRaw}`;
                         if (seenData.has(dataKey)) {
-                            addLog(`[SKIP] $L-${i} ${config[slotIdx].name} (${kRaw}回/1/${pRaw})`, "text-gray-600 text-[8px]");
+                            addLog(`[SKIP] $L-${i} SLOT[${slotIdx}] 重複検知。`, "text-gray-600 text-[8px]");
                             continue;
                         }
 
                         const item = config[slotIdx];
-                        if (item.id === "bb") bbCount = kRaw;
+                        if (item.id === "bb" || item.id === "bb_tot") bbCount = kRaw;
 
                         let kFinal = kRaw, nBase = totalG;
                         const isBigItem = item.id.startsWith("b_") || ["pf", "nf"].includes(item.id);
@@ -172,15 +218,16 @@
                         if (item.id === "vc" || item.id === "vg") {
                             nBase = Math.round(kRaw * pRaw);
                         } else if (isBigItem) {
-                            nBase = bbCount * 29;
+                            const span = (mCode === "SMASLO" ? 20 : (mCode === "VERSUS" ? 25 : 29));
+                            nBase = bbCount * span;
                             kFinal = nBase / pRaw; 
-                            addLog(`[CALC] ${item.name}: ${kFinal.toFixed(1)}回に補正`, "text-yellow-400 text-[8px]");
+                            addLog(`[CALC] ${item.name}: 補正 ${kFinal.toFixed(1)}回`, "text-yellow-400 text-[8px]");
                         }
 
                         results.push({ k: kFinal, n: nBase, active: item.active, probs: item.probs });
                         seenData.add(dataKey);
                         addLog(`[CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw}) [from L-${sourceIdx}]`, "text-green-400 text-[9px]");
-                        slotIdx++; // 正常確定時のみ次へ
+                        slotIdx++; 
                     }
                 }
 
