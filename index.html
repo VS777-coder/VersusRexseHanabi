@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI & VERSUS Rev 1.2.62</title>
+    <title>HANABI & VERSUS Rev 1.2.63</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -16,7 +16,7 @@
         .bar-bg { background-color: #020617; height: 12px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #3b82f6; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; }
+        .copy-btn { position: absolute; top: 8px; right: right; background: #3b82f6; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; }
         .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 4px; }
         .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 10px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.62 (Multi-Sync Fix)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.2.63 (Total Recovery)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -49,7 +49,7 @@
     </div>
 
     <script>
-        // --- 聖域：定義表（19項目） ---
+        // --- 聖域：定義表（不変の19項目） ---
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -119,7 +119,7 @@
             const logArea = document.getElementById('log'); logArea.innerHTML = "";
             const addLog = (m, c="text-cyan-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
             if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`--- START ANALYSIS Rev 1.2.62 ---`);
+            addLog(`--- START ANALYSIS Rev 1.2.63 ---`);
 
             try {
                 let rawImgs = [];
@@ -144,12 +144,11 @@
                     
                     const tLine = lines.find(l => l.match(/[\d,]+G/));
                     if (tLine && totalG === 0) totalG = parseInt(tLine.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                    
-                    fullTxt += lines.join("\n");
+                    fullTxt += lines.join("\n") + "\n";
                     rawImgs.push({ id: i, lines });
                 }
 
-                // 機種判定（厳格な順序）
+                // 機種判定（指示通りの優先順位）
                 let config = L_HANABI_CONFIG;
                 let mCode = "L_HANABI";
                 let mName = "新ハナビ (6号機)";
@@ -164,6 +163,7 @@
                 document.getElementById('machine-info').innerText = `機種: ${mName}`;
 
                 // (2) 順序判定
+                addLog(`(2) 画像順序判定ログ:`, "color-3 underline");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
                     img.lines.forEach(line => { config.forEach((c, idx) => { if (line.includes(c.name.substring(0, 2))) matchedIndices.push(idx); }); });
@@ -171,64 +171,80 @@
                     img.hasG = img.lines.some(l => l.match(/[\d,]+G/));
                 });
                 rawImgs.sort((a, b) => (a.hasG && !b.hasG) ? -1 : (!a.hasG && b.hasG) ? 1 : a.minIdx - b.minIdx);
+                rawImgs.forEach((img, idx) => addLog(`  - SEQ ${idx}: IMG_${img.id} (MinIdx:${img.minIdx})`));
 
                 // (3) 生値
-                addLog(`(3) 生値ダンプ完了`, "text-[9px]");
+                addLog(`\n(3) 生値ダンプ:`, "color-3 underline");
+                rawImgs.forEach((img, s) => { addLog(`  [SEQ ${s}] IMG_${img.id}:`, "text-[9px]"); img.lines.forEach(l => addLog(`    | ${l}`, "text-[8px] opacity-40")); });
 
-                // (4) 配列生成（デグレード修正：重複排除・逆算）
+                // (4) 配列生成（物理結合エンジン）
                 addLog(`\n(4) 配列生成 & 母数逆算ログ:`, "color-3 underline font-bold");
                 let results = new Array(config.length).fill(null);
-                let slotIdx = 0;
                 let bbCount = 0;
 
-                rawImgs.forEach((img, seq) => {
-                    let imgTrigger = true;
+                // 全画像から有効な (k, p) ペアをすべて抽出
+                let allPairs = [];
+                rawImgs.forEach(img => {
                     img.lines.forEach((line, i) => {
                         const clean = line.replace(/\s+/g, '');
                         if ((clean.includes('/') && clean.includes('.')) || clean === "1/-") {
                             let kVal = -1;
-                            for (let j of [2, 3]) { // j=1(名称)をスキップ
+                            for (let j of [2, 3]) {
                                 const target = img.lines[i - j];
                                 if (target && target.match(/([\d,]+)/)) { kVal = parseInt(target.match(/([\d,]+)/)[1].replace(/,/g, '')); break; }
                             }
-
                             if (kVal !== -1) {
                                 const pVal = clean.includes('.') ? parseFloat(clean.replace(/1\//, '')) : 0;
-                                
-                                // ★重複排除：同じ (k, p) ペアが既にあれば無視
-                                const isDup = results.some(r => r && r.k === kVal && Math.abs(r.pRaw - pVal) < 0.001);
-                                if (isDup) return;
-
-                                if (slotIdx < config.length) {
-                                    const item = config[slotIdx];
-                                    let nBase = totalG;
-                                    if (item.id === "bb") bbCount = kVal;
-                                    if (item.id === "vc" || item.id === "vg") {
-                                        nBase = Math.round(kVal * pVal); 
-                                    } else if (item.id.startsWith("b_") || ["pf", "nf", "cbs", "cbh"].includes(item.id)) {
-                                        let span = (mCode === "SMASLO") ? 20 : (mCode === "VERSUS") ? 25 : 29;
-                                        nBase = bbCount * span;
-                                    }
-
-                                    results[slotIdx] = { k: kVal, p: pVal > 0 ? 1/pVal : 0, pRaw: pVal, n: nBase, isValid: clean.includes('.'), name: item.name };
-                                    addLog(`  [SLOT ${slotIdx}] ${item.name} <- k:${kVal} / n:${nBase}`, "color-2 text-[9px]");
-                                    slotIdx++;
+                                // 値が全く同じ重複は1つにまとめる
+                                if (!allPairs.find(x => x.k === kVal && Math.abs(x.p - pVal) < 0.001)) {
+                                    allPairs.push({ k: kVal, p: pVal });
                                 }
                             }
                         }
                     });
                 });
 
-                // (5〜7) 尤度・結果
+                // 抽出したペアを順番に定義スロットに割り当て
+                allPairs.forEach((pair, idx) => {
+                    if (idx < config.length) {
+                        const item = config[idx];
+                        if (item.id === "bb") bbCount = pair.k;
+                        results[idx] = { k: pair.k, pRaw: pair.p, name: item.name, id: item.id };
+                    }
+                });
+
+                // 母数(n)の確定（逆算処理）
+                results = results.map(res => {
+                    if (!res) return null;
+                    let nBase = totalG;
+                    if (res.id === "vc" || res.id === "vg") {
+                        nBase = Math.round(res.k * res.pRaw);
+                    } else if (res.id.startsWith("b_") || ["pf", "nf", "cbs", "cbh"].includes(res.id)) {
+                        let span = (mCode === "SMASLO") ? 20 : (mCode === "VERSUS") ? 25 : 29;
+                        nBase = bbCount * span;
+                    }
+                    addLog(`  [SLOT] ${res.name} <- k:${res.k} / n:${nBase}`, "color-2 text-[9px]");
+                    return { ...res, n: nBase, isValid: res.pRaw > 0 };
+                });
+
+                // (5〜7) 解析
+                addLog(`\n(5) 定義確認ログ:`, "color-3 underline");
+                results.forEach(res => { if(res) addLog(`  - ${res.name}: k=${res.k}, n=${res.n}`, "text-[9px] color-2"); });
+
+                addLog(`\n(6) 尤度計算、強度、ギャップ:`, "color-3 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     if (!res) return;
                     const c = config.find(x => x.name === res.name);
                     if (c && c.active && res.isValid && res.n > 0) {
+                        let impacts = {};
                         [1, 2, 5, 6].forEach(s => {
                             let tp = 1 / c.probs[s];
-                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                            let impact = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                            lls[s] += impact; impacts[s] = impact;
                         });
+                        let gap = Math.max(...Object.values(impacts)) - Math.min(...Object.values(impacts));
+                        addLog(`  - ${res.name}: Gap:${gap.toFixed(2)}`, "text-[8px] color-1");
                     }
                 });
 
@@ -243,7 +259,7 @@
                     addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s}`);
                 });
 
-            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500 font-bold"); }
+            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-500 font-bold"); console.error(err); }
         }
 
         document.getElementById('copy-log').onclick = () => { navigator.clipboard.writeText(document.getElementById('log').innerText); alert('LOG COPIED'); };
