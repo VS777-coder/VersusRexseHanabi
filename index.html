@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.5.9</title>
+    <title>ANALYZER Rev 1.6.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -26,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.5.9 (Single Bypass Logic)</div>
+        <div class="kawaii-title uppercase text-blue-500">HANABI & VERSUS</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.2 (Strict Slot Sync)</div>
     </div>
 
     <div class="shrink-0">
@@ -53,29 +53,6 @@
     </div>
 
     <script>
-        const HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
-            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
-        ];
-
-        // L_HANABI_CONFIG / VERSUS_CONFIG は内部に完備
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -96,6 +73,28 @@
             { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
+        ];
+
+        const HANABI_CONFIG = [
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
         const VERSUS_CONFIG = [
@@ -123,35 +122,18 @@
         const logArea = document.getElementById('log');
         const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
         
-        document.getElementById('copy-log').onclick = () => {
-            const range = document.createRange(); range.selectNode(logArea);
-            window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
-            document.execCommand('copy'); window.getSelection().removeAllRanges();
-            alert('LOG COPIED');
-        };
-
-        const getDenominator = (str) => {
-            if (!str || !str.includes('/')) return null;
-            const parts = str.split('/'); 
-            const clean = parts[parts.length - 1].replace(/[^0-9.]/g, '');
-            return clean ? parseFloat(clean) : null;
-        };
-
-        const getIntOnly = (str) => {
-            if (!str || str.includes('/') || str.includes('.')) return null;
-            const clean = str.replace(/[^0-9]/g, '');
-            return clean ? parseInt(clean) : null;
-        };
+        const getDenominator = (str) => { if (!str || !str.includes('/')) return null; const clean = str.split('/').pop().replace(/[^0-9.]/g, ''); return clean ? parseFloat(clean) : null; };
+        const getIntOnly = (str) => { if (!str || str.includes('/') || str.includes('.')) return null; const clean = str.replace(/[^0-9]/g, ''); return clean ? parseInt(clean) : null; };
 
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.5.9...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.6.2...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
 
-                // (1) 画像情報
+                // （１）画像情報
                 addLog(`\n(1) 画像情報:`, "text-cyan-400 underline font-bold");
                 for(let i=0; i<fileList.length; i++){
                     addLog(`  [OCR] ${fileList[i].name} 読込中...`, "text-gray-400");
@@ -159,21 +141,15 @@
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json(); const raw = json.responses[0]?.textAnnotations;
                     if(!raw) continue;
-                    const lines = raw.slice(1).reduce((acc, w) => {
-                        let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
-                        let row = acc.find(r => r.y === y);
-                        if (row) row.words.push({x: w.boundingPoly.vertices[0].x, text: w.description}); else acc.push({ y, words: [{x: w.boundingPoly.vertices[0].x, text: w.description}] });
-                        return acc;
-                    }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ") }));
-                    rawImgs.push({ name: fileList[i].name, lines });
-                    lines.forEach(l => fullTxt += l.text + " ");
+                    const lines = raw.slice(1).reduce((acc, w) => { let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12; let row = acc.find(r => r.y === y); if (row) row.words.push({x: w.boundingPoly.vertices[0].x, text: w.description}); else acc.push({ y, words: [{x: w.boundingPoly.vertices[0].x, text: w.description}] }); return acc; }, []).sort((a,b)=>a.y-b.y).map(r => ({ y: r.y, text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ") }));
+                    rawImgs.push({ name: fileList[i].name, lines }); lines.forEach(l => fullTxt += l.text + " ");
                 }
 
                 let config = HANABI_CONFIG; let mName = "新ハナビ"; let mCode = "HANABI";
                 if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
                 else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサス"; mCode = "VERSUS"; }
 
-                // (2) 順番判定
+                // （２）順番判定
                 addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
@@ -182,16 +158,14 @@
                     if (img.lines.some(l => l.text.includes("総") && (l.text.includes("プレイ") || l.text.includes("数")))) img.score = -1;
                 });
                 rawImgs.sort((a, b) => a.score - b.score);
-                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxDepth:${img.score})`, "text-gray-300"));
+                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (Depth:${img.score})`, "text-gray-300"));
+                addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
-                // (3) 画像別の生データ
+                // （３）生データ
                 addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
-                rawImgs.forEach((img, i) => {
-                    addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]");
-                    img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
-                });
+                rawImgs.forEach((img, i) => { addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]"); img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]")); });
 
-                // (4) 仮想配列作成
+                // （４）仮想配列作成（座席指定マッチング）
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
                 let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0;
 
@@ -205,29 +179,22 @@
 
                         if (line.text.includes("/") && line.text.includes(".")) {
                             const pVal = getDenominator(line.text); if (pVal === null) return;
-                            let kVal = getIntOnly(img.lines[i - 2]?.text);
-                            if (kVal === null) kVal = getIntOnly(img.lines[i - 3]?.text);
-                            if (kVal === null) { addLog(`    ⚠️ L-${i} 回数欠落 (ゴミ認識)`, "text-red-400 text-[8px]"); return; }
+                            let kVal = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
+                            if (kVal === null) return;
 
-                            // 【指示厳守】1枚だけなら重複判定しない。2枚目以降のみ過去と比較
-                            if (rawImgs.length > 1) {
-                                const isDuplicate = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
-                                if (isDuplicate) {
-                                    addLog(`    [SKIP] 過去データと一致 (1/${pVal}) 重複破棄`, "text-gray-600 text-[8px]");
-                                    return;
-                                }
+                            // 【核心：座席指定マッチング】
+                            const seatData = results[slotIdx];
+                            if (seatData && seatData.rawK === kVal && seatData.rawP === pVal) {
+                                addLog(`    [SKIP] 座席[${slotIdx}] 重複(1/${pVal}) 破棄`, "text-gray-600 text-[8px]");
+                                return;
                             }
 
                             const item = config[slotIdx]; if (!item) return;
-
                             if (item.id === "bb") bbCount = kVal;
                             let kFinal = kVal, nBase = totalG;
                             const isBigItem = item.id.startsWith("b_") || ["pf","nf","cbs","cbh"].includes(item.id);
-                            
                             if (item.id === "vc" || item.id === "vg") nBase = Math.round(kVal * pVal);
-                            else if (isBigItem) {
-                                const span = (mCode === "SMASLO" ? 20 : 29); nBase = bbCount * span; kFinal = nBase / pVal;
-                            }
+                            else if (isBigItem) { const span = (mCode === "SMASLO" ? 20 : 29); nBase = bbCount * span; kFinal = nBase / pVal; }
 
                             results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs, rawK: kVal, rawP: pVal };
                             addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (1/${pVal})`, "text-green-500 font-bold");
@@ -236,22 +203,22 @@
                     });
                 });
 
-                // (5)~(7)
-                addLog(`\n(5) 定義表への当て込み:`, "text-cyan-400 underline font-bold");
+                // （５）定義表当て込み
+                addLog(`\n(5) 定義表への当て込み、項目名　回数：確率:`, "text-cyan-400 underline font-bold");
                 results.forEach((res, idx) => { if (res) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
 
-                addLog(`\n(6) 尤度計算完了:`, "text-cyan-400 underline font-bold");
+                // （６）尤度計算
+                addLog(`\n(6) 尤度計算　強度、ギャップ:`, "text-cyan-400 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     if (res && res.active && res.k > 0) {
-                        [1, 2, 5, 6].forEach(s => {
-                            let tp = 1 / res.probs[s];
-                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
-                        });
+                        [1, 2, 5, 6].forEach(s => { let tp = 1 / res.probs[s]; lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
+                        addLog(`  - ${res.name} 完了`, "text-[9px] text-gray-400");
                     }
                 });
 
-                addLog(`\n(7) 設定判別結果:`, "text-cyan-400 underline font-bold");
+                // （７）設定判別
+                addLog(`\n(7) 設定判別処理:`, "text-cyan-400 underline font-bold");
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1, 2, 5, 6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
@@ -261,7 +228,9 @@
                 });
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600"); }
         }
+
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value.trim()); alert('SAVED'); };
+        document.getElementById('copy-log').onclick = () => { const range = document.createRange(); range.selectNode(logArea); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); document.execCommand('copy'); window.getSelection().removeAllRanges(); alert('LOG COPIED'); };
         document.getElementById('file-input').onchange = e => { if (e.target.files.length > 0) processMulti(e.target.files); };
         window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
     </script>
