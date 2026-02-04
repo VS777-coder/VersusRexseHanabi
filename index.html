@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.6.7</title>
+    <title>ANALYZER Rev 1.6.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase text-blue-500">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.7 (Manual Weight Logic)</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.8 (Redundant Logic)</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     <div id="result-area" class="result-card">
@@ -40,7 +40,6 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
-        // 設定定義: weightは重み (1.0 = 標準)
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, weight: 1, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, weight: 1, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -59,7 +58,7 @@
             { id: "cb", name: "チェリーＢ", active: true, weight: 1, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
             { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, weight: 1, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
             { id: "vg", name: "ハナビゲーム中ハズレ", active: true, weight: 1, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
-            { id: "b_ba", name: "BIG中風鈴Ａ", active: true, weight: 1, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
+            { id: "b_ba", name: "BIG中風鈴Ａ", active: false, weight: 1, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: false, weight: 1, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
@@ -116,7 +115,7 @@
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.6.7...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.6.8...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
@@ -198,7 +197,6 @@
                         let itemLL = { 1: 0, 2: 0, 5: 0, 6: 0 };
                         [1, 2, 5, 6].forEach(s => { 
                             let tp = 1 / res.probs[s]; 
-                            // 重みを掛け合わせる
                             let l = res.weight * (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                             itemLL[s] = l; lls[s] += l;
                         }); 
