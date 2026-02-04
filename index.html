@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.5.0</title>
+    <title>ANALYZER Rev 1.5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.5.0 (Fingerprint-Based Sorting)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.5.1 (Fixed Fingerprint Sort)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -137,7 +137,7 @@
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.5.0...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.5.1...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
@@ -173,30 +173,27 @@
                     img.lines.forEach(line => {
                         config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) matchedIndices.push(idx); });
                     });
-                    // 指紋（項目名）から得られた最大インデックスを絶対位置スコアとする
                     img.fingerprintScore = matchedIndices.length > 0 ? Math.max(...matchedIndices) : 0;
-                    // 「総 プレイ 数」がある画像は、どんな指紋よりも優先して最上位(-1)へ。
                     if (img.lines.some(l => l.text.includes("総") && (l.text.includes("プレイ") || l.text.includes("数")))) img.fingerprintScore = -1;
                 });
                 rawImgs.sort((a, b) => a.fingerprintScore - b.fingerprintScore);
                 rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (指紋MaxIdx: ${img.fingerprintScore})`, "text-gray-300"));
                 addLog(`  - 判定機種: ${mName}`, "text-yellow-400");
 
-                // （３）画像別の生データ
+                // （３）画像別の生データ抽出
                 addLog(`\n(3) 画像別生データ抽出:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach((img, i) => {
                     addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]");
                     img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
                 });
 
-                // （４）仮想配列作成部分のログ（物理同期）
+                // （４）仮想配列作成（物理同期 - 上書きジャンプ機能削除）
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
                 let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0; let seenData = new Set();
                 
                 rawImgs.forEach((img, imgIdx) => {
                     addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 text-[9px]");
                     img.lines.forEach((line, i) => {
-                        // 総プレイ数抽出
                         if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
                             totalG = parseInt(line.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
                             addLog(`    [HEADER] 総プレイ数: ${totalG}G`, "text-yellow-400 text-[9px]");
@@ -205,15 +202,10 @@
                         if (line.text.includes(".") && line.text.includes("/")) {
                             const pRaw = getDenominator(line.text); if (!pRaw) return;
                             
-                            // 指紋（名前）によるslotIdxの補正ジャンプ
-                            let currentMatches = [];
-                            config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) currentMatches.push(idx); });
-                            if (currentMatches.length > 0) {
-                                let targetIdx = Math.min(...currentMatches);
-                                if (targetIdx > slotIdx) slotIdx = targetIdx;
-                            }
-
+                            // 物理同期ポインタの保護：今の行が「次の項目」として妥当かチェック
+                            // ジャンプはさせず、現在のslotIdxにふさわしいデータかだけを見る
                             const item = config[slotIdx]; if (!item) return;
+
                             let kRaw = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
                             const label = (img.lines[i-1]?.text || "") + (img.lines[i-2]?.text || "");
 
@@ -222,10 +214,11 @@
                                 return;
                             }
                             
+                            // 重複排除（同じ名前、同じ回数、同じ確率のデータは一度しか入れない）
                             const dataKey = `${item.id}-${kRaw}-${pRaw}`;
                             if (seenData.has(dataKey)) {
-                                addLog(`    [SKIP] SLOT[${slotIdx}] 重複のためスキップ`, "text-gray-700 text-[8px]");
-                                slotIdx++; return;
+                                addLog(`    [SKIP] SLOT[${slotIdx}] ${item.name} 重複スキップ`, "text-gray-700 text-[8px]");
+                                slotIdx++; return; 
                             }
                             
                             if (item.id === "bb") bbCount = kRaw;
@@ -245,7 +238,7 @@
                     });
                 });
 
-                // （５）定義表への当て込み
+                // （５）定義表への当て込み（最終データ）
                 addLog(`\n(5) 定義表への当て込み（最終データ）:`, "text-cyan-400 underline font-bold");
                 results.forEach((res, idx) => { if (res && res.k > 0) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
 
