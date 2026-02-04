@@ -27,30 +27,17 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase text-blue-500">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.3 (Global Overlap Filter)</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.3 (Global Sync Logic)</div>
     </div>
-
-    <div class="shrink-0">
-        <label for="file-input" class="main-btn"><span>（０）ユニメモ解析実行</span></label>
-        <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
-    </div>
-
+    <div class="shrink-0"><label for="file-input" class="main-btn"><span>（０）ユニメモ解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     <div id="result-area" class="result-card">
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
         <div><div class="flex justify-between text-[11px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
     </div>
-
-    <div class="log-container">
-        <button id="copy-log" class="copy-btn">（０）LOG COPY</button>
-        <div id="log" class="future-log">READY...</div>
-    </div>
-
-    <div class="api-footer">
-        <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
-        <button id="save-key" class="save-btn">SAVE</button>
-    </div>
+    <div class="log-container"><button id="copy-log" class="copy-btn">（０）LOG COPY</button><div id="log" class="future-log">READY...</div></div>
+    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
         const L_HANABI_CONFIG = [
@@ -155,7 +142,7 @@
                     if (img.lines.some(l => l.text.includes("総") && (l.text.includes("プレイ") || l.text.includes("数")))) img.score = -1;
                 });
                 rawImgs.sort((a, b) => a.score - b.score);
-                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (Depth:${img.score})`, "text-gray-300"));
+                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxDepth:${img.score})`, "text-gray-300"));
                 addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
                 addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
@@ -166,9 +153,9 @@
 
                 rawImgs.forEach((img, imgIdx) => {
                     addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 font-bold");
-                    // 【指示厳守】2枚目以降はまず「画像跨ぎの重なり（同期）」から始める
+                    // 2枚目以降は「重なり（同期）モード」から開始する
                     let isSyncing = (imgIdx > 0); 
-                    
+
                     img.lines.forEach((line, i) => {
                         if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
                             const gMatch = line.text.match(/([\d,]+)G/);
@@ -180,16 +167,16 @@
                             let kVal = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
                             if (kVal === null) return;
 
-                            // 【物理的な全履歴照合 ＋ 同期フラグ制御】
+                            // 【物理同期ロジック：境界線監視】
                             if (isSyncing) {
-                                // 1枚目〜現在の座席(0〜slotIdx-1)のどこかに同じ(回数, 分母)があるか？
-                                const foundInHistory = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
-                                if (foundInHistory) {
-                                    addLog(`    [SYNC] 過去データと一致 (1/${pVal}) 重複として破棄`, "text-gray-600 text-[8px]");
-                                    return; // 重なっている間はポインタを動かさずスルー
+                                // 既に埋まっている全履歴(results[0...slotIdx-1])の中に同じデータがあるか？
+                                const found = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
+                                if (found) {
+                                    addLog(`    [SYNC] 過去データ[0-${slotIdx-1}]に存在 (1/${pVal}) 重複破棄`, "text-gray-600 text-[8px]");
+                                    return; // 重なっている間はポインタを動かさない
                                 } else {
-                                    isSyncing = false; // 新しいデータが見つかった瞬間に同期(重なり除去)モードを終了
-                                    addLog(`    [NEW_START] 重なり終了、新規書き込みを開始します`, "text-blue-500 text-[8px]");
+                                    isSyncing = false; // 新しいデータが見つかった瞬間に旗を降ろし、ここから押し出し開始
+                                    addLog(`    [NEW_START] 重なり終了。SLOT[${slotIdx}]から書き込み再開`, "text-blue-500 text-[8px]");
                                 }
                             }
 
