@@ -3,46 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.5.4</title>
+    <title>ANALYZER Rev 1.5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .kawaii-title { font-family: 'Squada One', cursive; color: #3b82f6; font-size: 2.2rem; line-height: 1.0; text-align: center; }
-        .main-btn { background-color: #1e3a8a; border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 85px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 12px; }
+        .main-btn { background-color: #1e3a8a; border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
         .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fff; }
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 12px; flex-shrink: 0; }
-        .bar-bg { background-color: #020617; height: 12px; border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid #1e293b; }
+        .result-card { background-color: #0f172a; border-radius: 12px; padding: 12px; border: 1px solid #1e293b; margin-bottom: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #020617; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 8px; display: flex; flex-direction: column; }
+        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; }
         .copy-btn { position: absolute; top: 8px; right: 8px; background: #3b82f6; color: #fff; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; }
-        .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #adbac7; line-height: 1.4; }
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 4px; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 10px 12px; font-size: 12px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
-        .save-btn { background-color: #1e293b; color: #3b82f6; font-weight: bold; padding: 0 16px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 11px; cursor: pointer; }
+        .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #adbac7; line-height: 1.4; }
+        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
+        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
+        .save-btn { background-color: #1e293b; color: #3b82f6; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 10px; cursor: pointer; }
         .set-1 { color: #22d3ee; } .bar-1 { background-color: #22d3ee; } .set-2 { color: #facc15; } .bar-2 { background-color: #facc15; } .set-5 { color: #4ade80; } .bar-5 { background-color: #4ade80; } .set-6 { color: #f87171; } .bar-6 { background-color: #f87171; }
     </style>
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.5.4 (Strict Physical Triplet)</div>
+        <div class="kawaii-title uppercase text-blue-500">HANABI & VERSUS</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.5.5 (Consecutive Overlap Filter)</div>
     </div>
+
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>（０）ユニメモ解析実行</span></label>
         <input type="file" id="file-input" class="hidden" accept="image/*" multiple>
     </div>
+
     <div id="result-area" class="result-card">
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
-        <div class="mb-3"><div class="flex justify-between text-[12px] font-bold set-5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
     </div>
+
     <div class="log-container">
         <button id="copy-log" class="copy-btn">（０）LOG COPY</button>
         <div id="log" class="future-log">READY...</div>
     </div>
+
     <div class="api-footer">
         <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
         <button id="save-key" class="save-btn">SAVE</button>
@@ -70,6 +74,7 @@
             { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
             { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
+
         const HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -91,6 +96,7 @@
             { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
             { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
+
         const VERSUS_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -129,8 +135,9 @@
             const clean = parts[parts.length - 1].replace(/[^0-9.]/g, '');
             return clean ? parseFloat(clean) : null;
         };
+
         const getIntOnly = (str) => {
-            if (!str || str.includes('/')) return null;
+            if (!str || str.includes('/') || str.includes('.')) return null;
             const clean = str.replace(/[^0-9]/g, '');
             return clean ? parseInt(clean) : null;
         };
@@ -138,7 +145,7 @@
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.5.4...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.5.5...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
@@ -161,12 +168,11 @@
                     lines.forEach(l => fullTxt += l.text + " ");
                 }
 
-                let config = L_HANABI_CONFIG; let mName = "新ハナビ"; let mCode = "HANABI";
+                let config = HANABI_CONFIG; let mName = "新ハナビ"; let mCode = "HANABI";
                 if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
                 else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサス"; mCode = "VERSUS"; }
-                else if (fullTxt.includes("ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; mCode = "HANABI"; }
 
-                // （２）画像の順番の判定
+                // （２）順番判定
                 addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
@@ -175,8 +181,8 @@
                     if (img.lines.some(l => l.text.includes("総") && (l.text.includes("プレイ") || l.text.includes("数")))) img.score = -1;
                 });
                 rawImgs.sort((a, b) => a.score - b.score);
-                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxIdx:${img.score})`, "text-gray-300"));
-                addLog(`  - 判定機種: ${mName}`, "text-yellow-400");
+                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (Depth:${img.score})`, "text-gray-300"));
+                addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
                 // （３）画像別の生データ
                 addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
@@ -185,27 +191,35 @@
                     img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
                 });
 
-                // （４）仮想配列作成部分
+                // （４）仮想配列作成
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
-                let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0; let seenProbs = new Set();
+                let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0;
+                let lastData = { k: null, p: null }; // 直前の受理データを記憶（物理重複チェック用）
 
                 rawImgs.forEach((img, imgIdx) => {
-                    addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 text-[9px]");
+                    addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 font-bold");
                     img.lines.forEach((line, i) => {
                         if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
-                            totalG = parseInt(line.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                            addLog(`    [G-FOUND] ${totalG}G`, "text-yellow-400 text-[9px]");
+                            const gMatch = line.text.match(/([\d,]+)G/);
+                            if (gMatch) {
+                                totalG = parseInt(gMatch[1].replace(/,/g, ''));
+                                addLog(`    [G-FOUND] ${totalG}G`, "text-yellow-400 font-bold");
+                            }
                         }
 
                         if (line.text.includes("/") && line.text.includes(".")) {
                             const pVal = getDenominator(line.text); if (pVal === null) return;
-                            if (seenProbs.has(pVal)) { addLog(`    [SKIP] 重複 1/${pVal}`, "text-gray-700 text-[8px]"); return; }
-
-                            // 【指示厳守】2つ上、ダメなら3つ上を参照
+                            
+                            // 厳格参照: 2つ上、ダメなら3つ上
                             let kVal = getIntOnly(img.lines[i - 2]?.text);
                             if (kVal === null) kVal = getIntOnly(img.lines[i - 3]?.text);
+                            if (kVal === null) { addLog(`    ⚠️ L-${i} 回数欠落 (ゴミ認識)`, "text-red-400 text-[8px]"); return; }
 
-                            if (kVal === null) { addLog(`    ⚠️ L-${i} 回数欠落`, "text-red-400 text-[8px]"); return; }
+                            // 【物理押し出し重複排除】直前のデータと完全に一致するか？
+                            if (lastData.k === kVal && lastData.p === pVal) {
+                                addLog(`    [SKIP] 直前データと完全一致 (1/${pVal}) を重複ゴミとして破棄`, "text-gray-600 text-[8px]");
+                                return;
+                            }
 
                             const item = config[slotIdx]; if (!item) return;
 
@@ -219,18 +233,21 @@
                             }
 
                             results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs };
-                            seenProbs.add(pVal);
-                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (1/${pVal})`, "text-green-600 text-[9px]");
+                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (1/${pVal})`, "text-green-500 font-bold");
+                            
+                            // 状態更新
+                            lastData = { k: kVal, p: pVal };
                             slotIdx++;
                         }
                     });
                 });
 
-                // （５）〜（７）は省略せず完全実装
-                addLog(`\n(5) 定義表への当て込み:`, "text-cyan-400 underline font-bold");
+                // （５）定義表当て込み
+                addLog(`\n(5) 定義表への当て込み、項目名　回数：確率:`, "text-cyan-400 underline font-bold");
                 results.forEach((res, idx) => { if (res) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
 
-                addLog(`\n(6) 尤度計算完了:`, "text-cyan-400 underline font-bold");
+                // （６）尤度計算
+                addLog(`\n(6) 尤度計算　強度、ギャップ:`, "text-cyan-400 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
                 results.forEach(res => {
                     if (res && res.active && res.k > 0) {
@@ -238,10 +255,12 @@
                             let tp = 1 / res.probs[s];
                             lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                         });
+                        addLog(`  - ${res.name} 完了`, "text-[9px] text-gray-400");
                     }
                 });
 
-                addLog(`\n(7) 設定判別結果:`, "text-cyan-400 underline font-bold");
+                // （７）設定判別
+                addLog(`\n(7) 設定判別処理:`, "text-cyan-400 underline font-bold");
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1, 2, 5, 6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
