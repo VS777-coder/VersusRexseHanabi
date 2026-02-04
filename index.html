@@ -119,6 +119,7 @@
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
+                
                 addLog(`\n(1) 画像情報:`, "text-cyan-400 underline font-bold");
                 for(let i=0; i<fileList.length; i++){
                     addLog(`  [OCR] ${fileList[i].name} 読込中...`, "text-gray-400");
@@ -130,11 +131,11 @@
                     rawImgs.push({ name: fileList[i].name, lines }); lines.forEach(l => fullTxt += l.text + " ");
                 }
 
+                addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 let config = HANABI_CONFIG; let mName = "新ハナビ"; let mCode = "HANABI";
                 if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
                 else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサス"; mCode = "VERSUS"; }
 
-                addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
                     img.lines.forEach(line => { config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) matchedIndices.push(idx); }); });
@@ -145,16 +146,17 @@
                 rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxDepth:${img.score})`, "text-gray-300"));
                 addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
-                addLog(`\n(4) 仮想配列作成部分 (Triple-G Logic):`, "text-cyan-400 underline font-bold");
-                let results = []; let totalG = 0, hcG = 0, hgG = 0;
-                let bbCount = 0; let slotIdx = 0; let gFoundCount = 0;
+                addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
+                rawImgs.forEach((img, i) => { addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]"); img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]")); });
+
+                addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
+                let results = []; let totalG = 0, hcG = 0, hgG = 0; let bbCount = 0; let slotIdx = 0; let gFoundCount = 0;
 
                 rawImgs.forEach((img, imgIdx) => {
                     addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 font-bold");
                     let isSyncing = (imgIdx > 0); 
 
                     img.lines.forEach((line, i) => {
-                        // 【修正】最初の3つのGを抽出
                         if (line.text.includes("G")) {
                             const gMatch = line.text.match(/([\d,]+)G/);
                             if (gMatch) {
@@ -183,25 +185,41 @@
                             let kFinal = kVal, nBase = totalG;
                             const isBigItem = item.id.startsWith("b_") || ["pf","nf","cbs","cbh"].includes(item.id);
                             
-                            // 【修正】RT項目の母数割り当て
-                            if (item.id === "vc") { nBase = hcG; addLog(`    [RT_SYNC] ${item.name} 母数にHCプレイ数を使用`, "text-pink-400 text-[8px]"); }
-                            else if (item.id === "vg") { nBase = hgG; addLog(`    [RT_SYNC] ${item.name} 母数にHGプレイ数を使用`, "text-pink-400 text-[8px]"); }
+                            if (item.id === "vc") nBase = hcG;
+                            else if (item.id === "vg") nBase = hgG;
                             else if (isBigItem) { const span = (mCode === "SMASLO" ? 20 : 29); nBase = bbCount * span; kFinal = nBase / pVal; }
 
                             results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs, rawK: kVal, rawP: pVal };
-                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (母数:${nBase})`, "text-green-500 font-bold");
+                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} 同期完了`, "text-green-500 text-[8px]");
                             slotIdx++;
                         }
                     });
                 });
 
-                addLog(`\n(6) 尤度計算:`, "text-cyan-400 underline font-bold");
+                addLog(`\n(5) 定義表への当て込み、項目名　回数：確率:`, "text-cyan-400 underline font-bold");
+                results.forEach((res, idx) => { if (res) addLog(`  - SLOT[${idx}] ${res.name} ${res.rawK}回: 1/${res.rawP}`); });
+
+                addLog(`\n(6) 尤度計算　強度、ギャップ:`, "text-cyan-400 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
-                results.forEach(res => { if (res && res.active && res.k > 0) { [1, 2, 5, 6].forEach(s => { let tp = 1 / res.probs[s]; lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); }); addLog(`  - ${res.name} (k:${res.k.toFixed(1)}/n:${res.n}) 完了`, "text-[9px] text-gray-400"); } });
+                results.forEach(res => { 
+                    if (res && res.active && res.k > 0) { 
+                        [1, 2, 5, 6].forEach(s => { 
+                            let tp = 1 / res.probs[s]; 
+                            lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); 
+                        }); 
+                        addLog(`  - ${res.name} (k:${res.k.toFixed(1)}/n:${res.n}) 完了`, "text-[9px] text-gray-400"); 
+                    } 
+                });
 
                 addLog(`\n(7) 設定判別処理:`, "text-cyan-400 underline font-bold");
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
-                [1, 2, 5, 6].forEach(s => { let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100; document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`; document.getElementById(`b${s}`).style.width = `${prob}%`; addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s} font-bold`); });
+                [1, 2, 5, 6].forEach(s => { 
+                    let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100; 
+                    document.getElementById(`p${s}`).innerText = `${prob.toFixed(1)}%`; 
+                    document.getElementById(`b${s}`).style.width = `${prob}%`; 
+                    addLog(`  設定${s}: ${prob.toFixed(2)}%`, `set-${s} font-bold`); 
+                });
+
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600"); }
         }
 
