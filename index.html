@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.5.0 (Fingerprint Sort Only)</div>
+        <div id="machine-info" class="text-[10px] font-bold text-blue-500 text-center mb-2">Rev 1.5.0 (Fingerprint-Based Sorting)</div>
     </div>
     <div class="shrink-0">
         <label for="file-input" class="main-btn"><span>ユニメモ解析実行</span></label>
@@ -166,20 +166,20 @@
                 else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサス"; mCode = "VERSUS"; }
                 else if (fullTxt.includes("ハナビ")) { config = HANABI_CONFIG; mName = "新ハナビ"; mCode = "HANABI"; }
 
-                // （２）画像の順番判定処理（指紋方式）
-                addLog(`\n(2) 画像の順番の判定処理（指紋方式）:`, "text-cyan-400 underline font-bold");
+                // （２）画像の順番判定処理（指紋＝定義表インデックス最大値）
+                addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
                     img.lines.forEach(line => {
                         config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) matchedIndices.push(idx); });
                     });
-                    // その画像で見つかった最大インデックスをスコア（指紋の深さ）とする
-                    img.maxMatchIdx = matchedIndices.length > 0 ? Math.max(...matchedIndices) : 0;
-                    // 特別処理：総プレイ数がある画像は強制的に最上位
-                    if (img.lines.some(l => l.text.includes("総 プレイ 数") || l.text.includes("総プレイ数"))) img.maxMatchIdx = -1;
+                    // 指紋（項目名）から得られた最大インデックスを絶対位置スコアとする
+                    img.fingerprintScore = matchedIndices.length > 0 ? Math.max(...matchedIndices) : 0;
+                    // 「総 プレイ 数」がある画像は、どんな指紋よりも優先して最上位(-1)へ。
+                    if (img.lines.some(l => l.text.includes("総") && (l.text.includes("プレイ") || l.text.includes("数")))) img.fingerprintScore = -1;
                 });
-                rawImgs.sort((a, b) => a.maxMatchIdx - b.maxMatchIdx);
-                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (最深Idx: ${img.maxMatchIdx})`, "text-gray-300"));
+                rawImgs.sort((a, b) => a.fingerprintScore - b.fingerprintScore);
+                rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (指紋MaxIdx: ${img.fingerprintScore})`, "text-gray-300"));
                 addLog(`  - 判定機種: ${mName}`, "text-yellow-400");
 
                 // （３）画像別の生データ
@@ -189,23 +189,23 @@
                     img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
                 });
 
-                // （４）仮想配列作成（物理同期）
+                // （４）仮想配列作成部分のログ（物理同期）
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
                 let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0; let seenData = new Set();
                 
                 rawImgs.forEach((img, imgIdx) => {
-                    addLog(`  [PROCESS] IMG_${imgIdx} 物理解析開始`, "text-blue-400 text-[9px]");
+                    addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 text-[9px]");
                     img.lines.forEach((line, i) => {
-                        // 総プレイ数の抽出
-                        if ((line.text.includes("総 プレイ 数") || line.text.includes("総プレイ数")) && line.text.includes("G")) {
+                        // 総プレイ数抽出
+                        if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
                             totalG = parseInt(line.text.match(/([\d,]+)G/)[1].replace(/,/g, ''));
-                            addLog(`    [HEADER] 総ゲーム数確定: ${totalG}G`, "text-yellow-400 text-[9px]");
+                            addLog(`    [HEADER] 総プレイ数: ${totalG}G`, "text-yellow-400 text-[9px]");
                         }
 
                         if (line.text.includes(".") && line.text.includes("/")) {
                             const pRaw = getDenominator(line.text); if (!pRaw) return;
                             
-                            // 物理同期ポインタの補正：現在の行の名前がconfigのどこかチェック
+                            // 指紋（名前）によるslotIdxの補正ジャンプ
                             let currentMatches = [];
                             config.forEach((c, idx) => { if (line.text.includes(c.name.substring(0, 2))) currentMatches.push(idx); });
                             if (currentMatches.length > 0) {
@@ -218,13 +218,13 @@
                             const label = (img.lines[i-1]?.text || "") + (img.lines[i-2]?.text || "");
 
                             if (kRaw === null) {
-                                addLog(`    ⚠️ L-${i} ${item.name} 回数欠落スキップ`, "text-red-400 text-[8px]");
+                                addLog(`    ⚠️ L-${i} ${item.name} 回数欠落のためスキップ`, "text-red-400 text-[8px]");
                                 return;
                             }
                             
                             const dataKey = `${item.id}-${kRaw}-${pRaw}`;
                             if (seenData.has(dataKey)) {
-                                addLog(`    [SKIP] SLOT[${slotIdx}] 重複`, "text-gray-700 text-[8px]");
+                                addLog(`    [SKIP] SLOT[${slotIdx}] 重複のためスキップ`, "text-gray-700 text-[8px]");
                                 slotIdx++; return;
                             }
                             
@@ -239,7 +239,7 @@
 
                             results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs };
                             seenData.add(dataKey);
-                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name}: ${kRaw}回 (1/${pRaw})`, "text-green-600 text-[9px]");
+                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kRaw}回: 1/${pRaw} [看板:${label}]`, "text-green-600 text-[9px]");
                             slotIdx++; 
                         }
                     });
@@ -247,7 +247,7 @@
 
                 // （５）定義表への当て込み
                 addLog(`\n(5) 定義表への当て込み（最終データ）:`, "text-cyan-400 underline font-bold");
-                results.forEach((res, idx) => { if (res && res.k > 0) addLog(`  - SLOT[${idx}] ${res.name}: ${res.k.toFixed(1)}回 (1/${(res.n/res.k).toFixed(1)})`); });
+                results.forEach((res, idx) => { if (res && res.k > 0) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
 
                 // （６）尤度計算
                 addLog(`\n(6) 尤度計算・強度詳細:`, "text-cyan-400 underline font-bold");
