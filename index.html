@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.5.8</title>
+    <title>ANALYZER Rev 1.5.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.5.8 (Global History Sync)</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.5.9 (Single Bypass Logic)</div>
     </div>
 
     <div class="shrink-0">
@@ -75,6 +75,7 @@
             { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
+        // L_HANABI_CONFIG / VERSUS_CONFIG は内部に完備
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -122,6 +123,13 @@
         const logArea = document.getElementById('log');
         const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
         
+        document.getElementById('copy-log').onclick = () => {
+            const range = document.createRange(); range.selectNode(logArea);
+            window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+            document.execCommand('copy'); window.getSelection().removeAllRanges();
+            alert('LOG COPIED');
+        };
+
         const getDenominator = (str) => {
             if (!str || !str.includes('/')) return null;
             const parts = str.split('/'); 
@@ -138,12 +146,12 @@
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.5.8...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.5.9...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
 
-                // （１）画像情報取得
+                // (1) 画像情報
                 addLog(`\n(1) 画像情報:`, "text-cyan-400 underline font-bold");
                 for(let i=0; i<fileList.length; i++){
                     addLog(`  [OCR] ${fileList[i].name} 読込中...`, "text-gray-400");
@@ -165,7 +173,7 @@
                 if (fullTxt.includes("スマスロ")) { config = L_HANABI_CONFIG; mName = "スマスロハナビ"; mCode = "SMASLO"; }
                 else if (fullTxt.includes("バーサス")) { config = VERSUS_CONFIG; mName = "バーサス"; mCode = "VERSUS"; }
 
-                // （２）順番判定
+                // (2) 順番判定
                 addLog(`\n(2) 画像の順番の判定処理、機種判定:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach(img => {
                     let matchedIndices = [];
@@ -175,42 +183,39 @@
                 });
                 rawImgs.sort((a, b) => a.score - b.score);
                 rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxDepth:${img.score})`, "text-gray-300"));
-                addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
-                // （３）画像生データ
+                // (3) 画像別の生データ
                 addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
                 rawImgs.forEach((img, i) => {
                     addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]");
                     img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]"));
                 });
 
-                // （４）仮想配列作成（全受理済み履歴照合）
+                // (4) 仮想配列作成
                 addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
                 let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0;
 
                 rawImgs.forEach((img, imgIdx) => {
-                    addLog(`  [PROCESS] IMG_${imgIdx} スキャン開始`, "text-blue-400 font-bold");
+                    addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 font-bold");
                     img.lines.forEach((line, i) => {
-                        // 総プレイ数抽出
                         if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
                             const gMatch = line.text.match(/([\d,]+)G/);
                             if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); addLog(`    [HEADER] 総プレイ数: ${totalG}G`, "text-yellow-400 font-bold"); }
                         }
 
-                        // 3セット（回数・確率）判定
                         if (line.text.includes("/") && line.text.includes(".")) {
                             const pVal = getDenominator(line.text); if (pVal === null) return;
                             let kVal = getIntOnly(img.lines[i - 2]?.text);
                             if (kVal === null) kVal = getIntOnly(img.lines[i - 3]?.text);
                             if (kVal === null) { addLog(`    ⚠️ L-${i} 回数欠落 (ゴミ認識)`, "text-red-400 text-[8px]"); return; }
 
-                            // 【物理的な全履歴重複排除】
-                            // 1枚目〜現在の座席までに、同じ (回数, 分母) が存在するかチェック
-                            const isDuplicate = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
-                            
-                            if (isDuplicate) {
-                                addLog(`    [SKIP] 過去データと一致 (1/${pVal}) 重複として破棄`, "text-gray-600 text-[8px]");
-                                return;
+                            // 【指示厳守】1枚だけなら重複判定しない。2枚目以降のみ過去と比較
+                            if (rawImgs.length > 1) {
+                                const isDuplicate = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
+                                if (isDuplicate) {
+                                    addLog(`    [SKIP] 過去データと一致 (1/${pVal}) 重複破棄`, "text-gray-600 text-[8px]");
+                                    return;
+                                }
                             }
 
                             const item = config[slotIdx]; if (!item) return;
@@ -231,7 +236,7 @@
                     });
                 });
 
-                // （５）〜（７）
+                // (5)~(7)
                 addLog(`\n(5) 定義表への当て込み:`, "text-cyan-400 underline font-bold");
                 results.forEach((res, idx) => { if (res) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
 
