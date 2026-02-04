@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.6.3</title>
+    <title>ANALYZER Rev 1.6.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -27,7 +27,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title uppercase text-blue-500">HANABI & VERSUS</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.3 (Global Sync Logic)</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">Rev 1.6.4 (Triple-G Logic)</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>（０）ユニメモ解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     <div id="result-area" class="result-card">
@@ -115,7 +115,7 @@
         async function processMulti(files) {
             const key = document.getElementById('api-key').value.trim();
             logArea.innerHTML = ""; if (!key) { addLog("❌ API KEY REQUIRED", "text-red-500"); return; }
-            addLog(`>> BOOTING ANALYZER Rev 1.6.3...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.6.4...`, "text-blue-500 font-bold");
 
             try {
                 let rawImgs = []; let fullTxt = ""; const fileList = Array.from(files);
@@ -145,21 +145,25 @@
                 rawImgs.forEach((img, idx) => addLog(`  [ORDER_${idx}] ${img.name} (MaxDepth:${img.score})`, "text-gray-300"));
                 addLog(`  - 判定機種: ${mName}`, "text-yellow-400 font-bold");
 
-                addLog(`\n(3) 画像別の生データ:`, "text-cyan-400 underline font-bold");
-                rawImgs.forEach((img, i) => { addLog(`  [IMG_${i}] RAW:`, "text-gray-500 text-[9px]"); img.lines.forEach(l => addLog(`    | ${l.text}`, "text-gray-600 text-[8px]")); });
-
-                addLog(`\n(4) 仮想配列作成部分のログ:`, "text-cyan-400 underline font-bold");
-                let results = []; let totalG = 0; let bbCount = 0; let slotIdx = 0;
+                addLog(`\n(4) 仮想配列作成部分 (Triple-G Logic):`, "text-cyan-400 underline font-bold");
+                let results = []; let totalG = 0, hcG = 0, hgG = 0;
+                let bbCount = 0; let slotIdx = 0; let gFoundCount = 0;
 
                 rawImgs.forEach((img, imgIdx) => {
                     addLog(`  [PROCESS] IMG_${imgIdx} 同期開始`, "text-blue-400 font-bold");
-                    // 2枚目以降は「重なり（同期）モード」から開始する
                     let isSyncing = (imgIdx > 0); 
 
                     img.lines.forEach((line, i) => {
-                        if ((line.text.includes("総") && (line.text.includes("プレイ") || line.text.includes("数"))) && line.text.includes("G")) {
+                        // 【修正】最初の3つのGを抽出
+                        if (line.text.includes("G")) {
                             const gMatch = line.text.match(/([\d,]+)G/);
-                            if (gMatch) { totalG = parseInt(gMatch[1].replace(/,/g, '')); addLog(`    [HEADER] 総プレイ数: ${totalG}G`, "text-yellow-400 font-bold"); }
+                            if (gMatch) {
+                                const gVal = parseInt(gMatch[1].replace(/,/g, ''));
+                                gFoundCount++;
+                                if (gFoundCount === 1) { totalG = gVal; addLog(`    [HEADER] 総プレイ数: ${totalG}G`, "text-yellow-400 font-bold"); }
+                                else if (gFoundCount === 2) { hcG = gVal; addLog(`    [HEADER] HCプレイ数: ${hcG}G`, "text-orange-400 font-bold"); }
+                                else if (gFoundCount === 3) { hgG = gVal; addLog(`    [HEADER] HGプレイ数: ${hgG}G`, "text-orange-400 font-bold"); }
+                            }
                         }
 
                         if (line.text.includes("/") && line.text.includes(".")) {
@@ -167,39 +171,33 @@
                             let kVal = getIntOnly(img.lines[i - 2]?.text) || getIntOnly(img.lines[i - 3]?.text);
                             if (kVal === null) return;
 
-                            // 【物理同期ロジック：境界線監視】
                             if (isSyncing) {
-                                // 既に埋まっている全履歴(results[0...slotIdx-1])の中に同じデータがあるか？
                                 const found = results.some((res, idx) => res && idx < slotIdx && res.rawK === kVal && res.rawP === pVal);
-                                if (found) {
-                                    addLog(`    [SYNC] 過去データ[0-${slotIdx-1}]に存在 (1/${pVal}) 重複破棄`, "text-gray-600 text-[8px]");
-                                    return; // 重なっている間はポインタを動かさない
-                                } else {
-                                    isSyncing = false; // 新しいデータが見つかった瞬間に旗を降ろし、ここから押し出し開始
-                                    addLog(`    [NEW_START] 重なり終了。SLOT[${slotIdx}]から書き込み再開`, "text-blue-500 text-[8px]");
-                                }
+                                if (found) return;
+                                else isSyncing = false;
                             }
 
                             const item = config[slotIdx]; if (!item) return;
                             if (item.id === "bb") bbCount = kVal;
+                            
                             let kFinal = kVal, nBase = totalG;
                             const isBigItem = item.id.startsWith("b_") || ["pf","nf","cbs","cbh"].includes(item.id);
-                            if (item.id === "vc" || item.id === "vg") nBase = Math.round(kVal * pVal);
+                            
+                            // 【修正】RT項目の母数割り当て
+                            if (item.id === "vc") { nBase = hcG; addLog(`    [RT_SYNC] ${item.name} 母数にHCプレイ数を使用`, "text-pink-400 text-[8px]"); }
+                            else if (item.id === "vg") { nBase = hgG; addLog(`    [RT_SYNC] ${item.name} 母数にHGプレイ数を使用`, "text-pink-400 text-[8px]"); }
                             else if (isBigItem) { const span = (mCode === "SMASLO" ? 20 : 29); nBase = bbCount * span; kFinal = nBase / pVal; }
 
                             results[slotIdx] = { k: kFinal, n: nBase, name: item.name, active: item.active, probs: item.probs, rawK: kVal, rawP: pVal };
-                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (1/${pVal})`, "text-green-500 font-bold");
+                            addLog(`    [CONFIRM] SLOT[${slotIdx}] ${item.name} ${kVal}回 (母数:${nBase})`, "text-green-500 font-bold");
                             slotIdx++;
                         }
                     });
                 });
 
-                addLog(`\n(5) 定義表への当て込み、項目名　回数：確率:`, "text-cyan-400 underline font-bold");
-                results.forEach((res, idx) => { if (res) addLog(`  - SLOT[${idx}] ${res.name} ${res.k.toFixed(1)}回: 1/${(res.n/res.k).toFixed(1)}`); });
-
-                addLog(`\n(6) 尤度計算　強度、ギャップ:`, "text-cyan-400 underline font-bold");
+                addLog(`\n(6) 尤度計算:`, "text-cyan-400 underline font-bold");
                 let lls = { 1: 0, 2: 0, 5: 0, 6: 0 };
-                results.forEach(res => { if (res && res.active && res.k > 0) { [1, 2, 5, 6].forEach(s => { let tp = 1 / res.probs[s]; lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); }); addLog(`  - ${res.name} 完了`, "text-[9px] text-gray-400"); } });
+                results.forEach(res => { if (res && res.active && res.k > 0) { [1, 2, 5, 6].forEach(s => { let tp = 1 / res.probs[s]; lls[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); }); addLog(`  - ${res.name} (k:${res.k.toFixed(1)}/n:${res.n}) 完了`, "text-[9px] text-gray-400"); } });
 
                 addLog(`\n(7) 設定判別処理:`, "text-cyan-400 underline font-bold");
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
