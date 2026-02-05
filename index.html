@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.9.0</title>
+    <title>ANALYZER Rev 1.9.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -26,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.9.0</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">AUTO COMPLEMENT MODE</div>
+        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.9.1</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">PHYSICAL SYNC & COMPLEMENT</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -50,7 +50,11 @@
             { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
+            { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+            { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
             { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
             { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "rt", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
@@ -68,7 +72,11 @@
             { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
             { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
             { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
             { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "rt", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
@@ -80,13 +88,21 @@
         const VERSUS_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
             { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
             { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "rt", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
             { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "rt", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
             { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
@@ -98,7 +114,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 1.9.0...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.9.1...`, "text-blue-500 font-bold");
 
             try {
                 let vArray = []; let gCounts = [0, 0, 0]; let machine = null;
@@ -146,7 +162,7 @@
                     for (let i = 1; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
-                            let k = null; let src = "";
+                            let k = null;
                             const fetchInt = (idx) => {
                                 if (!rawLines[idx]) return null;
                                 const txt = rawLines[idx].text.trim();
@@ -157,18 +173,18 @@
                             };
 
                             let res = fetchInt(i - 2) || fetchInt(i - 3);
-                            if (res) { k = res.val; src = "OK"; if(!res.hasKai) addLog(`  ⚠️ #${i}に「回」なし(数値採用)`, "text-yellow-500 text-[8px]"); }
-
+                            if (res) { k = res.val; if(!res.hasKai) addLog(`  ⚠️ #${i}に「回」なし(数値採用)`, "text-yellow-500 text-[8px]"); }
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
-                            vArray.push({ k, p, lineIdx: i, rawText: line.text });
+                            vArray.push({ k, p });
                         }
                     }
                 }
 
-                addLog(`\n[MAP] 物理スロットマッピング & 補完開始...`, "text-cyan-400 font-bold");
+                addLog(`\n[MAP] 物理スロット割り当て...`, "text-cyan-400 font-bold");
                 let lls = {1:0, 2:0, 5:0, 6:0};
                 let bbCount = (vArray[1]?.k || 0);
 
+                // 【修正：器がある限り順番に割り当て】
                 machine.def.forEach((item, slotIdx) => {
                     let data = vArray[slotIdx];
                     if (!data) return;
@@ -177,14 +193,13 @@
                     if (item.type === "rt") n = (machine.offset === 3) ? (item.id === "vc" ? gCounts[1] : gCounts[2]) : (bbCount * 20);
                     if (item.type === "big") n = bbCount * 29;
 
-                    // 回数欠損時の補完ロジック
                     if (data.k === null) {
                         if (item.type === "rt") {
-                            addLog(`❌ FATAL ERROR: ${item.name} の回数欠損(RT中は逆算不可)。中止。`, "text-red-500 font-bold");
+                            addLog(`❌ FATAL ERROR: ${item.name} 回数欠損(RT中)。中止。`, "text-red-500 font-bold");
                             throw new Error("RT_DATA_MISSING");
                         }
                         data.k = Math.round(n / data.p);
-                        addLog(`[COMPLEMENT] ${item.name} <- 逆算推定 ${data.k}回 (p=1/${data.p}, N=${n})`, "text-yellow-400 text-[9px]");
+                        addLog(`[COMPLEMENT] ${item.name} <- 逆算推定 ${data.k}回 (p=1/${data.p})`, "text-yellow-400 text-[9px]");
                     }
 
                     if (item.active && data.k > 0) {
@@ -192,7 +207,9 @@
                             let tp = 1 / item.probs[s];
                             lls[s] += (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
                         });
-                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- ${data.k}回`, "text-gray-400 text-[9px]");
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- ${data.k}回 (N=${n})`, "text-gray-400 text-[9px]");
+                    } else {
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- スキップ(active:false)`, "text-gray-600 text-[8px]");
                     }
                 });
 
