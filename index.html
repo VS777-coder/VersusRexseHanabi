@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.16</title>
+    <title>ANALYZER Rev 2.2.17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -16,7 +16,7 @@
         .bar-bg { background-color: #1a1614; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; }
+        .copy-btn { position: absolute; top: 8px; right: right: 8px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; }
         .future-log { background-color: #0c0a09; border: 1px solid #78350f; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #ffffff; line-height: 1.5; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
@@ -25,11 +25,10 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.16</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOGISTICS STABILITY VERIFIED</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.17</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">PHYSICAL INDEX LOCK</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
-    
     <div class="result-card">
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-amber-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-amber-400"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-amber-500"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-amber-500"></div></div></div>
@@ -40,7 +39,6 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [永久凍結] 定義表 ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -114,12 +112,13 @@ const getStars = (gap) => gap < 0.1 ? "★★★★★" : gap < 0.5 ? "★★★
 
 async function run(files) {
     const key = document.getElementById('api-key').value.trim();
-    if(!key) return alert("VISION API KEY REQUIRED");
+    if(!key) return alert("Vision API Key Required");
     logArea.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.16`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.17`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let gOrigin = -1;
+        let gCounter = 0; 
         const fileList = Array.from(files);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
@@ -138,8 +137,7 @@ async function run(files) {
             }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
 
             if (fIdx === 0) {
-                titleLog(`(２) 機種判定`);
-                let head = rawLines.slice(0, 15).map(l=>l.text).join("");
+                let head = rawLines.slice(0, 20).map(l=>l.text).join("");
                 if (head.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" }; }
                 else if (head.includes("バーサス")) { machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" }; }
                 else { machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; }
@@ -149,29 +147,29 @@ async function run(files) {
             titleLog(`(３) 生データ (RAW)`);
             rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-zinc-600 text-[8px]"));
 
-            titleLog(`(５) 仮想配列作成ログ（物理起点規律）`);
+            titleLog(`(５) 仮想配列作成ログ（物理GGG規律）`);
             rawLines.forEach((line, i) => {
                 const mG = line.text.match(/([\d,]+)G/);
                 if (mG) {
                     const val = parseInt(mG[1].replace(/,/g, ''));
-                    // 総ゲーム数(G)検知
-                    if (gOrigin === -1) { totalG = val; gOrigin = i; addLog(`[G-START] TotalG Detect: ${totalG}G (#${i})`, "text-green-400"); }
-                    // RTゲーム数スキャン(近傍限定: Originから100行以内)
-                    else if (i < gOrigin + 100) {
-                        if (line.text.includes("ハナビチャレンジ") || line.text.includes("チャンス")) vcG = val;
-                        else if (line.text.includes("ハナビゲーム") || line.text.includes("GAME")) vgG = val;
+                    // [物理規律] Gの出現順序だけで役割を決定する
+                    if (gOrigin === -1) { 
+                        totalG = val; gOrigin = i; gCounter = 1;
+                        addLog(`[G-1] TotalG Lock: ${totalG}G (#${i})`, "text-green-400"); 
+                    } else if (gCounter === 1 && i < gOrigin + 20) {
+                        vcG = val; gCounter = 2;
+                        addLog(`[G-2] VC-G Lock: ${vcG}G (#${i})`, "text-cyan-400");
+                    } else if (gCounter === 2 && i < gOrigin + 20) {
+                        vgG = val; gCounter = 3;
+                        addLog(`[G-3] VG-G Lock: ${vgG}G (#${i})`, "text-cyan-400");
                     }
                 }
 
-                // [物理順] G検知以降の確率行を順番に格納
                 if (gOrigin !== -1 && i > gOrigin && line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
                     if (vArray.length < machine.def.length) {
                         let k = null;
-                        // 1. 同一行スキャン (優先)
                         const sameMatch = line.text.match(/(\d+)[\s]*回/);
                         if (sameMatch) { k = parseInt(sameMatch[1]); }
-                        
-                        // 2. 2-3行上スキャン
                         if (k === null) {
                             for(let o of [2,3]) {
                                 let t = rawLines[i-o];
@@ -181,33 +179,33 @@ async function run(files) {
                                 }
                             }
                         }
-                        // カンマ除去を徹底した確率パース
+                        // カンマ除去徹底
                         let p = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
-                        addLog(`[V-ARRAY] ID:${vArray.length} Anchor:"${line.text}" (#${i}) <- RAW:${k}`);
                         vArray.push({ k, p });
+                        addLog(`[V-ARRAY] ID:${vArray.length-1} Anchor:"${line.text}" (#${i}) <- RAW:${k}`);
                     }
                 }
             });
         }
 
-        titleLog(`(６) 定義表当て込み（シグマ連動レスキュー）`);
+        titleLog(`(６) 定義表当て込み（物理同期レスキュー）`);
         bbCount = vArray[1]?.k || 0;
         let lls = {1:0, 2:0, 5:0, 6:0};
 
         machine.def.forEach((slot, si) => {
             let data = vArray[si]; if(!data) return;
-            // RT母数の論理分岐 (bG:20以外はk*pを信じる)
+            // RT母数：スマスロ(bG:20)なら実数値、それ以外はk*pの逆算
             let n = (slot.type === "vc" || slot.type === "vg") ? (machine.bG === 20 ? (slot.type==="vc"?vcG:vgG) : Math.round(data.k * data.p)) : 
                     (slot.type === "big" ? bbCount * machine.bG : totalG);
             
             let theoryK = n / data.p; 
             let sigma = Math.sqrt(theoryK); 
             let diff = Math.abs(data.k - theoryK);
-            let threshold = Math.max(5, sigma * 4.5); // 氷B等を救うため少し余裕を持たせる
+            let threshold = Math.max(5, sigma * 4.5);
 
-            if(data.k === null || diff > threshold) {
+            if(data.k === null || (n > 0 && diff > threshold)) {
                 let old = data.k; data.k = Math.round(theoryK);
-                addLog(`[RESCUE] ${slot.name} | RAW:${old} -> 復元:${data.k} (乖離:${diff.toFixed(1)} > 限界:${threshold.toFixed(1)})`, "text-red-400 font-bold");
+                addLog(`[RESCUE] ${slot.name} | 生:${old} -> 復元:${data.k} (乖離:${diff.toFixed(1)} > 限界:${threshold.toFixed(1)})`, "text-red-400 font-bold");
             } else {
                 addLog(`[MAP] ${slot.name.padEnd(8)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`);
             }
@@ -229,12 +227,9 @@ async function run(files) {
             document.getElementById(`b${s}`).style.width = prob + "%";
             addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}% | Gap: ${gap.toFixed(3)} | ${getStars(gap)}`);
         });
-
-        titleLog(`(８) 設定判別結果`);
-        addLog(`>> ANALYSIS COMPLETE. PHYSICAL LOGISTICS VERIFIED.`);
+        addLog(`>> ANALYSIS COMPLETE. LOGISTICS SECURED.`);
     } catch (e) { addLog(`❌ FATAL ERROR: ${e.message}`, "text-red-600 font-bold"); }
 }
-
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
 document.getElementById('cp-btn').onclick = () => { const r=document.createRange(); r.selectNode(logArea); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert('COPIED'); };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
