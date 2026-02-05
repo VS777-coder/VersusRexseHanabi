@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.3</title>
+    <title>ANALYZER Rev 2.2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="kawaii-title">ANALYZER REV 2.2.3</div></div>
+    <div class="header-area"><div class="kawaii-title">ANALYZER REV 2.2.4</div></div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
     <div id="result-area" class="result-card">
@@ -43,7 +43,7 @@
     </div>
 
 <script>
-    // --- 【物理規律：画像出現順完全同期定義】 ---
+    // --- 【物理規律：定義表（Rev 2.2.3完全継承）】 ---
     const L_HANABI_CONFIG = [
         { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -114,11 +114,31 @@
     const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
     const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
+    // --- 【掟：物理検索の核心】 ---
+    function findCountRigid(idx, array) {
+        let kVal = -1;
+        // 1. 2行上を強制視認
+        let line2 = array[idx - 2];
+        if (line2 && line2.text.includes("回")) {
+            let m = line2.text.replace(/[,回]/g, '').match(/^\d+/);
+            if (m) kVal = parseInt(m[0]);
+        }
+        // 2. フォールバック（3行上）
+        if (kVal === -1) {
+            let line3 = array[idx - 3];
+            if (line3 && line3.text.includes("回")) {
+                let m = line3.text.replace(/[,回]/g, '').match(/^\d+/);
+                if (m) kVal = parseInt(m[0]);
+            }
+        }
+        return kVal;
+    }
+
     async function processAnalysis(files) {
         const key = document.getElementById('api-key').value.trim();
         if(!key) { alert("API KEY REQUIRED"); return; }
         logArea.innerHTML = "";
-        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.3`, "text-amber-400 font-bold");
+        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.4`, "text-amber-400 font-bold");
 
         try {
             titleLog(`（１）画像情報`);
@@ -193,26 +213,33 @@
                 let pLine = probLines[si];
                 if (pLine) {
                     let uIdx = unified.indexOf(pLine);
-                    let kVal = 0;
-                    for (let j = 1; j <= 3; j++) {
-                        let candidate = unified[uIdx - j];
-                        if (!candidate || candidate.text.includes("/")) continue;
-                        let m = candidate.text.replace(/[,回]/g, '').match(/^\d+/);
-                        if (m) { kVal = parseInt(m[0]); break; }
-                    }
+                    // 【規律】共通アルゴリズム findCountRigid の適用
+                    let kVal = findCountRigid(uIdx, unified);
+
                     let pStr = pLine.text.split("/")[1]?.replace(/[,G\s]/g,'') || "0";
                     let pVal = (pStr === "-" || pStr === "0") ? 999999 : parseFloat(pStr);
 
-                    let nRef = totalG;
-                    if(slot.type === "vc") nRef = vcG;
-                    if(slot.type === "vg") nRef = vgG;
-                    if(slot.type === "big") nRef = (vArr[1]?.k || 0) * 28;
-
-                    let kCalc = Math.round(nRef / pVal);
-                    if(Math.abs(kVal - kCalc) > (kCalc * 0.2) && Math.abs(kVal - kCalc) > 5) {
-                        addLog(`⚠️ ALERT: ${slot.name} 補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
-                        kVal = kCalc;
+                    // 算術補完の掟
+                    if (kVal === -1) {
+                        let nRef = totalG;
+                        if(slot.type === "vc") nRef = vcG;
+                        if(slot.type === "vg") nRef = vgG;
+                        if(slot.type === "big") nRef = (vArr[1]?.k || 0) * 28;
+                        kVal = Math.round(nRef / pVal);
+                        addLog(`⚠️ 算術補完実行: ${slot.name} [EXPECTED:${kVal}]`, "text-orange-400");
+                    } else {
+                        // 20%規律のチェック
+                        let nRef = totalG;
+                        if(slot.type === "vc") nRef = vcG;
+                        if(slot.type === "vg") nRef = vgG;
+                        if(slot.type === "big") nRef = (vArr[1]?.k || 0) * 28;
+                        let kCalc = Math.round(nRef / pVal);
+                        if(Math.abs(kVal - kCalc) > (kCalc * 0.2) && Math.abs(kVal - kCalc) > 5) {
+                            addLog(`⚠️ ALERT: ${slot.name} 物理誤認の疑い [OCR:${kVal} / CALC:${kCalc}]`, "text-red-400");
+                            kVal = kCalc; // 物理的乖離が20%を超えたら補正
+                        }
                     }
+
                     vArr.push({ k: kVal, p: pVal });
                     addLog(`[MAP] Slot${si}: ${slot.name.padEnd(8)} | 1/${pVal.toFixed(1)} <- ${kVal}回`);
                 }
