@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.8.7</title>
+    <title>ANALYZER Rev 1.8.8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -26,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.7</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">STRICT VALIDATION MODE</div>
+        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.8</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">THRESHOLD 3PX MODE</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -41,6 +41,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
+        // 定義表 (Rev 1.8.7 と同一)
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -114,7 +115,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 1.8.7...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.8.8...`, "text-blue-500 font-bold");
 
             try {
                 let vArray = []; 
@@ -123,16 +124,27 @@
                 const fileList = Array.from(files);
 
                 for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
-                    addLog(`\n--- IMG_${fIdx} OCR RAW DATA ---`, "text-gray-500 font-bold");
+                    addLog(`\n--- IMG_${fIdx} OCR PROCESSING ---`, "text-gray-500 font-bold");
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
-                    const rawLines = json.responses[0].fullTextAnnotation.pages[0].blocks.flatMap(b => b.paragraphs).map(p => ({
-                        text: p.words.map(w => w.symbols.map(s => s.text).join("")).join(""),
-                        y: p.boundingBox.vertices[0].y
-                    })).sort((a, b) => a.y - b.y);
+                    
+                    // 【しきい値3pxに変更箇所】
+                    const textAnnotations = json.responses[0].textAnnotations;
+                    if(!textAnnotations) return;
 
-                    // RAW LOGGING (Rev 1.8.6相当)
+                    const rawLines = textAnnotations.slice(1).reduce((acc, w) => {
+                        let y = Math.round(w.boundingPoly.vertices[0].y / 3) * 3; // 3px刻みに変更
+                        let row = acc.find(r => Math.abs(r.y - y) <= 3); // 3px以内を同列
+                        if (row) row.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
+                        else acc.push({ y, words: [{x: w.boundingPoly.vertices[0].x, text: w.description}] });
+                        return acc;
+                    }, []).sort((a, b) => a.y - b.y).map(line => ({
+                        text: line.words.sort((a, b) => a.x - b.x).map(w => w.text).join(" "),
+                        y: line.y
+                    }));
+
+                    // RAW LOGGING
                     rawLines.forEach((l, idx) => { addLog(`[RAW] #${idx} Y:${l.y} | ${l.text}`, "text-green-800 text-[8px]"); });
 
                     // 1. 機種判定
@@ -142,7 +154,7 @@
                         if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" }; }
                         else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" }; }
                         else { machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" }; }
-                        addLog(`[G-SCAN] 機種判定: ${machine.name} (HeaderG数: ${machine.offset})`, "text-yellow-400 font-bold");
+                        addLog(`[G-SCAN] 機種判定: ${machine.name}`, "text-yellow-400 font-bold");
                     }
 
                     // 2. G処理
@@ -159,7 +171,7 @@
                         }
                     });
 
-                    // 3. Body抽出 (指示通りの厳格バリデーション)
+                    // 3. Body抽出 (Rev 1.8.7の厳格判定を継承)
                     addLog(`[BODY-SCAN] 小役データ抽出開始 (StartIndex: ${bodyStartIdx})`, "text-cyan-400 text-[9px]");
                     for (let i = bodyStartIdx; i < rawLines.length; i++) {
                         const line = rawLines[i];
@@ -171,7 +183,7 @@
                             const checkLine = (idx) => {
                                 if (!rawLines[idx]) return null;
                                 const t = rawLines[idx].text.trim();
-                                if (t.includes("/")) return null; // スラッシュ入りは除外
+                                if (t.includes("/")) return null;
                                 if (numRegex.test(t)) {
                                     return parseInt(t.replace(/[^0-9]/g, ''));
                                 }
@@ -185,11 +197,9 @@
                                 if (k !== null) src = "3行上";
                             }
 
-                            // ❌ 停止条件
                             if (k === null) {
-                                const errorMsg = `❌ FATAL ERROR: 確率行 "${line.text}" (#${i}) に対する有効な回数が見つかりません。解析を中止します。`;
-                                addLog(errorMsg, "text-red-500 font-bold underline");
-                                throw new Error("Data missing/corrupted at index " + i);
+                                addLog(`❌ FATAL ERROR: 確率行 "${line.text}" (#${i}) の回数欠損。`, "text-red-500 font-bold underline");
+                                throw new Error("STOP: Data Corrupted at row " + i);
                             }
 
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
@@ -198,21 +208,20 @@
 
                             if (vArray.length === 0 || pair.id !== vArray[vArray.length-1].id) {
                                 vArray.push(pair);
-                                addLog(`[BODY-SCAN] #${i} ${src}より${pair.k}回(1/${pair.p})取得 ${hasKai?"[回OK]":"[回NG]"}`, "text-green-400 text-[9px]");
+                                addLog(`[BODY-SCAN] #${i} ${src}より${pair.k}回取得`, "text-green-400 text-[9px]");
                             }
                         }
                     }
                 }
 
-                // 4. マッピング
-                addLog(`\n[MAP] 物理スロット割り当て開始...`, "text-cyan-400 font-bold");
+                // 4. マッピング & 尤度
+                addLog(`\n[MAP] 物理スロット割り当て...`, "text-cyan-400 font-bold");
                 let lls = {1:0, 2:0, 5:0, 6:0};
                 let bbCount = (vArray[1]?.k || 0);
 
                 machine.def.forEach((item, slotIdx) => {
                     const data = vArray[slotIdx];
                     if (!data) return;
-                    
                     let n = gCounts[0];
                     if (item.id === "vc") n = (machine.offset === 3) ? gCounts[1] : (bbCount * 20);
                     if (item.id === "vg") n = (machine.offset === 3) ? gCounts[2] : (bbCount * 20);
@@ -223,7 +232,7 @@
                             let tp = 1 / item.probs[s];
                             lls[s] += (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
                         });
-                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- ${data.k}回 (N=${n})`, "text-gray-400 text-[9px]");
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- ${data.k}回`, "text-gray-400 text-[9px]");
                     }
                 });
 
