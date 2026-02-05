@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.8.8</title>
+    <title>ANALYZER Rev 1.8.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -26,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.8</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">THRESHOLD 3PX MODE</div>
+        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.9</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">STRICT INTEGER FETCH MODE</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -41,7 +41,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
-        // 定義表 (Rev 1.8.7 と同一)
+        // 定義表 (L_HANABI, HANABI, VERSUS 全て維持)
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -115,7 +115,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 1.8.8...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.8.9...`, "text-blue-500 font-bold");
 
             try {
                 let vArray = []; 
@@ -128,14 +128,13 @@
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
-                    
-                    // 【しきい値3pxに変更箇所】
                     const textAnnotations = json.responses[0].textAnnotations;
                     if(!textAnnotations) return;
 
+                    // 【しきい値を10に戻す：相対化なし】
                     const rawLines = textAnnotations.slice(1).reduce((acc, w) => {
-                        let y = Math.round(w.boundingPoly.vertices[0].y / 3) * 3; // 3px刻みに変更
-                        let row = acc.find(r => Math.abs(r.y - y) <= 3); // 3px以内を同列
+                        let y = w.boundingPoly.vertices[0].y;
+                        let row = acc.find(r => Math.abs(r.y - y) <= 10);
                         if (row) row.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
                         else acc.push({ y, words: [{x: w.boundingPoly.vertices[0].x, text: w.description}] });
                         return acc;
@@ -144,10 +143,8 @@
                         y: line.y
                     }));
 
-                    // RAW LOGGING
                     rawLines.forEach((l, idx) => { addLog(`[RAW] #${idx} Y:${l.y} | ${l.text}`, "text-green-800 text-[8px]"); });
 
-                    // 1. 機種判定
                     if (fIdx === 0) {
                         let preGTxt = "";
                         for (let l of rawLines) { if (l.text.includes("G")) break; preGTxt += l.text; }
@@ -157,7 +154,6 @@
                         addLog(`[G-SCAN] 機種判定: ${machine.name}`, "text-yellow-400 font-bold");
                     }
 
-                    // 2. G処理
                     let gFound = 0;
                     let bodyStartIdx = 0;
                     rawLines.forEach((l, i) => {
@@ -171,39 +167,54 @@
                         }
                     });
 
-                    // 3. Body抽出 (Rev 1.8.7の厳格判定を継承)
-                    addLog(`[BODY-SCAN] 小役データ抽出開始 (StartIndex: ${bodyStartIdx})`, "text-cyan-400 text-[9px]");
+                    // 【3. Body抽出：整数優先ロジック】
+                    addLog(`[BODY-SCAN] 小役データ抽出開始`, "text-cyan-400 text-[9px]");
                     for (let i = bodyStartIdx; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
                             let k = null;
                             let src = "";
-                            const numRegex = /^[0-9,]+回?$/;
 
-                            const checkLine = (idx) => {
+                            const fetchInt = (idx) => {
                                 if (!rawLines[idx]) return null;
-                                const t = rawLines[idx].text.trim();
-                                if (t.includes("/")) return null;
-                                if (numRegex.test(t)) {
-                                    return parseInt(t.replace(/[^0-9]/g, ''));
+                                const txt = rawLines[idx].text.trim();
+                                if (txt.includes("/")) return null; // スラッシュは整数ではない
+
+                                // 純粋な数値(カンマ除外)を抽出
+                                const cleanTxt = txt.replace(/,/g, '');
+                                const match = cleanTxt.match(/^\d+/); // 行頭から始まる数値
+                                
+                                if (match) {
+                                    const val = parseInt(match[0]);
+                                    const hasKaiMark = txt.includes("回");
+                                    return { val, hasKaiMark };
                                 }
                                 return null;
                             };
 
-                            k = checkLine(i - 2);
-                            if (k !== null) { src = "2行上"; }
-                            else {
-                                k = checkLine(i - 3);
-                                if (k !== null) src = "3行上";
+                            // A. 2行上チェック
+                            let res = fetchInt(i - 2);
+                            if (res) {
+                                k = res.val;
+                                src = "2行上";
+                                if (!res.hasKaiMark) addLog(`  ⚠️ #${i-2}に「回」がなかったよ (要チェック)`, "text-yellow-500 text-[8px]");
+                            } else {
+                                // B. 3行上チェック
+                                res = fetchInt(i - 3);
+                                if (res) {
+                                    k = res.val;
+                                    src = "3行上";
+                                    if (!res.hasKaiMark) addLog(`  ⚠️ #${i-3}に「回」がなかったよ (要チェック)`, "text-yellow-500 text-[8px]");
+                                }
                             }
 
+                            // C. どちらもダメなら❌
                             if (k === null) {
-                                addLog(`❌ FATAL ERROR: 確率行 "${line.text}" (#${i}) の回数欠損。`, "text-red-500 font-bold underline");
-                                throw new Error("STOP: Data Corrupted at row " + i);
+                                addLog(`❌ FATAL ERROR: 確率行 "${line.text}" (#${i}) の2/3行上に整数が見つかりません。中止。`, "text-red-500 font-bold underline");
+                                throw new Error("STOP: No Integer Found");
                             }
 
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
-                            const hasKai = (rawLines[i-2]?.text.includes("回") || rawLines[i-3]?.text.includes("回"));
                             const pair = { k, p, id: `${k}_${p}` };
 
                             if (vArray.length === 0 || pair.id !== vArray[vArray.length-1].id) {
@@ -214,7 +225,6 @@
                     }
                 }
 
-                // 4. マッピング & 尤度
                 addLog(`\n[MAP] 物理スロット割り当て...`, "text-cyan-400 font-bold");
                 let lls = {1:0, 2:0, 5:0, 6:0};
                 let bbCount = (vArray[1]?.k || 0);
@@ -236,7 +246,6 @@
                     }
                 });
 
-                // 5. 結果表示
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1,2,5,6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
@@ -248,11 +257,7 @@
         }
 
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
-        document.getElementById('copy-log').onclick = () => { 
-            const range = document.createRange(); range.selectNode(logArea); 
-            window.getSelection().removeAllRanges(); window.getSelection().addRange(range); 
-            document.execCommand('copy'); alert('LOG COPIED'); 
-        };
+        document.getElementById('copy-log').onclick = () => { const range = document.createRange(); range.selectNode(logArea); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); document.execCommand('copy'); alert('LOG COPIED'); };
         window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
         document.getElementById('file-input').onchange = e => processMulti(e.target.files);
     </script>
