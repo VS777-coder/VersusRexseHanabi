@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.1</title>
+    <title>ANALYZER Rev 2.2.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="kawaii-title">ANALYZER REV 2.2.1</div></div>
+    <div class="header-area"><div class="kawaii-title">ANALYZER REV 2.2.3</div></div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
     <div id="result-area" class="result-card">
@@ -43,14 +43,13 @@
     </div>
 
 <script>
-    // --- 【規律】定義表の並び順を画像の物理順（A->B->合算）に完全同期 ---
+    // --- 【物理規律：画像出現順完全同期定義】 ---
     const L_HANABI_CONFIG = [
         { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
         { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
-        // 通常中小役（物理順：A -> B -> 合算）
         { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
         { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
         { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
@@ -61,7 +60,6 @@
         { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
         { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
         { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        // RT/BIG
         { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
         { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
         { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
@@ -74,16 +72,16 @@
         { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+        { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
         { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-        { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
         { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
         { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-        { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
         { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
         { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
@@ -96,15 +94,15 @@
         { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+        { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
         { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-        { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
         { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-        { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
         { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
         { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
@@ -120,7 +118,7 @@
         const key = document.getElementById('api-key').value.trim();
         if(!key) { alert("API KEY REQUIRED"); return; }
         logArea.innerHTML = "";
-        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.1`, "text-amber-400 font-bold");
+        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.3`, "text-amber-400 font-bold");
 
         try {
             titleLog(`（１）画像情報`);
@@ -142,8 +140,6 @@
 
             titleLog(`（２）画像の順番の判定処理、機種判定`);
             const sorted = rawDatas.sort((a, b) => b.lines.some(l => l.text.includes("G")) - a.lines.some(l => l.text.includes("G")));
-            sorted.forEach((img, i) => addLog(`[SORT] Index[${i}]: ${img.lines.some(l=>l.text.includes("G"))?'(BASE)':''}`));
-
             let baseLines = sorted[0].lines;
             let headTxt = baseLines.slice(0, 15).map(l=>l.text).join("");
             let isSmaslo = headTxt.includes("スマスロ");
@@ -170,7 +166,6 @@
                 }
                 if(gateIdx !== -1) break;
             }
-            if(gateIdx === -1) throw new Error("G-GATE NOT FOUND");
             addLog(`G-GATE: ${totalG}G (VC:${vcG}G / VG:${vgG}G)`);
 
             titleLog(`（３）画像別の生データ`);
@@ -191,7 +186,6 @@
                 }
             });
 
-            // 物理順マッピング（名前不問）
             let probLines = unified.filter(l => l.text.includes("/") && (l.text.includes(".") || l.text.includes("-")));
             let vArr = [];
 
@@ -200,7 +194,6 @@
                 if (pLine) {
                     let uIdx = unified.indexOf(pLine);
                     let kVal = 0;
-                    // 近距離の数字を優先救出（誤爆防止）
                     for (let j = 1; j <= 3; j++) {
                         let candidate = unified[uIdx - j];
                         if (!candidate || candidate.text.includes("/")) continue;
@@ -216,7 +209,6 @@
                     if(slot.type === "big") nRef = (vArr[1]?.k || 0) * 28;
 
                     let kCalc = Math.round(nRef / pVal);
-                    // 【規律】誤認閾値を20%に緩和
                     if(Math.abs(kVal - kCalc) > (kCalc * 0.2) && Math.abs(kVal - kCalc) > 5) {
                         addLog(`⚠️ ALERT: ${slot.name} 補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
                         kVal = kCalc;
