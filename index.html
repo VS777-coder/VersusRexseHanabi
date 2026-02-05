@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.9.4</title>
+    <title>ANALYZER Rev 1.9.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 1.9.4</div>
-        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">INTENSIVE GAP ANALYSIS MODE</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 1.9.5</div>
+        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE LIKELIHOOD ANALYSIS</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -83,7 +83,7 @@
             { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
             { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
             { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "rt", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "rt", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
             { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
             { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
@@ -91,21 +91,13 @@
         const VERSUS_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-            { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
             { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
             { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "rt", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
             { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "rt", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-            { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
             { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
             { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
@@ -125,7 +117,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> SYSTEM BOOT: ANALYZER Rev 1.9.4`, "text-amber-400 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.9.5...`, "text-amber-400 font-bold");
 
             try {
                 let vArray = []; let gCounts = [0, 0, 0]; let machine = null;
@@ -134,17 +126,15 @@
                 for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
                     const file = fileList[fIdx];
                     titleLog(`(１) 画像情報`);
-                    addLog(`TARGET_FILE: ${file.name} / ${Math.round(file.size/1024)}KB`);
+                    addLog(`FILE: ${file.name} | ${Math.round(file.size/1024)}KB`);
 
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const textAnnotations = json.responses[0].textAnnotations;
-                    if(!textAnnotations) throw new Error("VISION_API_FAILURE");
+                    if(!textAnnotations) throw new Error("API_ERROR");
 
                     titleLog(`(２) 画像の順番の判定処理`);
-                    addLog(`Analyzing sequence order for ${fileList.length} files... OK.`);
-
                     const rawLines = textAnnotations.slice(1).reduce((acc, w) => {
                         let y = w.boundingPoly.vertices[0].y;
                         let row = acc.find(r => Math.abs(r.y - y) <= 10);
@@ -157,7 +147,7 @@
                     }));
 
                     titleLog(`(３) 画像別の生データ`);
-                    rawLines.forEach((l, idx) => { addLog(`[RAW] #${String(idx).padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-gray-500 text-[8px]"); });
+                    rawLines.forEach((l, idx) => { addLog(`[RAW] #${String(idx).padStart(2,'0')} | ${l.text}`, "text-gray-600 text-[8px]"); });
 
                     if (fIdx === 0) {
                         titleLog(`(４) 機種判別`);
@@ -166,18 +156,18 @@
                         if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" }; }
                         else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" }; }
                         else { machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" }; }
-                        addLog(`[G-SCAN] Machine detected: 【${machine.name}】`);
+                        addLog(`[G-SCAN] 機種判定: 【${machine.name}】`);
                     }
 
                     rawLines.forEach((l, i) => {
                         const m = l.text.match(/([\d,]+)G/);
                         if (m) {
                             const val = parseInt(m[1].replace(/,/g, ''));
-                            for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) { gCounts[j]=val; addLog(`  > G-SCAN: Found ${val}G at index #${i}`); break; }
+                            for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) { gCounts[j]=val; addLog(`  > G-SCAN: Found ${val}G at #${i}`); break; }
                         }
                     });
 
-                    titleLog(`(５) 仮想配列作成 (マッピング詳細)`);
+                    titleLog(`(５) 仮想配列作成部分のログ`);
                     for (let i = 1; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
@@ -193,10 +183,7 @@
                             let res = fetchInt(i - 2) || fetchInt(i - 3);
                             if (res) { 
                                 k = res.val; 
-                                addLog(`[V-ARRAY] Prob:"${line.text}" (#${i}) <- Count:"${res.raw}" (#${res === fetchInt(i-2) ? i-2 : i-3})`);
-                                if(!res.hasKai) addLog(`  ⚠️ ユニット(回)欠落。数値を強制採用。`, "text-red-400 text-[8px]");
-                            } else {
-                                addLog(`[V-ARRAY] Prob:"${line.text}" (#${i}) -> ⚠️ 回数行が見つかりません。`, "text-orange-400");
+                                addLog(`[V-ARRAY] Prob:"${line.text}" (#${i}) <- Found:"${res.raw}"`);
                             }
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
                             vArray.push({ k, p });
@@ -204,7 +191,7 @@
                     }
                 }
 
-                titleLog(`(６) 定義表への当て込み (ギャップ分析実行)`);
+                titleLog(`(６) 定義表への当て込み、項目名 回数：確率`);
                 let lls = {1:0, 2:0, 5:0, 6:0};
                 let bbCount = (vArray[1]?.k || 0);
 
@@ -213,18 +200,23 @@
                     if (!data) return;
 
                     let n = gCounts[0];
-                    if (item.type === "rt") n = (machine.offset === 3) ? (item.id === "vc" ? gCounts[1] : gCounts[2]) : (bbCount * 20);
-                    if (item.type === "big") n = bbCount * 29;
-
-                    if (data.k === null) {
-                        if (item.type === "rt") { addLog(`❌ FATAL: RTセクション回数欠落につき中断。`); throw new Error("RT_RECOVERY_FAILED"); }
-                        data.k = Math.round(n / data.p);
-                        addLog(`SLOT[${slotIdx}] ${item.name.padEnd(10)} | 🔄 逆算推定: ${data.k}回`, "text-cyan-300 text-[9px]");
-                    } else {
-                        addLog(`SLOT[${slotIdx}] ${item.name.padEnd(10)} | 確定数値: ${data.k}回`);
+                    if (item.type === "rt") {
+                        // RT中は回数kと確率pから真の消化G数を算出して分母Nとする
+                        n = (data.k !== null) ? Math.round(data.k * data.p) : 0;
+                    } else if (item.type === "big") {
+                        n = bbCount * 29;
                     }
 
-                    if (item.active && data.k > 0) {
+                    if (data.k === null) {
+                        if (item.type === "rt") throw new Error("RT_RECOVERY_FAILED");
+                        data.k = Math.round(n / data.p);
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} | 🔄 逆算推定: ${data.k}回 (1/${data.p})`, "text-cyan-300");
+                    } else {
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} | ${data.k}回 : 1/${data.p} (N=${n})`);
+                    }
+
+                    // デグレード修正：k=0でも判定役に設定差がある限り計算対象に含める
+                    if (item.active && n > 0) {
                         let itemLLs = {1:0, 2:0, 5:0, 6:0};
                         [1,2,5,6].forEach(s => {
                             let tp = 1 / item.probs[s];
@@ -232,34 +224,28 @@
                             itemLLs[s] = currentLL;
                             lls[s] += currentLL;
                         });
-
-                        // 役ごとの星評価ダンプ
                         const maxItemLL = Math.max(...Object.values(itemLLs));
                         [1,2,5,6].forEach(s => {
                             const gap = maxItemLL - itemLLs[s];
-                            addLog(`  [設定${s}] ${getStars(gap)} (Gap:${gap.toFixed(3)})`, "text-gray-400 text-[8px]");
+                            addLog(`  > 設定${s}: ${getStars(gap)} (Gap:${gap.toFixed(3)})`, "text-gray-400 text-[8px]");
                         });
-                    } else {
-                        addLog(`  > スキップ(active:false)`, "text-gray-600 text-[8px]");
                     }
                 });
 
-                titleLog(`(７) 尤度計算 (総合判定・強度分析)`);
+                titleLog(`(７) 尤度計算 強度、ギャップ`);
                 const maxLL = Math.max(...Object.values(lls));
                 const sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
-                
                 [1,2,5,6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
                     let gap = maxLL - lls[s];
                     document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
                     document.getElementById(`b${s}`).style.width = prob + "%";
-                    addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${gap.toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
+                    addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${gap.toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
                 });
 
                 titleLog(`(８) 設定判別結果`);
-                addLog(`Inference cycle successfully terminated.`);
-
-            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600 font-bold underline"); }
+                addLog(`Inference cycle complete.`);
+            } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600"); }
         }
 
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
