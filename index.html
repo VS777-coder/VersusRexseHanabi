@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.9.5</title>
+    <title>ANALYZER Rev 2.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 1.9.5</div>
-        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE LIKELIHOOD ANALYSIS</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.0.0</div>
+        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">MULTI-IMAGE MASTER PUZZLE</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -44,6 +44,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
+        // 定義表は Rev 1.9.5 完全継承
         const L_HANABI_CONFIG = [
             { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
             { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -117,24 +118,24 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 1.9.5...`, "text-amber-400 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 2.0.0...`, "text-amber-400 font-bold");
 
             try {
-                let vArray = []; let gCounts = [0, 0, 0]; let machine = null;
+                let masterSlots = new Array(20).fill(null); // 指定席（19個+α）
+                let gCounts = [0, 0, 0]; let machine = null;
                 const fileList = Array.from(files);
 
                 for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
                     const file = fileList[fIdx];
-                    titleLog(`(１) 画像情報`);
-                    addLog(`FILE: ${file.name} | ${Math.round(file.size/1024)}KB`);
+                    titleLog(`(１) 画像情報 [IMG_${fIdx}]`);
+                    addLog(`FILE: ${file.name}`);
 
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
                     const textAnnotations = json.responses[0].textAnnotations;
-                    if(!textAnnotations) throw new Error("API_ERROR");
+                    if(!textAnnotations) continue;
 
-                    titleLog(`(２) 画像の順番の判定処理`);
                     const rawLines = textAnnotations.slice(1).reduce((acc, w) => {
                         let y = w.boundingPoly.vertices[0].y;
                         let row = acc.find(r => Math.abs(r.y - y) <= 10);
@@ -146,76 +147,81 @@
                         y: line.y
                     }));
 
-                    titleLog(`(３) 画像別の生データ`);
-                    rawLines.forEach((l, idx) => { addLog(`[RAW] #${String(idx).padStart(2,'0')} | ${l.text}`, "text-gray-600 text-[8px]"); });
-
-                    if (fIdx === 0) {
-                        titleLog(`(４) 機種判別`);
+                    // 機種・G数判定 (1枚目またはGが見つかった最初の画像)
+                    if (!machine) {
                         let preGTxt = "";
                         for (let l of rawLines) { if (l.text.includes("G")) break; preGTxt += l.text; }
-                        if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" }; }
-                        else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" }; }
-                        else { machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" }; }
-                        addLog(`[G-SCAN] 機種判定: 【${machine.name}】`);
+                        if (preGTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" };
+                        else if (preGTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" };
+                        else machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" };
+                        
+                        rawLines.forEach((l, i) => {
+                            const m = l.text.match(/([\d,]+)G/);
+                            if (m) {
+                                const val = parseInt(m[1].replace(/,/g, ''));
+                                for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) gCounts[j]=val;
+                            }
+                        });
+                        if (gCounts[0] > 0) addLog(`[G-SCAN] Machine: 【${machine.name}】 G:${gCounts[0]}`, "text-amber-200");
                     }
 
-                    rawLines.forEach((l, i) => {
-                        const m = l.text.match(/([\d,]+)G/);
-                        if (m) {
-                            const val = parseInt(m[1].replace(/,/g, ''));
-                            for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) { gCounts[j]=val; addLog(`  > G-SCAN: Found ${val}G at #${i}`); break; }
-                        }
-                    });
-
-                    titleLog(`(５) 仮想配列作成部分のログ`);
+                    titleLog(`(５) 指定席ハメ込み処理 [IMG_${fIdx}]`);
+                    
+                    // この画像が定義表のどこを指しているかラベルで同期
+                    let localVArray = [];
                     for (let i = 1; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
-                            let k = null;
                             const fetchInt = (idx) => {
                                 if (!rawLines[idx]) return null;
                                 const txt = rawLines[idx].text.trim();
                                 if (txt.includes("/")) return null;
                                 const m = txt.replace(/,/g, '').match(/^\d+/);
-                                if (m) return { val: parseInt(m[0]), hasKai: txt.includes("回"), raw: txt };
-                                return null;
+                                return m ? { val: parseInt(m[0]), raw: txt } : null;
                             };
                             let res = fetchInt(i - 2) || fetchInt(i - 3);
-                            if (res) { 
-                                k = res.val; 
-                                addLog(`[V-ARRAY] Prob:"${line.text}" (#${i}) <- Found:"${res.raw}"`);
+                            let k = res ? res.val : null;
+                            let p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
+                            
+                            // 役名ラベルを探す (回数よりさらに上)
+                            let label = "";
+                            for(let back=1; back<=5; back++) {
+                                if(rawLines[i-back] && !rawLines[i-back].text.includes("/") && !rawLines[i-back].text.includes("回")) {
+                                    label = rawLines[i-back].text; break;
+                                }
                             }
-                            const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
-                            vArray.push({ k, p });
+
+                            // マスタースロットのどこに座るべきか特定
+                            let targetIdx = -1;
+                            machine.def.forEach((d, dIdx) => {
+                                if (label.includes(d.name.substring(0,2))) targetIdx = dIdx;
+                            });
+
+                            if (targetIdx !== -1) {
+                                if (masterSlots[targetIdx] === null && k !== null) {
+                                    masterSlots[targetIdx] = { k, p };
+                                    addLog(`[MASTER-FIT] SLOT[${targetIdx}] ${machine.def[targetIdx].name} <- ${k}回 (1/${p})`);
+                                } else if (masterSlots[targetIdx] !== null) {
+                                    addLog(`[SKIP] SLOT[${targetIdx}] ${machine.def[targetIdx].name} は既に埋まっています`, "text-gray-600");
+                                }
+                            }
                         }
                     }
                 }
 
-                titleLog(`(６) 定義表への当て込み、項目名 回数：確率`);
+                // (６) 最終尤度計算 (Rev 1.9.5ロジック)
+                titleLog(`(６) 統合尤度解析実行`);
                 let lls = {1:0, 2:0, 5:0, 6:0};
-                let bbCount = (vArray[1]?.k || 0);
+                let bbCount = (masterSlots[1]?.k || 0);
 
                 machine.def.forEach((item, slotIdx) => {
-                    let data = vArray[slotIdx];
+                    let data = masterSlots[slotIdx];
                     if (!data) return;
 
                     let n = gCounts[0];
-                    if (item.type === "rt") {
-                        // RT中は回数kと確率pから真の消化G数を算出して分母Nとする
-                        n = (data.k !== null) ? Math.round(data.k * data.p) : 0;
-                    } else if (item.type === "big") {
-                        n = bbCount * 29;
-                    }
+                    if (item.type === "rt") n = Math.round(data.k * data.p);
+                    if (item.type === "big") n = bbCount * 29;
 
-                    if (data.k === null) {
-                        if (item.type === "rt") throw new Error("RT_RECOVERY_FAILED");
-                        data.k = Math.round(n / data.p);
-                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} | 🔄 逆算推定: ${data.k}回 (1/${data.p})`, "text-cyan-300");
-                    } else {
-                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} | ${data.k}回 : 1/${data.p} (N=${n})`);
-                    }
-
-                    // デグレード修正：k=0でも判定役に設定差がある限り計算対象に含める
                     if (item.active && n > 0) {
                         let itemLLs = {1:0, 2:0, 5:0, 6:0};
                         [1,2,5,6].forEach(s => {
@@ -225,6 +231,7 @@
                             lls[s] += currentLL;
                         });
                         const maxItemLL = Math.max(...Object.values(itemLLs));
+                        addLog(`SLOT[${slotIdx}] ${item.name.padEnd(10)} | ${data.k}/${n}`);
                         [1,2,5,6].forEach(s => {
                             const gap = maxItemLL - itemLLs[s];
                             addLog(`  > 設定${s}: ${getStars(gap)} (Gap:${gap.toFixed(3)})`, "text-gray-400 text-[8px]");
@@ -243,8 +250,6 @@
                     addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${gap.toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
                 });
 
-                titleLog(`(８) 設定判別結果`);
-                addLog(`Inference cycle complete.`);
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600"); }
         }
 
