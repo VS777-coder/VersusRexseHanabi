@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.1.4</title>
+    <title>ANALYZER Rev 2.1.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #1a1614; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.2rem; line-height: 1.0; text-align: center; }
-        .main-btn { background-color: #78350f; border: 2px solid #f59e0b; border-radius: 12px; cursor: pointer; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
+        .main-btn { background-color: #78350f; border: 2px solid #f59e0b; border-radius: 12px; cursor: pointer; height: 65px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
         .result-card { background-color: #2d241e; border-radius: 12px; padding: 10px; border: 1px solid #78350f; margin-bottom: 8px; flex-shrink: 0; }
         .bar-bg { background-color: #1a1614; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -23,8 +23,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title">ANALYZER REV 2.1.4</div>
-        <div class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT PHYSICAL RULES</div>
+        <div class="kawaii-title">ANALYZER REV 2.1.5</div>
+        <div class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE JOIN & PARSE</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     <div id="result-area" class="result-card">
@@ -111,7 +111,7 @@
         const key = document.getElementById('api-key').value.trim();
         if(!key) { alert("API KEY REQUIRED"); return; }
         logArea.innerHTML = "";
-        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.1.4`, "text-amber-400 font-bold");
+        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.1.5`, "text-amber-400 font-bold");
 
         try {
             // （１）画像情報
@@ -132,7 +132,7 @@
                 rawDatas.push({ file: file.name, lines });
             }
 
-            // （２）画像順序
+            // （２）画像順序 & 接着
             titleLog(`（２）画像の順番の判定処理`);
             const sorted = rawDatas.sort((a, b) => {
                 const aG = a.lines.some(l => l.text.includes("G"));
@@ -141,14 +141,14 @@
             });
             sorted.forEach((img, i) => addLog(`[SORT] Index[${i}]: ${img.file} ${img.lines.some(l=>l.text.includes("G"))?'(BASE)':''}`));
 
-            // （３）生データ
+            // （３）画像別の生データ
             titleLog(`（３）画像別の生データ`);
             sorted.forEach((img, i) => {
                 addLog(`--- IMAGE[${i}] RAW ---`, "text-amber-200 text-[8px]");
                 img.lines.forEach((l, li) => addLog(`[RAW] #${li.toString().padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-gray-500 text-[7px]"));
             });
 
-            // （４）機種判定 & G-GATE 
+            // （４）機種判定 & G-GATE
             titleLog(`（４）機種判定`);
             let baseLines = sorted[0].lines;
             let headTxt = baseLines.slice(0, 10).map(l=>l.text).join("");
@@ -160,12 +160,11 @@
 
             let totalG = 0, vcG = 0, vgG = 0, gateIdx = -1;
             let gCount = 0;
-            for(let i=0; i<Math.min(baseLines.length, 20); i++) {
+            for(let i=0; i<Math.min(baseLines.length, 25); i++) {
                 const gs = baseLines[i].text.match(/([\d,]+)G/g);
                 if(gs) {
                     const nums = gs.map(s => parseInt(s.replace(/[,G]/g,'')));
                     if(isSmaslo) {
-                        // スマスロ規律: 3つのGを探す
                         nums.forEach(n => {
                             gCount++;
                             if(gCount === 1) totalG = n;
@@ -173,46 +172,63 @@
                             if(gCount === 3) { vgG = n; gateIdx = i; }
                         });
                     } else {
-                        // 他規律: 最初のGを総プレイ数とする
                         if(totalG === 0) { totalG = nums[0]; gateIdx = i; }
                     }
                 }
                 if(gateIdx !== -1) break;
             }
-            if(gateIdx === -1) throw new Error("G-GATE NOT FOUND (G数が見つかりません)");
-            addLog(`G-GATE: OPEN at #${gateIdx} (GGG: ${totalG}/${vcG}/${vgG})`);
+            if(gateIdx === -1) throw new Error("G-GATE NOT FOUND");
+            addLog(`G-GATE: OPEN at Index[0]:#${gateIdx} (GGG: ${totalG}/${vcG}/${vgG})`);
 
-            // （５）仮想配列作成
+            // （５）仮想配列作成 (ここが物流の心臓)
             titleLog(`（５）仮想配列作成部分のログ`);
-            let fullLines = [];
+            let unified = [];
             sorted.forEach((img, idx) => {
-                if(idx === 0) fullLines = img.lines.slice(gateIdx + 1); // 門番(G)より前は完全無視
-                else {
-                    let lastProb = [...fullLines].reverse().find(l => l.text.includes("/"));
-                    let matchIdx = img.lines.findIndex(l => lastProb && l.text.includes(lastProb.text));
-                    let news = matchIdx === -1 ? img.lines : img.lines.slice(matchIdx + 1);
-                    fullLines.push(...news);
-                    addLog(`[JOIN] ${img.file} を fp:${lastProb?.text} で接着`);
+                if(idx === 0) {
+                    // BASEは門番以降を全て採用。IMG番号をメタデータとして付与
+                    img.lines.slice(gateIdx + 1).forEach((l, li) => {
+                        unified.push({ text: l.text, imgIdx: 0, lineIdx: gateIdx + 1 + li });
+                    });
+                } else {
+                    // JOIN処理
+                    let lastProb = [...unified].reverse().find(l => l.text.includes("/"));
+                    if(lastProb) {
+                        // 2枚目から指紋と一致する行を探す
+                        let matchIdx = img.lines.findIndex(l => l.text.includes(lastProb.text));
+                        if(matchIdx !== -1) {
+                            addLog(`[JOIN] ${img.file} を fp:${lastProb.text} で接着 (IMG1:#${matchIdx})`);
+                            // 重なりを「以降」で切り捨てて結合
+                            img.lines.slice(matchIdx + 1).forEach((l, li) => {
+                                unified.push({ text: l.text, imgIdx: idx, lineIdx: matchIdx + 1 + li });
+                            });
+                        } else {
+                            addLog(`[JOIN] 指紋不一致のため全行結合`, "text-red-400");
+                            img.lines.forEach((l, li) => unified.push({ text: l.text, imgIdx: idx, lineIdx: li }));
+                        }
+                    }
                 }
             });
 
             let vArr = [];
-            fullLines.forEach((line, i) => {
+            unified.forEach((line, i) => {
                 if(line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
                     const findK = (idx) => {
                         for(let j=1; j<=4; j++) {
-                            const m = fullLines[idx-j]?.text.replace(/,/g,'').match(/^\d+/);
-                            if(m) return {k:parseInt(m[0]), id:idx-j};
+                            const m = unified[idx-j]?.text.replace(/,/g,'').match(/^\d+/);
+                            if(m) return {k:parseInt(m[0]), imgIdx: unified[idx-j].imgIdx, lineIdx: unified[idx-j].lineIdx};
                         } return null;
                     };
                     let kRes = findK(i);
-                    let p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
+                    // 【修正】コンマ除去ロジック
+                    let rawP = line.text.split("/")[1] || "0";
+                    let p = line.text.includes("-") ? 999999 : parseFloat(rawP.replace(/,/g, ''));
+                    
                     if(kRes) {
-                        vArr.push({ k: kRes.k, p, kId: kRes.id, pId: i });
-                        addLog(`[MAP] Prob:1/${p.toFixed(1)} (#${i}) <- Count:${kRes.k} (#${kRes.id})`);
+                        vArr.push({ k: kRes.k, p, kPos: `IMG${kRes.imgIdx}:#${kRes.lineIdx}`, pPos: `IMG${line.imgIdx}:#${line.lineIdx}` });
+                        addLog(`[MAP] Prob:1/${p.toFixed(1)} (${vArr[vArr.length-1].pPos}) <- Count:${kRes.k} (${vArr[vArr.length-1].kPos})`);
                     } else {
                         vArr.push(null);
-                        addLog(`[MAP] Prob:1/${p.toFixed(1)} (#${i}) -> ⚠️ 回数不明`, "text-red-400");
+                        addLog(`[MAP] Prob:1/${p.toFixed(1)} (IMG${line.imgIdx}:#${line.lineIdx}) -> ⚠️ 回数不明`, "text-red-400");
                     }
                 }
             });
@@ -256,7 +272,6 @@
                 document.getElementById(`b${s}`).style.width = prob + "%";
                 addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${(maxL - lls[s]).toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
             });
-            addLog(`\nInference terminated.`);
         } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-600"); }
     }
 
