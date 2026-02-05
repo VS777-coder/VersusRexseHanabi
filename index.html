@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.11</title>
+    <title>ANALYZER Rev 2.2.13</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -25,7 +25,7 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.11</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.13</div>
         <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE PHYSICAL LOGISTICS</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
@@ -41,7 +41,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- 絶対規律：定義表の完全復旧 ---
+// --- [絶対規律] 最新定義表の完全固定 ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -113,14 +113,14 @@ const addLog = (m, c="text-white") => { const e=document.createElement('div'); e
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 const getStars = (gap) => gap < 0.1 ? "★★★★★" : gap < 0.5 ? "★★★★☆" : gap < 1.0 ? "★★★☆☆" : "★☆☆☆☆";
 
-async function processAnalysis(files) {
+async function runAnalysis(files) {
     const key = document.getElementById('api-key').value.trim();
-    if(!key) return alert("KEYを入力してください");
+    if(!key) return alert("API KEY REQUIRED");
     logArea.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.11`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.13`, "text-amber-400 font-bold");
 
     try {
-        let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null;
+        let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let foundHeaderG = false;
         const fileList = Array.from(files);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
@@ -141,37 +141,38 @@ async function processAnalysis(files) {
 
             if (fIdx === 0) {
                 titleLog(`(２) 機種判定`);
-                let head = rawLines.slice(0, 15).map(l=>l.text).join("");
-                if (head.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" }; }
-                else if (head.includes("バーサス")) { machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサスリヴァイズ" }; }
+                let headTxt = rawLines.slice(0, 15).map(l=>l.text).join("");
+                if (headTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" }; }
+                else if (headTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサスリヴァイズ" }; }
                 else { machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; }
                 addLog(`DETECTED: 【${machine.name}】 (定数:${machine.bG})`);
             }
 
             titleLog(`(３) 生データ (RAW)`);
-            rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-gray-600 text-[8px]"));
+            rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-zinc-600 text-[8px]"));
 
-            rawLines.forEach(l => {
-                const m = l.text.match(/([\d,]+)G/);
-                if (m) {
-                    const val = parseInt(m[1].replace(/,/g, ''));
-                    if (totalG === 0) totalG = val; else if (vcG === 0) vcG = val; else if (vgG === 0) vgG = val;
-                }
-            });
-
-            titleLog(`(５) 仮想配列作成部分のログ（物理順同期）`);
+            titleLog(`(５) 仮想配列作成ログ（GGG規律）`);
             rawLines.forEach((line, i) => {
-                if (line.text.includes("/") && line.text.match(/\d/)) {
+                // 総ゲーム数（G）の検知までは不純物として排除
+                const mG = line.text.match(/([\d,]+)G/);
+                if (mG) {
+                    const val = parseInt(mG[1].replace(/,/g, ''));
+                    if (!foundHeaderG) { totalG = val; foundHeaderG = true; addLog(`[GGG-HIT] 総プレイ数: ${totalG}G (#${i})`, "text-green-400"); }
+                    else if (vcG === 0) { vcG = val; addLog(`[GGG-HIT] チャレンジ: ${vcG}G (#${i})`, "text-green-400"); }
+                    else if (vgG === 0) { vgG = val; addLog(`[GGG-HIT] GAME: ${vgG}G (#${i})`, "text-green-400"); }
+                }
+
+                // G検知後のみ、確率行(/)を仮想配列へ格納
+                if (foundHeaderG && line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
                     let k = null;
                     for(let o of [2,3]) {
                         let t = rawLines[i-o];
                         if(t && t.text.includes("回") && !t.text.includes("/")) {
                             k = parseInt(t.text.replace(/[,回\s]/g,''));
-                            addLog(`[V-ARRAY] Anchor:"${line.text}" (#${i}) <- Found:"${t.text}"`); break;
+                            addLog(`[V-ARRAY] Anchor:"${line.text}" (#${i}) <- Trace:"${t.text}"`); break;
                         }
                     }
-                    let p = parseFloat(line.text.split("/")[1]) || 999999;
-                    vArray.push({ k, p });
+                    vArray.push({ k, p: parseFloat(line.text.split("/")[1]) || 999999 });
                 }
             });
         }
@@ -184,12 +185,12 @@ async function processAnalysis(files) {
             let data = vArray[si]; if(!data) return;
             let n = slot.type === "vc" ? vcG : slot.type === "vg" ? vgG : slot.type === "big" ? bbCount * machine.bG : totalG;
             
-            // 物理レスキュー規律
+            // 物理レスキュー：15回等の誤読を理論値へ引き戻す
             if(data.k === null || (Math.abs(data.k - (n/data.p)) > (n/data.p)*0.5 && Math.abs(data.k - (n/data.p)) > 10)) {
                 let old = data.k; data.k = Math.round(n / data.p);
                 addLog(`[RESCUE] ${slot.name} | RAW:${old} -> 復元:${data.k}回`, "text-red-400 font-bold");
             } else {
-                addLog(`[MAP] ${slot.name.padEnd(8)} | ${data.k}回 : 1/${data.p} (N=${n})`);
+                addLog(`[MAP] ${slot.name.padEnd(8)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`);
             }
 
             if(slot.active && n > 0) {
@@ -200,7 +201,7 @@ async function processAnalysis(files) {
             }
         });
 
-        titleLog(`(７) 尤度計算 強度判定`);
+        titleLog(`(７) 尤度計算 強度・ギャップ`);
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (Math.exp(lls[s] - max) / sum) * 100;
@@ -211,14 +212,14 @@ async function processAnalysis(files) {
         });
 
         titleLog(`(８) 設定判別結果`);
-        addLog(`>> ANALYSIS COMPLETE.`);
-    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-600 font-bold"); }
+        addLog(`>> SYSTEM SHUTDOWN: ANALYSIS COMPLETE.`);
+    } catch (e) { addLog(`❌ FATAL ERROR: ${e.message}`, "text-red-600 font-bold"); }
 }
 
 document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
 document.getElementById('copy-log').onclick = () => { const r = document.createRange(); r.selectNode(logArea); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert('COPIED'); };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
-document.getElementById('file-input').onchange = e => processAnalysis(e.target.files);
+document.getElementById('file-input').onchange = e => runAnalysis(e.target.files);
 </script>
 </body>
 </html>
