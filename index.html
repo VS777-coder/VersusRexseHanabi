@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.1.8</title>
+    <title>ANALYZER Rev 2.1.8 FINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -24,7 +24,7 @@
 <body>
     <div class="header-area">
         <div class="kawaii-title">ANALYZER REV 2.1.8</div>
-        <div class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT NAME-BASED MAPPING</div>
+        <div class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT PHYSICAL INDEX MAPPING</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -46,23 +46,23 @@
     </div>
 
 <script>
-    // --- 定義表（最新適合） ---
+    // --- 定義表（ユーザー提示の最新を絶対死守） ---
     const L_HANABI_CONFIG = [
-        { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
-        { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
-        { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
-        { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
-        { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
-        { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
-        { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
+        { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
+        { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "red7", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
+        { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
+        { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
+        { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ia", name: "氷Ａ", active: true, probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+        { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
+        { id: "cb", name: "チェリーＢ", active: true, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
         { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
         { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
         { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
@@ -70,21 +70,21 @@
     ];
 
     const HANABI_CONFIG = [
-        { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-        { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-        { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-        { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-        { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-        { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-        { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+        { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+        { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+        { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+        { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+        { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+        { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+        { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
         { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
         { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
         { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
@@ -92,20 +92,20 @@
     ];
 
     const VERSUS_CONFIG = [
-        { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-        { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-        { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-        { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-        { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-        { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-        { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+        { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+        { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+        { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+        { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+        { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+        { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+        { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
         { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
         { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
         { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
@@ -115,7 +115,6 @@
 
     const logArea = document.getElementById('log');
     const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logArea.appendChild(e); logArea.scrollTop=logArea.scrollHeight; };
-    const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
     async function processAnalysis(files) {
         const key = document.getElementById('api-key').value.trim();
@@ -124,10 +123,9 @@
         addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.1.8`, "text-amber-400 font-bold");
 
         try {
-            titleLog(`（１）画像情報`);
             let rawDatas = [];
             for (let file of Array.from(files)) {
-                addLog(`TARGET_FILE: ${file.name} / ${Math.round(file.size/1024)}KB`);
+                addLog(`TARGET: ${file.name}`);
                 const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
                 const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                 const json = await resp.json();
@@ -138,153 +136,89 @@
                     else acc.push({ y, words: [{x: w.boundingPoly.vertices[0].x, text: w.description}] });
                     return acc;
                 }, []).sort((a, b) => a.y - b.y).map(line => ({ text: line.words.sort((a, b) => a.x - b.x).map(w => w.text).join(" "), y: line.y }));
-                rawDatas.push({ file: file.name, lines });
+                rawDatas.push({ lines });
             }
 
-            titleLog(`（２）順序判定`);
-            const sorted = rawDatas.sort((a, b) => {
-                const aG = a.lines.some(l => l.text.includes("G"));
-                const bG = b.lines.some(l => l.text.includes("G"));
-                return bG - aG;
-            });
-            sorted.forEach((img, i) => addLog(`[SORT] Index[${i}]: ${img.file}`));
-
-            titleLog(`（３）画像別の生データ`);
-            sorted.forEach((img, i) => {
-                addLog(`--- IMAGE[${i}] RAW ---`, "text-amber-200 text-[8px]");
-                img.lines.forEach((l, li) => addLog(`[RAW] #${li.toString().padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-gray-500 text-[7px]"));
-            });
-
-            titleLog(`（４）機種判定 & G-GATE`);
+            // Gがある画像をBASEにする
+            const sorted = rawDatas.sort((a, b) => b.lines.some(l => l.text.includes("G")) - a.lines.some(l => l.text.includes("G")));
             let baseLines = sorted[0].lines;
             let headTxt = baseLines.slice(0, 15).map(l=>l.text).join("");
-            let isSmaslo = headTxt.includes("スマスロ");
-            let isVersus = headTxt.includes("バーサス");
-            let machine = isSmaslo ? {def:L_HANABI_CONFIG, name:"スマスロ", bG:20} :
-                          isVersus ? {def:VERSUS_CONFIG, name:"バーサス", bG:28} : {def:HANABI_CONFIG, name:"新ハナビ", bG:29};
+            let isSmaslo = headTxt.includes("スマスロ"), isVersus = headTxt.includes("バーサス");
+            let machine = isSmaslo ? {def:L_HANABI_CONFIG, name:"スマスロ", bG:20} : isVersus ? {def:VERSUS_CONFIG, name:"バーサス", bG:28} : {def:HANABI_CONFIG, name:"新ハナビ", bG:29};
             addLog(`DETECTED: 【${machine.name}】`);
 
-            let totalG = 0, vcG = 0, vgG = 0, gateIdx = -1, gCount = 0;
+            let totalG = 0, vcG = 0, vgG = 0, gateIdx = -1, gFound = 0;
             for(let i=0; i<Math.min(baseLines.length, 30); i++){
                 const matches = baseLines[i].text.match(/([\d,]+)G/g);
                 if(matches){
                     const nums = matches.map(s => parseInt(s.replace(/[,G]/g,'')));
                     if(isSmaslo){
                         nums.forEach(n => {
-                            gCount++;
-                            if(gCount === 1) totalG = n;
-                            if(gCount === 2) vcG = n;
-                            if(gCount === 3) { vgG = n; gateIdx = i; }
+                            gFound++;
+                            if(gFound === 1) totalG = n; if(gFound === 2) vcG = n; if(gFound === 3) { vgG = n; gateIdx = i; }
                         });
-                    } else if(totalG === 0){
-                        totalG = nums[0]; gateIdx = i;
-                    }
+                    } else if(totalG === 0){ totalG = nums[0]; gateIdx = i; }
                 }
                 if(gateIdx !== -1) break;
             }
-            if(gateIdx === -1) throw new Error("G-GATE NOT FOUND");
-            addLog(`G-GATE OPEN at Index[0]:#${gateIdx} (Total:${totalG} / VC:${vcG} / VG:${vgG})`);
 
-            titleLog(`（５）仮想配列作成（名前ベース・物理マッピング）`);
+            // 仮想配列（物理接着）
             let unified = [];
             sorted.forEach((img, idx) => {
-                if(idx === 0) {
-                    img.lines.slice(gateIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: 0, lineIdx: gateIdx + 1 + li }));
-                } else {
+                if(idx === 0) img.lines.slice(gateIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: 0, lineIdx: gateIdx + 1 + li }));
+                else {
                     let lastProb = [...unified].reverse().find(l => l.text.includes("/"));
-                    if(lastProb){
-                        let matchIdx = img.lines.findIndex(l => l.text.includes(lastProb.text));
-                        if(matchIdx !== -1) {
-                            addLog(`[JOIN] ${img.file} 接着点(IMG${idx}:#${matchIdx}) 「${lastProb.text}」`);
-                            img.lines.slice(matchIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: idx, lineIdx: matchIdx + 1 + li }));
-                        }
-                    }
+                    let mIdx = img.lines.findIndex(l => lastProb && l.text.includes(lastProb.text));
+                    if(mIdx !== -1) img.lines.slice(mIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: idx, lineIdx: mIdx + 1 + li }));
                 }
             });
 
-            // 【規律：名前ベースの抽出】
+            // 【規律：物理インデックス同期（文字列を見ない）】
+            let probLines = unified.filter(l => l.text.includes("/") && (l.text.includes(".") || l.text.includes("-")));
             let vArr = [];
+
             machine.def.forEach((slot, si) => {
-                // 1. 定義表の名前を探す
-                let nameLineIdx = unified.findIndex(l => l.text.replace(/\s+/g,'').includes(slot.name));
-                if (nameLineIdx !== -1) {
-                    // 2. その直近（3行以内）にある「/」を含む行を探す
-                    let pLine = null;
-                    let pLineRelIdx = -1;
-                    for (let j = 1; j <= 3; j++) {
-                        if (unified[nameLineIdx + j]?.text.includes("/")) {
-                            pLine = unified[nameLineIdx + j];
-                            pLineRelIdx = nameLineIdx + j;
-                            break;
-                        }
+                let pLine = probLines[si];
+                if (pLine) {
+                    let uIdx = unified.indexOf(pLine);
+                    let kLine = unified[uIdx - 1];
+                    let kVal = parseInt(kLine?.text.replace(/[,回]/g,'').match(/^\d+/)?.[0] || "0");
+                    let pVal = parseFloat(pLine.text.split("/")[1]?.replace(/,/g,'') || "0");
+
+                    // 10%乖離チェック
+                    let nRef = totalG;
+                    if(slot.type === "vc") nRef = isSmaslo ? vcG : Math.round(kVal * pVal);
+                    if(slot.type === "vg") nRef = isSmaslo ? vgG : Math.round(kVal * pVal);
+                    if(slot.type === "big") nRef = (vArr[1]?.k || 0) * machine.bG;
+
+                    let kCalc = Math.round(nRef / pVal);
+                    if(Math.abs(kVal - kCalc) > (kCalc * 0.1) && Math.abs(kVal - kCalc) > 5) {
+                        addLog(`⚠️ ALERT: ${slot.name} 補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
+                        kVal = kCalc;
                     }
-
-                    if (pLine) {
-                        // 3. その確率行の直前にある数字を回数とする
-                        let kLine = unified[pLineRelIdx - 1];
-                        let kVal = parseInt(kLine?.text.replace(/[,回]/g,'').match(/^\d+/)?.[0] || "0");
-                        let pVal = parseFloat(pLine.text.split("/")[1].replace(/,/g,''));
-
-                        // 4. 自己修復（10%乖離チェック）
-                        let nRef = totalG;
-                        if(slot.type === "vc") nRef = isSmaslo ? vcG : Math.round(kVal * pVal);
-                        if(slot.type === "vg") nRef = isSmaslo ? vgG : Math.round(kVal * pVal);
-                        if(slot.type === "big") nRef = (vArr[1]?.k || 0) * machine.bG;
-
-                        let kCalc = Math.round(nRef / pVal);
-                        if(Math.abs(kVal - kCalc) > (kCalc * 0.1) && Math.abs(kVal - kCalc) > 5) {
-                            addLog(`⚠️ ALERT: ${slot.name} 補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
-                            kVal = kCalc;
-                        }
-                        vArr.push({ k: kVal, p: pVal, pos: `IMG${pLine.imgIdx}:#${pLine.lineIdx}` });
-                        addLog(`[MAP] ${slot.name.padEnd(8)} | 1/${pVal.toFixed(1)} <- ${kVal}回 (${vArr[vArr.length-1].pos})`);
-                    } else {
-                        vArr.push(null);
-                        addLog(`[MAP] ${slot.name.padEnd(8)} | ⚠️ 確率行見つからず`, "text-gray-500");
-                    }
-                } else {
-                    vArr.push(null);
-                    addLog(`[MAP] ${slot.name.padEnd(8)} | ⚠️ 項目名見つからず`, "text-gray-500");
+                    vArr.push({ k: kVal, p: pVal });
+                    addLog(`[MAP] Slot${si}: ${slot.name.padEnd(8)} | 1/${pVal.toFixed(1)} <- ${kVal}回`);
                 }
             });
 
-            titleLog(`（６）定義表当て込み （７）尤度計算`);
+            // 尤度 & 最終
             let lls = {1:0, 2:0, 5:0, 6:0};
-            let bbTotalCount = vArr[1]?.k || 0;
-
             machine.def.forEach((slot, si) => {
-                let data = vArr[si];
-                if(!data) return;
+                let d = vArr[si]; if(!d || !slot.active) return;
                 let n = totalG;
-                if(slot.type === "vc") n = isSmaslo ? vcG : Math.round(data.k * data.p);
-                if(slot.type === "vg") n = isSmaslo ? vgG : Math.round(data.k * data.p);
-                if(slot.type === "big") n = bbTotalCount * machine.bG;
-
-                addLog(`${slot.name.padEnd(12)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`);
-                if(slot.active && n > 0 && data.p < 99999){
-                    let itemLLs = {1:0, 2:0, 5:0, 6:0};
-                    [1,2,5,6].forEach(s => {
-                        let tp = 1 / slot.probs[s];
-                        let ll = (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
-                        itemLLs[s] = ll; lls[s] += ll;
-                    });
-                    const maxI = Math.max(...Object.values(itemLLs));
-                    [1,2,5,6].forEach(s => {
-                        let gap = maxI - itemLLs[s];
-                        addLog(`  [設定${s}] ${gap < 0.1 ? '★★★★★' : gap < 0.5 ? '★★★★☆' : '★★★☆☆'} (Gap:${gap.toFixed(3)})`, "text-gray-500 text-[8px]");
-                    });
-                }
+                if(slot.type === "vc") n = isSmaslo ? vcG : Math.round(d.k * d.p);
+                if(slot.type === "vg") n = isSmaslo ? vgG : Math.round(d.k * d.p);
+                if(slot.type === "big") n = (vArr[1]?.k || 0) * machine.bG;
+                if(n > 0 && d.p < 99999) [1,2,5,6].forEach(s => { let tp = 1/slot.probs[s]; lls[s] += (d.k*Math.log(tp) + (n-d.k)*Math.log(1-tp)); });
             });
 
-            titleLog(`（８）設定判別処理（最終）`);
-            const maxL = Math.max(...Object.values(lls));
-            const sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxL), 0);
+            const maxL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxL), 0);
             [1,2,5,6].forEach(s => {
                 let prob = (Math.exp(lls[s] - maxL) / sumExp) * 100;
                 document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
                 document.getElementById(`b${s}`).style.width = prob + "%";
-                addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${(maxL - lls[s]).toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
             });
+            addLog("ANALYSIS COMPLETE", "text-amber-400 font-bold");
         } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-600"); }
     }
 
