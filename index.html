@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.1.9</title>
+    <title>ANALYZER Rev 2.2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -22,9 +22,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area">
-        <div class="kawaii-title">ANALYZER REV 2.1.9</div>
-    </div>
+    <div class="header-area"><div class="kawaii-title">ANALYZER REV 2.2.0</div></div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
     <div id="result-area" class="result-card">
@@ -45,7 +43,7 @@
     </div>
 
 <script>
-    // 定義表 (完全固定)
+    // --- 規律：定義表の絶対保持 ---
     const L_HANABI_CONFIG = [
         { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -120,7 +118,7 @@
         const key = document.getElementById('api-key').value.trim();
         if(!key) { alert("API KEY REQUIRED"); return; }
         logArea.innerHTML = "";
-        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.1.9`, "text-amber-400 font-bold");
+        addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.0`, "text-amber-400 font-bold");
 
         try {
             titleLog(`（１）画像情報`);
@@ -211,11 +209,12 @@
                     let nRef = totalG;
                     if(slot.type === "vc") nRef = isSmaslo ? vcG : Math.round(kVal * pVal);
                     if(slot.type === "vg") nRef = isSmaslo ? vgG : Math.round(kVal * pVal);
-                    if(slot.type === "big") nRef = (vArr[1]?.k || 0) * machine.bG;
+                    if(slot.type === "big") nRef = (vArr[1]?.k || 0) * 28; // 最大猶予定数
 
                     let kCalc = Math.round(nRef / pVal);
-                    if(Math.abs(kVal - kCalc) > (kCalc * 0.1) && Math.abs(kVal - kCalc) > 5) {
-                        addLog(`⚠️ ALERT: ${slot.name} 補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
+                    // 【規律修正】誤認閾値を20%に緩和。生データの「遊び」を許容する。
+                    if(Math.abs(kVal - kCalc) > (kCalc * 0.2) && Math.abs(kVal - kCalc) > 5) {
+                        addLog(`⚠️ ALERT: ${slot.name} 物理的誤認補正 [OCR:${kVal} → CALC:${kCalc}]`, "text-red-400");
                         kVal = kCalc;
                     }
                     vArr.push({ k: kVal, p: pVal });
@@ -236,7 +235,7 @@
                 let n = totalG;
                 if(slot.type === "vc") n = isSmaslo ? vcG : Math.round(d.k * d.p);
                 if(slot.type === "vg") n = isSmaslo ? vgG : Math.round(d.k * d.p);
-                if(slot.type === "big") n = (vArr[1]?.k || 0) * machine.bG;
+                if(slot.type === "big") n = (vArr[1]?.k || 0) * 28;
                 if(n > 0 && d.p < 99999) {
                     let itemLLs = {1:0, 2:0, 5:0, 6:0};
                     [1,2,5,6].forEach(s => { 
