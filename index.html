@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.8.5</title>
+    <title>ANALYZER Rev 1.8.6 DEBUG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -13,28 +13,31 @@
         .main-btn { background-color: #1e3a8a; border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
         .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fff; }
         .result-card { background-color: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #020617; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #1e293b; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; }
-        .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #adbac7; line-height: 1.4; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #3b82f6; color: #fff; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; }
+        .future-log { background-color: #000000; border: 1px solid #3b82f6; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #adbac7; line-height: 1.4; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
         .save-btn { background-color: #1e293b; color: #3b82f6; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 10px; cursor: pointer; }
+        .set-1 { color: #22d3ee; } .bar-1 { background-color: #22d3ee; } .set-2 { color: #facc15; } .bar-2 { background-color: #facc15; } .set-5 { color: #4ade80; } .bar-5 { background-color: #4ade80; } .set-6 { color: #f87171; } .bar-6 { background-color: #f87171; }
     </style>
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.5</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-400 text-center mb-1">Structural Sequential (Debug Mode)</div>
+        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.6</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">RAW LOG DEBUG MODE</div>
     </div>
-    <div class="shrink-0"><label for="file-input" class="main-btn"><span>解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
+    <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
     <div id="result-area" class="result-card">
-        <div class="flex justify-between text-[11px] mb-1 font-bold"><span>設定1: <span id="p1">---</span>%</span><span>設定2: <span id="p2">---</span>%</span></div>
-        <div class="flex justify-between text-[11px] font-bold"><span>設定5: <span id="p5">---</span>%</span><span>設定6: <span id="p6">---</span>%</span></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bar-1"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bar-2"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold set-5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bar-5"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-bold set-6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bar-6"></div></div></div>
     </div>
-
-    <div class="log-container">
-        <div id="log" class="future-log">READY...</div>
-    </div>
+    <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log" class="future-log">READY...</div></div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
@@ -111,7 +114,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> ANALYZER Rev 1.8.5 BOOTING...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.8.6...`, "text-blue-500 font-bold");
 
             try {
                 let vArray = []; 
@@ -120,7 +123,7 @@
                 const fileList = Array.from(files);
 
                 for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
-                    addLog(`\n[STEP 1] IMG_${fIdx} スキャン中...`, "text-cyan-400 font-bold");
+                    addLog(`\n--- IMG_${fIdx} OCR RAW DATA ---`, "text-gray-500 font-bold");
                     const base64 = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
                     const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, { method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] }) });
                     const json = await resp.json();
@@ -129,17 +132,20 @@
                         y: p.boundingBox.vertices[0].y
                     })).sort((a, b) => a.y - b.y);
 
-                    // A. 1枚目のみ：G出現前までのテキストで機種確定
+                    // RAW LOGGING
+                    rawLines.forEach((l, idx) => { addLog(`[RAW] #${idx} Y:${l.y} | ${l.text}`, "text-green-800 text-[8px]"); });
+
+                    // 1. 機種判定
                     if (fIdx === 0) {
                         let preGTxt = "";
                         for (let l of rawLines) { if (l.text.includes("G")) break; preGTxt += l.text; }
-                        if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロハナビ" }; }
-                        else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサスリヴァイズ" }; }
+                        if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "Lハナビ" }; }
+                        else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" }; }
                         else { machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" }; }
-                        addLog(`[LOG] 機種確定: ${machine.name} (Offset: ${machine.offset})`, "text-yellow-400 font-bold");
+                        addLog(`[G-SCAN] 機種判定: ${machine.name} (HeaderG数: ${machine.offset})`, "text-yellow-400 font-bold");
                     }
 
-                    // B. GカウントによるHeaderスキップ
+                    // 2. G処理
                     let gFound = 0;
                     let bodyStartIdx = 0;
                     rawLines.forEach((l, i) => {
@@ -147,41 +153,44 @@
                         if (m) {
                             gFound++;
                             const val = parseInt(m[1].replace(/,/g, ''));
+                            addLog(`[G-SCAN] #${gFound} G発見: ${val}`, "text-orange-400 text-[9px]");
                             if (gFound <= machine.offset) gCounts[gFound-1] = val;
                             if (gFound === machine.offset) bodyStartIdx = i + 1;
                         }
                     });
 
-                    // C. 物理順序抽出 (2行上/3行上)
+                    // 3. Body抽出
+                    addLog(`[BODY-SCAN] 小役データ抽出開始 (StartIndex: ${bodyStartIdx})`, "text-cyan-400 text-[9px]");
                     for (let i = bodyStartIdx; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
                             let k = null;
                             let src = "";
+                            // 2行上/3行上
                             if (rawLines[i-2] && rawLines[i-2].text.match(/\d+/)) { k = parseInt(rawLines[i-2].text.replace(/[^0-9]/g, '')); src = "2行上"; }
                             else if (rawLines[i-3] && rawLines[i-3].text.match(/\d+/)) { k = parseInt(rawLines[i-3].text.replace(/[^0-9]/g, '')); src = "3行上"; }
 
                             if (k === null) {
-                                addLog(`❌ FATAL: "${line.text}" の回数取得失敗(2/3行上不足)`, "text-red-500 font-bold");
+                                addLog(`❌ FATAL: #${i} "${line.text}" の回数取得失敗(2/3行上不足)`, "text-red-500 font-bold");
                                 return;
                             }
 
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
+                            const hasKai = (rawLines[i-2]?.text.includes("回") || rawLines[i-3]?.text.includes("回"));
                             const pair = { k, p, id: `${k}_${p}` };
 
-                            // 複数画像マージ
                             if (vArray.length === 0 || pair.id !== vArray[vArray.length-1].id) {
                                 vArray.push(pair);
-                                addLog(`  [SCAN] ${src}より${pair.k}回 (1/${pair.p}) を抽出`, "text-green-400 text-[9px]");
+                                addLog(`[BODY-SCAN] #${i} ${src}より${pair.k}回(1/${pair.p})取得 ${hasKai?"[回OK]":"[回NG]"}`, "text-green-400 text-[9px]");
                             }
                         }
                     }
                 }
 
-                // D. 物理マッピング & 尤度
-                addLog(`\n[STEP 2] 物理マッピング開始`, "text-cyan-400 font-bold");
+                // 4. マッピング
+                addLog(`\n[MAP] 物理スロット割り当て開始...`, "text-cyan-400 font-bold");
                 let lls = {1:0, 2:0, 5:0, 6:0};
-                let bbCount = (vArray[1]?.k || 0); 
+                let bbCount = (vArray[1]?.k || 0);
 
                 machine.def.forEach((item, slotIdx) => {
                     const data = vArray[slotIdx];
@@ -197,23 +206,29 @@
                             let tp = 1 / item.probs[s];
                             lls[s] += (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
                         });
-                        addLog(`  [MAP] SLOT[${slotIdx}] ${item.name} OK: ${data.k}回`, "text-gray-400 text-[9px]");
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} <- ${data.k}回 (N=${n})`, "text-gray-400 text-[9px]");
                     }
                 });
 
-                // E. 表示
+                // 5. 表示
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1,2,5,6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
-                    document.getElementById(`p${s}`).innerText = prob.toFixed(1);
+                    document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
+                    document.getElementById(`b${s}`).style.width = prob + "%";
                 });
 
             } catch (err) { addLog(`❌ ERROR: ${err.message}`, "text-red-600"); }
         }
 
-        document.getElementById('file-input').onchange = e => processMulti(e.target.files);
         document.getElementById('save-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
+        document.getElementById('copy-log').onclick = () => { 
+            const range = document.createRange(); range.selectNode(logArea); 
+            window.getSelection().removeAllRanges(); window.getSelection().addRange(range); 
+            document.execCommand('copy'); alert('LOG COPIED'); 
+        };
         window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
+        document.getElementById('file-input').onchange = e => processMulti(e.target.files);
     </script>
 </body>
 </html>
