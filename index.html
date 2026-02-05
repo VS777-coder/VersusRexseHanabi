@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.1.6</title>
+    <title>ANALYZER Rev 2.1.6 Final</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -16,7 +16,7 @@
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; }
         .future-log { background-color: #0c0a09; border: 1px solid #78350f; border-radius: 8px; padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #ffffff; line-height: 1.5; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; cursor: pointer; border: none; z-index: 10; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; cursor: pointer; border: none; z-index: 100; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
     </style>
@@ -27,17 +27,25 @@
         <div class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE PHYSICAL AUTO-REPAIR</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span class="text-white text-2xl font-black">解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
+    
     <div id="result-area" class="result-card">
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-amber-400"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-amber-400"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-amber-500"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-amber-500"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-orange-600"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-orange-600"></div></div></div>
         <div><div class="flex justify-between text-[11px] font-bold text-red-600"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600"></div></div></div>
     </div>
-    <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log" class="future-log">READY...</div></div>
-    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="bg-amber-900 text-amber-200 px-4 rounded">SAVE</button></div>
+
+    <div class="log-container">
+        <button id="copy-log" class="copy-btn">COPY</button>
+        <div id="log" class="future-log">READY...</div>
+    </div>
+
+    <div class="api-footer">
+        <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
+        <button id="save-key" class="bg-amber-900 text-amber-200 px-4 rounded">SAVE</button>
+    </div>
 
 <script>
-    // 定義表 (完全固定)
     const L_HANABI_CONFIG = [
         { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -85,13 +93,21 @@
     const VERSUS_CONFIG = [
         { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+        { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+        { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
         { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+        { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+        { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+        { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
         { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
         { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
         { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+        { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
         { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
         { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
     ];
@@ -107,6 +123,7 @@
         addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.1.6`, "text-amber-400 font-bold");
 
         try {
+            // (1) 画像取得・OCR
             titleLog(`（１）画像情報`);
             let rawDatas = [];
             for (let file of Array.from(files)) {
@@ -124,7 +141,8 @@
                 rawDatas.push({ file: file.name, lines });
             }
 
-            titleLog(`（２）画像順序・接着判定`);
+            // (2) 順序判定
+            titleLog(`（２）画像の順番の判定処理`);
             const sorted = rawDatas.sort((a, b) => {
                 const aG = a.lines.some(l => l.text.includes("G"));
                 const bG = b.lines.some(l => l.text.includes("G"));
@@ -132,61 +150,67 @@
             });
             sorted.forEach((img, i) => addLog(`[SORT] Index[${i}]: ${img.file} ${img.lines.some(l=>l.text.includes("G"))?'(BASE)':''}`));
 
+            // (3) 生データ
             titleLog(`（３）画像別の生データ`);
             sorted.forEach((img, i) => {
                 addLog(`--- IMAGE[${i}] RAW ---`, "text-amber-200 text-[8px]");
                 img.lines.forEach((l, li) => addLog(`[RAW] #${li.toString().padStart(2,'0')} Y:${l.y} | ${l.text}`, "text-gray-500 text-[7px]"));
             });
 
-            titleLog(`（４）機種判定 & G-GATE`);
+            // (4) 機種判定・G-GATE
+            titleLog(`（４）機種判定`);
             let baseLines = sorted[0].lines;
-            let headTxt = baseLines.slice(0, 15).map(l=>l.text).join("");
+            let headTxt = baseLines.slice(0, 10).map(l=>l.text).join("");
             let isSmaslo = headTxt.includes("スマスロ");
             let isVersus = headTxt.includes("バーサス");
             let machine = isSmaslo ? {def:L_HANABI_CONFIG, name:"スマスロ", bG:20} :
                           isVersus ? {def:VERSUS_CONFIG, name:"バーサス", bG:28} : {def:HANABI_CONFIG, name:"新ハナビ", bG:29};
             addLog(`DETECTED: 【${machine.name}】`);
 
-            let totalG = 0, vcG = 0, vgG = 0, gateIdx = -1;
-            let gCountFound = 0;
-            for(let i=0; i<Math.min(baseLines.length, 30); i++) {
-                const gs = baseLines[i].text.match(/([\d,]+)G/g);
-                if(gs) {
-                    const nums = gs.map(s => parseInt(s.replace(/[,G]/g,'')));
-                    if(isSmaslo) {
+            let totalG = 0, vcG = 0, vgG = 0, gateIdx = -1, gFound = 0;
+            for(let i=0; i<Math.min(baseLines.length, 30); i++){
+                const matches = baseLines[i].text.match(/([\d,]+)G/g);
+                if(matches){
+                    const nums = matches.map(s => parseInt(s.replace(/[,G]/g,'')));
+                    if(isSmaslo){
                         nums.forEach(n => {
-                            gCountFound++;
-                            if(gCountFound === 1) totalG = n;
-                            if(gCountFound === 2) vcG = n;
-                            if(gCountFound === 3) { vgG = n; gateIdx = i; }
+                            gFound++;
+                            if(gFound === 1) totalG = n;
+                            if(gFound === 2) vcG = n;
+                            if(gFound === 3) { vgG = n; gateIdx = i; }
                         });
-                    } else if(totalG === 0) { totalG = nums[0]; gateIdx = i; }
+                    } else if(totalG === 0){
+                        totalG = nums[0]; gateIdx = i;
+                    }
                 }
                 if(gateIdx !== -1) break;
             }
             if(gateIdx === -1) throw new Error("G-GATE NOT FOUND");
             addLog(`G-GATE OPEN at Index[0]:#${gateIdx} (Total:${totalG} / VC:${vcG} / VG:${vgG})`);
 
-            titleLog(`（５）仮想配列作成（物理マッピング・自己修復）`);
+            // (5) 仮想配列作成 (物理接着・自己修復)
+            titleLog(`（５）仮想配列作成部分のログ`);
             let unified = [];
             sorted.forEach((img, idx) => {
                 if(idx === 0) {
                     img.lines.slice(gateIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: 0, lineIdx: gateIdx + 1 + li }));
                 } else {
                     let lastProb = [...unified].reverse().find(l => l.text.includes("/"));
-                    let matchIdx = img.lines.findIndex(l => lastProb && l.text.includes(lastProb.text));
-                    if(matchIdx !== -1) {
-                        addLog(`[JOIN] ${img.file} 接着点(IMG${idx}:#${matchIdx}) 「${lastProb.text}」`);
-                        img.lines.slice(matchIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: idx, lineIdx: matchIdx + 1 + li }));
+                    if(lastProb){
+                        let matchIdx = img.lines.findIndex(l => l.text.includes(lastProb.text));
+                        if(matchIdx !== -1) {
+                            addLog(`[JOIN] ${img.file} 接着点(IMG${idx}:#${matchIdx}) 「${lastProb.text}」`);
+                            img.lines.slice(matchIdx + 1).forEach((l, li) => unified.push({ text: l.text, imgIdx: idx, lineIdx: matchIdx + 1 + li }));
+                        }
                     }
                 }
             });
 
             let vArr = [];
             unified.forEach((line, i) => {
-                if(line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
+                if(line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))){
                     const findK = (idx) => {
-                        for(let j=1; j<=4; j++) {
+                        for(let j=1; j<=4; j++){
                             const m = unified[idx-j]?.text.replace(/[,回]/g,'').match(/^\d+/);
                             if(m) return {k:parseInt(m[0]), pos:`IMG${unified[idx-j].imgIdx}:#${unified[idx-j].lineIdx}`};
                         } return null;
@@ -196,20 +220,21 @@
                     let pVal = line.text.includes("-") ? 999999 : parseFloat(rawP.replace(/,/g, ''));
                     
                     if(kRes) {
-                        // 【物理規律：自己修復機能】
-                        let currentSlot = machine.def[vArr.length];
+                        let curSlot = machine.def[vArr.length];
                         let nRef = totalG;
-                        if(currentSlot?.type === "vc") nRef = isSmaslo ? vcG : Math.round(kRes.k * pVal);
-                        if(currentSlot?.type === "vg") nRef = isSmaslo ? vgG : Math.round(kRes.k * pVal);
-                        if(currentSlot?.type === "big") nRef = (vArr[1]?.k || 0) * machine.bG;
+                        if(curSlot?.type === "vc") nRef = isSmaslo ? vcG : Math.round(kRes.k * pVal);
+                        if(curSlot?.type === "vg") nRef = isSmaslo ? vgG : Math.round(kRes.k * pVal);
+                        if(curSlot?.type === "big") nRef = (vArr[1]?.k || 0) * machine.bG;
 
                         let kCalc = Math.round(nRef / pVal);
                         let finalK = kRes.k;
+                        // 乖離判定ロジック：OCR優先だが、異常値のみ修正
                         if(Math.abs(kRes.k - kCalc) > 2) {
-                            addLog(`⚠️ ALERT: ${currentSlot?.name} 誤読補正 [OCR:${kRes.k} → CALC:${kCalc}] (1/${pVal.toFixed(1)})`, "text-red-400");
+                            addLog(`⚠️ ALERT: ${curSlot?.name} 誤読補正 [OCR:${kRes.k} → CALC:${kCalc}]`, "text-red-400");
                             finalK = kCalc;
                         }
                         vArr.push({ k: finalK, p: pVal, kPos: kRes.pos, pPos: `IMG${line.imgIdx}:#${line.lineIdx}` });
+                        addLog(`[MAP] Prob:1/${pVal.toFixed(1)} (${vArr[vArr.length-1].pPos}) <- Count:${finalK} (${vArr[vArr.length-1].kPos})`);
                     } else {
                         vArr.push(null);
                         addLog(`[MAP] 1/${pVal.toFixed(1)} -> ⚠️回数不明`, "text-red-400");
@@ -217,9 +242,10 @@
                 }
             });
 
-            titleLog(`（６）定義表当て込み （７）尤度計算`);
+            // (6)(7) 当て込み・尤度
+            titleLog(`（６）定義表への当て込み（７）尤度計算`);
             let lls = {1:0, 2:0, 5:0, 6:0};
-            let bbCount = vArr[1]?.k || 0;
+            let bbTotalCount = vArr[1]?.k || 0;
 
             machine.def.forEach((slot, si) => {
                 let data = vArr[si];
@@ -227,10 +253,10 @@
                 let n = totalG;
                 if(slot.type === "vc") n = isSmaslo ? vcG : Math.round(data.k * data.p);
                 if(slot.type === "vg") n = isSmaslo ? vgG : Math.round(data.k * data.p);
-                if(slot.type === "big") n = bbCount * machine.bG;
+                if(slot.type === "big") n = bbTotalCount * machine.bG;
 
                 addLog(`${slot.name.padEnd(12)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`);
-                if(slot.active && n > 0 && data.p < 99999) {
+                if(slot.active && n > 0 && data.p < 99999){
                     let itemLLs = {1:0, 2:0, 5:0, 6:0};
                     [1,2,5,6].forEach(s => {
                         let tp = 1 / slot.probs[s];
@@ -245,6 +271,7 @@
                 }
             });
 
+            // (8) 最終結果
             titleLog(`（８）設定判別処理（最終）`);
             const maxL = Math.max(...Object.values(lls));
             const sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxL), 0);
@@ -254,7 +281,6 @@
                 document.getElementById(`b${s}`).style.width = prob + "%";
                 addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}% | 総GAP: ${(maxL - lls[s]).toFixed(4)}`, s === 6 ? "text-red-400" : "text-white");
             });
-            addLog(`\nInference cycle terminated.`);
         } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-600"); }
     }
 
