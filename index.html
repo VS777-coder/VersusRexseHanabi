@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.15</title>
+    <title>ANALYZER Rev 2.2.16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -25,8 +25,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.15</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE PHYSICAL LOGISTICS</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.16</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOGISTICS STABILITY VERIFIED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     
@@ -40,7 +40,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [永久凍結] 最新定義表 ---
+// --- [永久凍結] 定義表 ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -116,7 +116,7 @@ async function run(files) {
     const key = document.getElementById('api-key').value.trim();
     if(!key) return alert("VISION API KEY REQUIRED");
     logArea.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.15`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.16`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let gOrigin = -1;
@@ -154,22 +154,37 @@ async function run(files) {
                 const mG = line.text.match(/([\d,]+)G/);
                 if (mG) {
                     const val = parseInt(mG[1].replace(/,/g, ''));
+                    // 総ゲーム数(G)検知
                     if (gOrigin === -1) { totalG = val; gOrigin = i; addLog(`[G-START] TotalG Detect: ${totalG}G (#${i})`, "text-green-400"); }
-                    else if (vcG === 0) { vcG = val; addLog(`[G-INFO] VC-G Detect: ${vcG}G (#${i})`, "text-cyan-400"); }
-                    else if (vgG === 0) { vgG = val; addLog(`[G-INFO] VG-G Detect: ${vgG}G (#${i})`, "text-cyan-400"); }
+                    // RTゲーム数スキャン(近傍限定: Originから100行以内)
+                    else if (i < gOrigin + 100) {
+                        if (line.text.includes("ハナビチャレンジ") || line.text.includes("チャンス")) vcG = val;
+                        else if (line.text.includes("ハナビゲーム") || line.text.includes("GAME")) vgG = val;
+                    }
                 }
 
+                // [物理順] G検知以降の確率行を順番に格納
                 if (gOrigin !== -1 && i > gOrigin && line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
                     if (vArray.length < machine.def.length) {
                         let k = null;
-                        for(let o of [2,3]) {
-                            let t = rawLines[i-o];
-                            if(t && t.text.includes("回") && !t.text.includes("/")) {
-                                k = parseInt(t.text.replace(/[,回\s]/g,''));
-                                addLog(`[V-ARRAY] Index:${vArray.length} Anchor:"${line.text}" (#${i}) <- Found:"${t.text}"`); break;
+                        // 1. 同一行スキャン (優先)
+                        const sameMatch = line.text.match(/(\d+)[\s]*回/);
+                        if (sameMatch) { k = parseInt(sameMatch[1]); }
+                        
+                        // 2. 2-3行上スキャン
+                        if (k === null) {
+                            for(let o of [2,3]) {
+                                let t = rawLines[i-o];
+                                if(t && !t.text.includes("/")) {
+                                    const numMatch = t.text.replace(/,/g, '').match(/\d+/);
+                                    if (numMatch) { k = parseInt(numMatch[0]); break; }
+                                }
                             }
                         }
-                        vArray.push({ k, p: parseFloat(line.text.split("/")[1]) || 999999 });
+                        // カンマ除去を徹底した確率パース
+                        let p = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
+                        addLog(`[V-ARRAY] ID:${vArray.length} Anchor:"${line.text}" (#${i}) <- RAW:${k}`);
+                        vArray.push({ k, p });
                     }
                 }
             });
@@ -181,14 +196,14 @@ async function run(files) {
 
         machine.def.forEach((slot, si) => {
             let data = vArray[si]; if(!data) return;
-            let n = slot.type === "vc" ? vcG : (slot.type === "vg" ? vgG : (slot.type === "big" ? bbCount * machine.bG : totalG));
+            // RT母数の論理分岐 (bG:20以外はk*pを信じる)
+            let n = (slot.type === "vc" || slot.type === "vg") ? (machine.bG === 20 ? (slot.type==="vc"?vcG:vgG) : Math.round(data.k * data.p)) : 
+                    (slot.type === "big" ? bbCount * machine.bG : totalG);
             
-            // --- ロジカル・シグマ判定エンジン ---
             let theoryK = n / data.p; 
             let sigma = Math.sqrt(theoryK); 
             let diff = Math.abs(data.k - theoryK);
-            // 期待値が極小の場合は固定5回、それ以外は期待値のムラ(4σ)を許容
-            let threshold = Math.max(5, sigma * 4);
+            let threshold = Math.max(5, sigma * 4.5); // 氷B等を救うため少し余裕を持たせる
 
             if(data.k === null || diff > threshold) {
                 let old = data.k; data.k = Math.round(theoryK);
