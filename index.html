@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 1.8.6 DEBUG</title>
+    <title>ANALYZER Rev 1.8.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -26,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.6</div>
-        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">RAW LOG DEBUG MODE</div>
+        <div class="kawaii-title uppercase text-blue-500">ANALYZER REV 1.8.7</div>
+        <div id="machine-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">STRICT VALIDATION MODE</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -114,7 +114,7 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 1.8.6...`, "text-blue-500 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 1.8.7...`, "text-blue-500 font-bold");
 
             try {
                 let vArray = []; 
@@ -132,14 +132,14 @@
                         y: p.boundingBox.vertices[0].y
                     })).sort((a, b) => a.y - b.y);
 
-                    // RAW LOGGING
+                    // RAW LOGGING (Rev 1.8.6相当)
                     rawLines.forEach((l, idx) => { addLog(`[RAW] #${idx} Y:${l.y} | ${l.text}`, "text-green-800 text-[8px]"); });
 
                     // 1. 機種判定
                     if (fIdx === 0) {
                         let preGTxt = "";
                         for (let l of rawLines) { if (l.text.includes("G")) break; preGTxt += l.text; }
-                        if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "Lハナビ" }; }
+                        if (preGTxt.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" }; }
                         else if (preGTxt.includes("バーサス")) { machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" }; }
                         else { machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" }; }
                         addLog(`[G-SCAN] 機種判定: ${machine.name} (HeaderG数: ${machine.offset})`, "text-yellow-400 font-bold");
@@ -159,20 +159,37 @@
                         }
                     });
 
-                    // 3. Body抽出
+                    // 3. Body抽出 (指示通りの厳格バリデーション)
                     addLog(`[BODY-SCAN] 小役データ抽出開始 (StartIndex: ${bodyStartIdx})`, "text-cyan-400 text-[9px]");
                     for (let i = bodyStartIdx; i < rawLines.length; i++) {
                         const line = rawLines[i];
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
                             let k = null;
                             let src = "";
-                            // 2行上/3行上
-                            if (rawLines[i-2] && rawLines[i-2].text.match(/\d+/)) { k = parseInt(rawLines[i-2].text.replace(/[^0-9]/g, '')); src = "2行上"; }
-                            else if (rawLines[i-3] && rawLines[i-3].text.match(/\d+/)) { k = parseInt(rawLines[i-3].text.replace(/[^0-9]/g, '')); src = "3行上"; }
+                            const numRegex = /^[0-9,]+回?$/;
 
+                            const checkLine = (idx) => {
+                                if (!rawLines[idx]) return null;
+                                const t = rawLines[idx].text.trim();
+                                if (t.includes("/")) return null; // スラッシュ入りは除外
+                                if (numRegex.test(t)) {
+                                    return parseInt(t.replace(/[^0-9]/g, ''));
+                                }
+                                return null;
+                            };
+
+                            k = checkLine(i - 2);
+                            if (k !== null) { src = "2行上"; }
+                            else {
+                                k = checkLine(i - 3);
+                                if (k !== null) src = "3行上";
+                            }
+
+                            // ❌ 停止条件
                             if (k === null) {
-                                addLog(`❌ FATAL: #${i} "${line.text}" の回数取得失敗(2/3行上不足)`, "text-red-500 font-bold");
-                                return;
+                                const errorMsg = `❌ FATAL ERROR: 確率行 "${line.text}" (#${i}) に対する有効な回数が見つかりません。解析を中止します。`;
+                                addLog(errorMsg, "text-red-500 font-bold underline");
+                                throw new Error("Data missing/corrupted at index " + i);
                             }
 
                             const p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
@@ -210,7 +227,7 @@
                     }
                 });
 
-                // 5. 表示
+                // 5. 結果表示
                 const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1,2,5,6].forEach(s => {
                     let prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
