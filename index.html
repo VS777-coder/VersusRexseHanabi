@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.0.2</title>
+    <title>ANALYZER Rev 2.0.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.0.2</div>
-        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">INTENSIVE GAP ANALYSIS</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.0.4</div>
+        <div id="machine-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE PHYSICAL ANALYZER</div>
     </div>
     <div class="shrink-0"><label for="file-input" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="file-input" class="hidden" accept="image/*" multiple></div>
     
@@ -44,71 +44,70 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="save-key" class="save-btn">SAVE</button></div>
 
     <script>
-        // 指示通りの定義表
         const L_HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
-            { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
-            { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
-            { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
-            { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
-            { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "rt", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "rt", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
-            { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
-            { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red7", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
+            { id: "b_ba", name: "BIG中風鈴Ａ", active: true, probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
+            { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
         ];
 
         const HANABI_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-            { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-            { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
-            { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
-            { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
-            { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-            { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "rt", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
-            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "rt", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
-            { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-            { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス", active: true, probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+            { id: "don", name: "ドンBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "red", name: "赤七BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+            { id: "f_tot", name: "風鈴合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "風鈴Ａ", active: true, probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+            { id: "bb_b", name: "風鈴Ｂ", active: true, probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+            { id: "i_tot", name: "氷合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ia", name: "氷Ａ", active: true, probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+            { id: "ib", name: "氷Ｂ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "c_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca1", name: "チェリーＡ１", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca2", name: "チェリーＡ２", active: true, probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+            { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+            { id: "vg", name: "ハナビゲーム中ハズレ", active: true, probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+            { id: "pf", name: "平行風鈴", active: false, probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+            { id: "nf", name: "斜め風鈴", active: true, probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
         ];
 
         const VERSUS_CONFIG = [
-            { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-            { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-            { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-            { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-            { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-            { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-            { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "rt", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "rt", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-            { id: "rb_bel", name: "ベル揃い", active: false, type: "normal", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
-            { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+            { id: "total", name: "ボーナス合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "bb", name: "ビックボーナス合算", active: true, probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+            { id: "xbb", name: "XBB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "7bb", name: "7BB", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "rb", name: "レギュラーボーナス", active: true, probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+            { id: "f_tot", name: "ベル合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ba", name: "ベルＡ", active: true, probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+            { id: "bb_b", name: "ベルＢ", active: true, probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+            { id: "i_tot", name: "スイカ合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "sa", name: "スイカＡ", active: true, probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+            { id: "sb", name: "スイカＢ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "che_tot", name: "チェリー合算", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "ca", name: "チェリーＡ", active: false, probs: {1:1,2:1,5:1,6:1} },
+            { id: "cb", name: "チェリーＢ", active: true, probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+            { id: "vc", name: "バーサスチャンス中ハズレ", active: true, probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+            { id: "vg", name: "バーサスゲーム中ハズレ", active: true, probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+            { id: "rb_bel", name: "ベル揃い", active: false, probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+            { id: "cbs", name: "チェリー＋ベル揃い", active: true, probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+            { id: "cbh", name: "チェリー＋ベルはずれ", active: true, probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
         ];
 
         const logArea = document.getElementById('log');
@@ -126,10 +125,10 @@
             const key = document.getElementById('api-key').value.trim();
             if(!key) { alert("API KEY REQUIRED"); return; }
             logArea.innerHTML = "";
-            addLog(`>> BOOTING ANALYZER Rev 2.0.2...`, "text-amber-400 font-bold");
+            addLog(`>> BOOTING ANALYZER Rev 2.0.4...`, "text-amber-400 font-bold");
 
             try {
-                let masterArray = []; // 全画像の統合用
+                let masterSlots = new Array(20).fill(null);
                 let gCounts = [0, 0, 0];
                 let machine = null;
                 const fileList = Array.from(files);
@@ -156,34 +155,34 @@
                         y: line.y
                     }));
 
-                    // 機種判定とG数取得（指示通りのGGG3つ目ロジックを1枚目のみ適用）
+                    titleLog(`(３) 生データ出力 [IMG_${fIdx}]`);
+                    rawLines.forEach((l, idx) => addLog(`[RAW] #${String(idx).padStart(2,'0')} | ${l.text}`, "text-gray-600 text-[8px]"));
+
                     if (fIdx === 0) {
-                        titleLog(`(４) 機種判別`);
+                        titleLog(`(４) 基点検索 & 機種判別`);
                         let preGTxt = "";
                         for (let l of rawLines) { if (l.text.includes("G")) break; preGTxt += l.text; }
                         if (preGTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, offset: 3, name: "スマスロ" };
                         else if (preGTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, offset: 1, name: "バーサス" };
                         else machine = { def: HANABI_CONFIG, offset: 1, name: "新ハナビ" };
-                        addLog(`[G-SCAN] Machine: 【${machine.name}】`);
-
+                        
                         rawLines.forEach((l, i) => {
                             const m = l.text.match(/([\d,]+)G/);
                             if (m) {
                                 const val = parseInt(m[1].replace(/,/g, ''));
-                                for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) { gCounts[j]=val; addLog(`  > G-SCAN: Found ${val}G at #${i}`); break; }
+                                for(let j=0; j<machine.offset; j++) if(gCounts[j]===0) { gCounts[j]=val; addLog(`  > 基点発見: ${val}G (at #${i})`, "text-amber-300"); }
                             }
                         });
+                        addLog(`[G-SCAN] Machine: 【${machine.name}】`);
                     }
 
-                    // 画像ごとの仮想配列作成
-                    titleLog(`(５) 仮想配列作成部分 [IMG_${fIdx}]`);
+                    titleLog(`(５) 仮想配列スキャン [IMG_${fIdx}]`);
                     let tempVArray = [];
                     let gFound = false;
                     for (let i = 0; i < rawLines.length; i++) {
                         const line = rawLines[i];
-                        // G数(GGG)が見つかるまではゴミ。見つかったら開始。
-                        if (line.text.includes("G")) { gFound = true; continue; }
-                        if (!gFound && fIdx === 0) continue; // 1枚目はGまでスキップ
+                        if (line.text.includes("G")) { gFound = true; addLog(`  -> 開始地点ロック (at #${i})`, "text-cyan-400 text-[8px]"); continue; }
+                        if (!gFound && fIdx === 0) continue; 
 
                         if (line.text.includes("/") && (line.text.includes(".") || line.text.includes("-"))) {
                             const fetchInt = (idx) => {
@@ -197,42 +196,55 @@
                             if (res) {
                                 let k = res.val;
                                 let p = line.text.includes("-") ? 999999 : parseFloat(line.text.split("/")[1]);
-                                tempVArray.push({ k, p, fingerprint: `${k}:${p}` });
-                                addLog(`[SCAN] Prob:"${line.text}" <- Count:"${res.raw}"`);
+                                tempVArray.push({ k, p, fp: `${k}:${p}` });
+                                addLog(`[SCAN] #${tempVArray.length-1} | Prob:"${line.text}" <- Count:"${res.raw}"`);
                             } else {
-                                addLog(`[SCAN] Prob:"${line.text}" <- ❌ 回数不明のためゴミ判定`, "text-red-400 text-[8px]");
+                                addLog(`[SCAN] ❌ 小数点発見したが回数不明のため破棄 (#${i})`, "text-red-500 text-[8px]");
                             }
                         }
                     }
 
-                    // 複数画像統合（指紋接着＋1枚目絶対死守）
                     if (fIdx === 0) {
-                        masterArray = tempVArray;
+                        titleLog(`(接着) マスター初期化 [IMG_0]`);
+                        tempVArray.forEach((v, i) => {
+                            if (i < 19) {
+                                masterSlots[i] = v;
+                                addLog(`[INIT] SLOT[${i}] にデータを格納しました`);
+                            }
+                        });
                     } else {
-                        titleLog(`(接着) 指紋による重複チェック [IMG_${fIdx}]`);
-                        // masterArrayの末尾付近とtempVArrayの先頭付近を指紋(k:p)で照合
-                        let mergePoint = -1;
-                        for (let i = 0; i < tempVArray.length; i++) {
-                            if (masterArray.some(m => m.fingerprint === tempVArray[i].fingerprint)) {
-                                mergePoint = i;
-                            } else {
-                                if (mergePoint !== -1 || i === 0) { // 重複が切れたところから追加
-                                    masterArray.push(tempVArray[i]);
-                                    addLog(`[MERGE] New Data: ${tempVArray[i].fingerprint}`);
+                        titleLog(`(接着) 接続点検知 [IMG_${fIdx}]`);
+                        // 指紋(k:p)で接続点を探す
+                        let lastMasterIdx = -1;
+                        for(let i=18; i>=0; i--) if(masterSlots[i]) { lastMasterIdx = i; break; }
+                        
+                        let mergeStartIdx = -1;
+                        for(let i=0; i<tempVArray.length; i++){
+                            if(masterSlots.some(ms => ms && ms.fp === tempVArray[i].fp)){
+                                addLog(`[FINGERPRINT] 一致確認: ${tempVArray[i].fp}`, "text-gray-500 text-[8px]");
+                                mergeStartIdx = i;
+                            } else if (mergeStartIdx !== -1) {
+                                // 一致が途切れたところからが新規データ
+                                lastMasterIdx++;
+                                if (lastMasterIdx < 19 && masterSlots[lastMasterIdx] === null) {
+                                    masterSlots[lastMasterIdx] = tempVArray[i];
+                                    addLog(`[MASTER-FIT] SLOT[${lastMasterIdx}] ${machine.def[lastMasterIdx].name} <- ${tempVArray[i].fp}`);
                                 }
                             }
                         }
                     }
                 }
 
-                // 定義表への最終割り当て（物理カウント）
-                titleLog(`(６) 定義表への最終当て込み`);
+                titleLog(`(６) 定義表への物理マッピング & 解析`);
                 let lls = {1:0, 2:0, 5:0, 6:0};
-                let bbCount = (masterArray[1]?.k || 0);
+                let bbCount = (masterSlots[1]?.k || 0);
 
                 machine.def.forEach((item, slotIdx) => {
-                    let data = masterArray[slotIdx];
-                    if (!data) return;
+                    let data = masterSlots[slotIdx];
+                    if (!data) {
+                        addLog(`[MAP] SLOT[${slotIdx}] ${item.name} | --- データ欠損 ---`, "text-gray-500");
+                        return;
+                    }
 
                     let n = gCounts[0];
                     if (item.type === "rt") n = Math.round(data.k * data.p);
@@ -256,7 +268,7 @@
                     }
                 });
 
-                titleLog(`(７) 尤度計算 結果`);
+                titleLog(`(７) 尤度計算 強度、ギャップ`);
                 const maxLL = Math.max(...Object.values(lls));
                 const sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
                 [1,2,5,6].forEach(s => {
