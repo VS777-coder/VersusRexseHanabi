@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.19</title>
+    <title>ANALYZER Rev 2.2.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -16,7 +16,8 @@
         .bar-bg { background-color: #1a1614; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
         .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #78350f; border-radius: 8px; background-color: #0c0a09; overflow: hidden; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; opacity: 0.8; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 1000; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
+        .copy-btn:active { background: #f59e0b; color: #000; }
         .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #ffffff; line-height: 1.5; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
@@ -25,8 +26,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.19</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ALL LOGS DISCLOSED / NO OMISSION</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.20</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">COPY FUNCTION FIXED / ALL LOGS DISCLOSED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -35,7 +36,10 @@
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-orange-600"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-orange-600"></div></div></div>
         <div><div class="flex justify-between text-[11px] font-bold text-red-600"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600"></div></div></div>
     </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">COPY</button><div id="log" class="future-log">READY...</div></div>
+    <div class="log-container">
+        <button id="cp-btn" class="copy-btn">COPY LOG</button>
+        <div id="log-display" class="future-log">READY...</div>
+    </div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
@@ -106,16 +110,16 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-const lp = document.getElementById('log');
-const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; lp.appendChild(e); lp.scrollTop=lp.scrollHeight; };
-const st = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
+const logDisplay = document.getElementById('log-display');
+const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
+const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 const getStars = (gap) => gap < 0.1 ? "★★★★★" : gap < 0.5 ? "★★★★☆" : gap < 1.0 ? "★★★☆☆" : "★☆☆☆☆";
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
-    lp.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.19`, "text-amber-400 font-bold");
+    logDisplay.innerHTML = "";
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.20`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let gOrigin = -1;
@@ -123,7 +127,7 @@ async function run(files) {
         const fileList = Array.from(files);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
-            st(`(１) 画像情報 [${fileList[fIdx].name}]`);
+            titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -145,15 +149,14 @@ async function run(files) {
                 addLog(`DETECTED: 【${machine.name}】 (定数bG:${machine.bG})`);
             }
 
-            st(`(３) 生データ (RAW)`);
+            titleLog(`(３) 生データ (RAW)`);
             rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-zinc-600 text-[8px]"));
 
-            st(`(５) 仮想配列作成ログ（物流工程開示）`);
+            titleLog(`(５) 仮想配列作成ログ（物流工程開示）`);
             rawLines.forEach((line, i) => {
                 const mG = line.text.match(/([\d,]+)G/);
                 if (mG) {
                     const val = parseInt(mG[1].replace(/,/g, ''));
-                    // [GGG規律] 出現順序だけで物理ロック
                     if (gOrigin === -1) { 
                         totalG = val; gOrigin = i; gCounter = 1;
                         addLog(`[G-1] TotalG Found: ${totalG}G (Row:#${i})`, "text-green-400"); 
@@ -169,28 +172,18 @@ async function run(files) {
                 if (gOrigin !== -1 && i > gOrigin && line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
                     if (vArray.length < machine.def.length) {
                         let k = null; let trace = "";
-                        // 1. 同一行スキャン
                         const sameMatch = line.text.match(/(\d+)[\s]*回/);
-                        if (sameMatch) { 
-                            k = parseInt(sameMatch[1]); 
-                            trace = `[Same-Line: ${k}回]`;
-                        }
-                        // 2. 2-3行上スキャン
+                        if (sameMatch) { k = parseInt(sameMatch[1]); trace = `[Same-Line: ${k}回]`; }
                         if (k === null) {
                             for(let o of [2,3]) {
                                 let t = rawLines[i-o];
                                 if(t && !t.text.includes("/")) {
                                     const numMatch = t.text.replace(/,/g, '').match(/\d+/);
-                                    if (numMatch) { 
-                                        k = parseInt(numMatch[0]); 
-                                        trace = `[Trace-Back(#${i-o}): ${k}回]`;
-                                        break; 
-                                    }
+                                    if (numMatch) { k = parseInt(numMatch[0]); trace = `[Trace-Back(#${i-o}): ${k}回]`; break; }
                                 }
                             }
                         }
                         if (k === null) trace = `[NOT FOUND: null]`;
-                        
                         let pStr = line.text.split("/")[1].replace(/,/g, '');
                         let p = parseFloat(pStr) || 999999;
                         vArray.push({ k, p });
@@ -200,7 +193,7 @@ async function run(files) {
             });
         }
 
-        st(`(６) 定義表当て込み（物流同期レスキュー）`);
+        titleLog(`(６) 定義表当て込み（物流同期レスキュー）`);
         bbCount = vArray[1]?.k || 0;
         let lls = {1:0, 2:0, 5:0, 6:0};
 
@@ -229,7 +222,7 @@ async function run(files) {
             }
         });
 
-        st(`(７) 尤度計算 強度・ギャップ`);
+        titleLog(`(７) 尤度計算 強度・ギャップ`);
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (Math.exp(lls[s] - max) / sum) * 100;
@@ -241,8 +234,21 @@ async function run(files) {
         addLog(`>> ANALYSIS COMPLETE. LOGISTICS SECURED.`);
     } catch (e) { addLog(`❌ FATAL ERROR: ${e.message}`, "text-red-600 font-bold"); }
 }
+
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
-document.getElementById('cp-btn').onclick = () => { const r=document.createRange(); r.selectNode(logArea); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert('COPIED'); };
+document.getElementById('cp-btn').onclick = () => {
+    const range = document.createRange();
+    range.selectNode(logDisplay);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    try {
+        document.execCommand('copy');
+        alert('COPIED LOG');
+    } catch (err) {
+        alert('COPY FAILED');
+    }
+    window.getSelection().removeAllRanges();
+};
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
 document.getElementById('f-in').onchange = e => run(e.target.files);
 </script>
