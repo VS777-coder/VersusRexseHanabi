@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ハナビ＆バーサス Rev.1.0.0</title>
+    <title>ハナビ＆バーサス Rev.1.0.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.0 ULTIMATE MASTER</div></div>
+    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.2 ULTIMATE MASTER (Repaired)</div></div>
     <label for="f-in" class="main-btn"><span>よしこの<br>解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
     <div class="content-stack">
         <div class="graph-panel">
@@ -50,7 +50,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="ACCESS_KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [定義表：全機種提供データに完全差し替え] ---
+// --- [絶対規律：提供済み定義表] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -77,7 +77,7 @@ const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
     { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
+    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
     { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 7.7, 2: 7.6, 5: 7.5, 6: 7.3} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
@@ -86,7 +86,7 @@ const HANABI_CONFIG = [
     { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
     { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
     { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.4, 2: 15.3, 5: 16.1, 6: 15.6} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 1, 2: 1, 5: 1, 6: 1} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
     { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
@@ -127,7 +127,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("VISION_API_KEY_REQUIRED");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM_INITIALIZING_REV.1.0.0...`, "text-[#00f2ff] font-bold");
+    addLog(`>> SYSTEM_INITIALIZING_REV.1.0.2...`, "text-[#00f2ff] font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
@@ -153,7 +153,6 @@ async function run(files) {
 
         titleLog(2, "物理深度ソート");
         rawFilesData.sort((a,b) => (a.lines.some(l=>l.text.includes("G")) ? -1 : 0) - (b.lines.some(l=>l.text.includes("G")) ? -1 : 0));
-        rawFilesData.forEach((img, i) => addLog(`>> DEPTH_${i}: ${img.name}`));
 
         titleLog(3, "RAW生データ・ダンプ");
         rawFilesData.forEach((img, i) => { addLog(`[IMG${i}]`, "text-[#006677]"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-600 text-[8px]")); });
@@ -224,7 +223,9 @@ async function run(files) {
                 let itemLLs = {};
                 [1,2,5,6].forEach(s => {
                     let tp = 1/res.probs[s];
-                    itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                    // log(0)ガード
+                    let safeTp = Math.max(0.000001, Math.min(0.999999, tp));
+                    itemLLs[s] = (res.k * Math.log(safeTp) + (res.n - res.k) * Math.log(1 - safeTp));
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
