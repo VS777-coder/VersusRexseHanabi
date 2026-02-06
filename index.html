@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.28</title>
+    <title>ANALYZER Rev 2.2.29</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -21,6 +21,7 @@
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
         .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
+        /* 物理色規律 */
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
         .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
@@ -29,8 +30,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.28</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOGISTICS SECURED / EVAL COMPLETE</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.29</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">IMAGE-INDEX SYNCED / PHYSICAL ORDER</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -39,10 +40,14 @@
         <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
         <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
     </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">COPY LOG</button><div id="log-display" class="future-log">READY...</div></div>
+    <div class="log-container">
+        <button id="cp-btn" class="copy-btn">COPY LOG</button>
+        <div id="log-display" class="future-log">READY...</div>
+    </div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
+// --- [構成定数は完全固定: 指示された画像物理順] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -65,16 +70,60 @@ const L_HANABI_CONFIG = [
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
 
+const HANABI_CONFIG = [
+    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
+    { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
+    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
+    { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
+    { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+    { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
+    { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
+];
+
+const VERSUS_CONFIG = [
+    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
+    { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+    { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+    { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+    { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
+    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+];
+
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
-// 物理規律: Zスコア 5段階判定
-function getStars(val) {
-    if (val < 0.5) return "★★★★★";
-    if (val < 1.0) return "★★★★☆";
-    if (val < 1.5) return "★★★☆☆";
-    if (val < 2.0) return "★★☆☆☆";
+// 物理規律: Zスコアに基づく5段階星判定
+function getStars(z) {
+    if (z < 0.5) return "★★★★★";
+    if (z < 1.0) return "★★★★☆";
+    if (z < 1.5) return "★★★☆☆";
+    if (z < 2.0) return "★★☆☆☆";
     return "★☆☆☆☆";
 }
 
@@ -91,7 +140,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.28`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.29`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0; let machine = null; let gOrigin = -1; let gCounter = 0;
@@ -111,7 +160,12 @@ async function run(files) {
                 return acc;
             }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
 
-            if (fIdx === 0) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" }; }
+            if (fIdx === 0) {
+                let head = rawLines.slice(0, 25).map(l=>l.text).join("");
+                if (head.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
+                else if (head.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+                else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+            }
 
             titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
             addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED)`);
