@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.68</title>
+    <title>ANALYZER Rev 2.2.69</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,30 +29,21 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.68</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">UI RESTORED / FULL PROCESS LOGGING</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.69</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT POSITION SYNC / LOCAL-ONLY OVERLAP GUARD</div>
     </div>
-    <div class="shrink-0">
-        <label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label>
-        <input type="file" id="f-in" class="hidden" multiple accept="image/*">
-    </div>
-    <div class="result-card" id="res-area">
+    <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
+    <div class="result-card">
         <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
         <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
         <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
     </div>
-    <div class="log-container">
-        <button id="cp-btn" class="copy-btn">LOG COPY</button>
-        <div id="log-display" class="future-log">READY...</div>
-    </div>
-    <div class="api-footer">
-        <input type="password" id="api-key" class="api-input" placeholder="VISION API KEY">
-        <button id="sv-key" class="save-btn">SAVE</button>
-    </div>
+    <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
+    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [定義表：一切の改変禁止] ---
+// --- [構成定数完全固定] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -79,7 +70,7 @@ const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
     { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
     { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
@@ -123,6 +114,13 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
+const getDenominator = (str) => { 
+    if (!str || !str.includes('/')) return null; 
+    const cleanStr = str.replace(/,/g, ''); 
+    const match = cleanStr.split('/').pop().match(/\d+\.?\d*/);
+    return match ? parseFloat(match[0]) : null; 
+};
+
 const getStars = (gap) => {
     if (gap < 0.1) return "★★★★★";
     if (gap < 0.5) return "★★★★☆";
@@ -133,13 +131,13 @@ const getStars = (gap) => {
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("VISION API KEY REQUIRED");
+    if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.68`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.69`, "text-amber-400 font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
-        let machine = null, finalStorage = [], rawFilesData = [];
+        let machine = null; let finalStorage = []; let rawFilesData = [];
 
         titleLog(`（１）画像情報`);
         for (let file of Array.from(files)) {
@@ -149,6 +147,8 @@ async function run(files) {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
+            if (!json.responses || !json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API読取失敗`);
+            
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
                 let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
                 let r = acc.find(row => row.y === y);
@@ -164,50 +164,82 @@ async function run(files) {
         if (totalTxt.match(/バーサス|VS|リヴァイズ/)) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
         else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else if (totalTxt.match(/ハナビ|新ハナ/)) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
-        if (!machine) throw new Error("機種特定不能");
+
+        if (!machine) throw new Error("❌ 判定不能: 機種キーワードなし。");
         addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
 
         titleLog(`（２）画像の順番の判定処理`);
-        rawFilesData.sort((a,b)=> (a.lines.some(l=>l.text.includes("G")) ? -1 : 0) - (b.lines.some(l=>l.text.includes("G")) ? -1 : 0));
+        rawFilesData.sort((a,b) => (a.lines.some(l=>l.text.includes("G")) ? -1 : 0) - (b.lines.some(l=>l.text.includes("G")) ? -1 : 0));
         rawFilesData.forEach((img, i) => addLog(`  [DEPTH_${i}] ${img.name}`));
 
         titleLog(`（３）画像別の生データ`);
-        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}] ${img.name}`); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]")); });
+        rawFilesData.forEach((img, i) => {
+            addLog(`[IMG${i}] ${img.name}:`, "text-amber-800");
+            img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]"));
+        });
 
         titleLog(`（５）仮想配列作成部分のログ`);
         let slotIdx = 0;
-        rawFilesData.forEach((img) => {
-            addLog(`\n[SYNC] ${img.name} 走査中...`, "text-amber-500 font-bold");
-            let gLatch = false;
+        rawFilesData.forEach((img, imgIdx) => {
+            addLog(`\n[SYNC] ${img.name} 走査開始`, "text-amber-500 font-bold");
+            let isSyncing = (imgIdx > 0); 
+            let gLatch = false; 
+
             img.lines.forEach((line, i) => {
+                // 母数取得 & 物理ラッチ確定 (G数行を見つけるまで凍結)
                 if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
-                        if (line.text.match(/総|プレイ/)) { if(totalG===0){totalG=val; addLog(`    [G-SCAN] 総G数確定: ${val}G`, "text-green-500");} gLatch=true; }
-                        else if (line.text.includes("チャンス")||line.text.includes("チャレンジ")) { if(vcG===0){vcG=val; addLog(`    [G-SCAN] VC-G数確定: ${val}G`, "text-cyan-400");} }
-                        else if (line.text.includes("GAME")) { if(vgG===0){vgG=val; addLog(`    [G-SCAN] VG-G数確定: ${val}G`, "text-blue-400");} }
-                        if(!gLatch && val > 10) gLatch = true;
+                        if (line.text.match(/総|プレイ/)) {
+                            if (totalG === 0) { totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold"); }
+                            gLatch = true; 
+                        } else if (line.text.includes("チャンス") || line.text.includes("チャレンジ")) {
+                            if (vcG === 0) { vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400"); }
+                        } else if (line.text.includes("GAME")) {
+                            if (vgG === 0) { vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400"); }
+                        }
                     }
                 }
+
+                // 物理ポインタ規律：/があれば必ずスロット消費。ただしGラッチ後。
                 if (line.text.includes("/") && gLatch) {
-                    if (slotIdx >= machine.def.length) { addLog(`    [OVER] 定義外スキップ: ${line.text}`, "text-gray-600"); return; }
-                    const rawP = line.text.replace(/,/g,'').split('/').pop().match(/\d+\.?\d*/);
-                    const pVal = rawP ? parseFloat(rawP[0]) : null;
-                    if(pVal && finalStorage.some(s=>s && s.rawP === pVal)) { addLog(`    [SKIP] 同期済: 1/${pVal}`, "text-gray-500"); return; }
-                    let kVal = null, hasKai = false;
-                    [2,3].forEach(off => {
-                        if(kVal!==null) return;
-                        let r = img.lines[i-off];
-                        if(r && !r.text.includes("/")) {
-                            let m = r.text.replace(/,/g,'').match(/\d+/);
-                            if(m) { kVal = parseInt(m[0]); if(r.text.includes("回")) hasKai=true; }
+                    if (slotIdx >= machine.def.length) {
+                        addLog(`    [OVER] 定義表枠外のため破棄: ${line.text}`, "text-gray-600 text-[8px]");
+                        return;
+                    }
+
+                    const pVal = getDenominator(line.text); // 数値がなければnull
+                    
+                    let kVal = null; let kaiWarn = ""; let hasKai = false;
+                    [2,3].forEach(offset => {
+                        if (kVal !== null) return;
+                        let tRow = img.lines[i-offset];
+                        if (tRow && !tRow.text.includes("/")) {
+                            let match = tRow.text.replace(/,/g, '').match(/\d+/);
+                            if (match) { kVal = parseInt(match[0]); if (tRow.text.includes("回")) hasKai = true; }
                         }
                     });
+                    if (kVal !== null && !hasKai) kaiWarn = "⚠️";
+
+                    // 【Rev 2.2.69 修正】同期スキップは「他画像との境界時」かつ「分母一致」のときのみ。
+                    // 同一画像内での数値重複は絶対にスキップしない。
+                    if (isSyncing && pVal !== null) {
+                        const isAlreadyFilled = finalStorage.some(res => res && res.rawP === pVal && res.fromImg !== imgIdx);
+                        if (isAlreadyFilled) {
+                            addLog(`    [SKIP] 既読接合スキップ: 1/${pVal}`, "text-gray-500");
+                            return; 
+                        } else {
+                            isSyncing = false;
+                            addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400");
+                        }
+                    }
+
                     const item = machine.def[slotIdx];
-                    if(item.id.includes("bb")) bbCount = kVal || 0;
-                    addLog(`    [SLOT-IN] SLOT[${slotIdx}] ${item.name} | 1/${pVal||'-'} : ${kVal||0}回${hasKai?'':'⚠️'}`);
-                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0 };
+                    if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
+                    
+                    addLog(`    [V-ARRAY] SLOT[${slotIdx}] ${item.name} | 1/${pVal || '-'} -> ${kVal || 0}回${kaiWarn}`);
+                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawK: kVal || 0, rawP: pVal || 0, fromImg: imgIdx };
                     slotIdx++;
                 }
             });
@@ -215,37 +247,38 @@ async function run(files) {
 
         titleLog(`（６）定義表への当て込み`);
         finalStorage.forEach((res, idx) => {
-            if(!res) return;
+            if (!res) return;
             let n = totalG;
-            if(res.type==="vc") n = vcG || Math.round(res.k * res.rawP);
-            else if(res.type==="vg") n = vgG || Math.round(res.k * res.rawP);
-            else if(res.type==="big") n = bbCount * machine.bG;
+            if (n === 0 && res.type === "normal") n = Math.round(res.k * res.rawP);
+            if (res.type === "vc") n = (vcG > 0) ? vcG : Math.round(res.k * res.rawP);
+            else if (res.type === "vg") n = (vgG > 0) ? vgG : Math.round(res.k * res.rawP);
+            else if (res.type === "big") n = bbCount * machine.bG;
             res.n = n;
-            addLog(`  [MAP] ${res.name.padEnd(12)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
+            addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
         });
 
         titleLog(`（７）尤度計算`);
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if(res && res.active && res.k>=0 && res.n>0) {
+            if (res && res.active && res.k >= 0 && res.n > 0) {
                 let itemLLs = {};
-                [1,2,5,6].forEach(s=>{
+                [1,2,5,6].forEach(s => {
                     let tp = 1/res.probs[s];
-                    itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1-tp));
+                    itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                     lls[s] += itemLLs[s];
                 });
-                const maxLL = Math.max(...Object.values(itemLLs));
-                addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div>` + [1,2,5,6].map(s=>`<span class="c-s${s} mr-2">設${s}:${getStars(maxLL - itemLLs[s])}</span>`).join(""));
+                const maxItem = Math.max(...Object.values(itemLLs));
+                addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[10px]">` +
+                    [1,2,5,6].map(s => `<span class="c-s${s}">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
             }
         });
 
         titleLog(`（８）設定判別処理`);
-        const maxVal = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a,l)=>a+Math.exp(l-maxVal), 0);
-        [1,2,5,6].forEach(s=>{
-            let p = (Math.exp(lls[s]-maxVal)/sumExp)*100;
-            document.getElementById(`p${s}`).innerText = p.toFixed(1) + "%";
-            document.getElementById(`b${s}`).style.width = p + "%";
-            addLog(`設定${s}: ${p.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+        const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
+        [1,2,5,6].forEach(s => {
+            let prob = (sum === 0) ? 25 : (Math.exp(lls[s] - max) / sum) * 100;
+            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
+            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
         });
 
     } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-1"); }
