@@ -8,39 +8,40 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0f0e0c; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        body { background-color: #0c0b0a; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
         
-        .header-area { text-align: center; margin-bottom: 8px; flex-shrink: 0; }
-        .main-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.8rem; color: #f59e0b; line-height: 1.1; }
-        .rev-text { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: #78350f; display: block; margin-top: 2px; }
+        /* タイトル・Rev構成 */
+        .header-area { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
+        .main-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.8rem; color: #f59e0b; line-height: 1.0; }
+        .rev-text { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: #78350f; display: block; margin-top: 1px; }
 
-        .main-btn { background: linear-gradient(180deg, #92400e 0%, #451a03 100%); border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 85px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 12px; flex-shrink: 0; box-shadow: 0 4px 0 #2d1a0a; }
+        /* 実行ボタン */
+        .main-btn { background: linear-gradient(180deg, #92400e 0%, #451a03 100%); border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 10px; flex-shrink: 0; box-shadow: 0 4px 0 #2d1a0a; }
         .main-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2d1a0a; }
         .main-btn span { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.5rem; color: #fef3c7; line-height: 1.2; text-align: center; }
         
         .content-stack { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
         
-        /* グラフエリア: 4段階設定 縦4段 */
-        .graph-panel { flex: 1; background-color: #1a1614; border-radius: 10px; padding: 12px; border: 1px solid #78350f; display: flex; flex-direction: column; justify-content: space-around; min-height: 150px; }
-        .graph-item { margin-bottom: 2px; }
-        .graph-label { display: flex; justify-content: space-between; font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 11px; margin-bottom: 2px; }
-        
-        /* ログエリア: 下部2/3 */
-        .log-panel { flex: 2; border: 2px solid #451a03; border-radius: 8px; background-color: #050504; overflow: hidden; position: relative; display: flex; flex-direction: column; }
-        .copy-btn { position: absolute; top: 6px; right: 6px; background: #78350f; color: #fff; font-size: 9px; padding: 3px 8px; border-radius: 4px; z-index: 50; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
-        .future-log { padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #a1a1aa; line-height: 1.4; }
+        /* グラフ: 1/3 ・ 文字サイズ拡大 */
+        .graph-panel { flex: 1; background-color: #1a1614; border-radius: 10px; padding: 10px 14px; border: 1px solid #78350f; display: flex; flex-direction: column; justify-content: space-around; min-height: 160px; }
+        .graph-item { width: 100%; }
+        .graph-label { display: flex; justify-content: space-between; font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 16px; margin-bottom: 2px; }
+        .bar-bg { background-color: #000; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #451a03; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        .bar-bg { background-color: #000; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #451a03; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s ease-out; }
+        /* ログ: 2/3 */
+        .log-panel { flex: 2; border: 2px solid #451a03; border-radius: 8px; background-color: #050504; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #78350f; color: #fff; font-size: 10px; padding: 4px 10px; border-radius: 4px; z-index: 50; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
+        .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #a1a1aa; line-height: 1.5; }
 
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-top: 8px; }
-        .api-input { background-color: #1a1614; color: #f59e0b; border-radius: 6px; padding: 6px; font-size: 10px; flex-grow: 1; border: 1px solid #451a03; outline: none; }
-        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; }
+        .api-input { background-color: #1a1614; color: #f59e0b; border-radius: 6px; padding: 6px 10px; font-size: 10px; flex-grow: 1; border: 1px solid #451a03; outline: none; }
+        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 11px; cursor: pointer; }
 
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 10px #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; } 
     </style>
 </head>
 <body>
@@ -84,7 +85,7 @@
     </div>
 
 <script>
-// --- [ロジック完全維持] ---
+// --- [ロジック完全継承・一切の変更禁止] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -211,7 +212,7 @@ async function run(files) {
                     const m = line.text.match(/([\d,]+)G/);
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
-                        if (line.text.match(/総|プレイ/)) { if (totalG === 0) { totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500"); } gLatch = true; }
+                        if (line.text.match(/総|プレイ/)) { if (totalG === 0) { totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold"); } gLatch = true; }
                         else if (line.text.match(/チャンス|チャレンジ/)) { if (vcG === 0) { vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400"); } }
                         else if (line.text.includes("GAME")) { if (vgG === 0) { vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400"); } }
                     }
@@ -271,11 +272,12 @@ async function run(files) {
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (sum === 0) ? 25 : (Math.exp(lls[s] - max) / sum) * 100;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; 
+            document.getElementById(`b${s}`).style.width = prob + "%";
+            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold text-[12px]`);
         });
 
-    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-2 mt-2"); }
+    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-2 mt-2 rounded"); }
 }
 
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
