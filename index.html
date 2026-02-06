@@ -3,44 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.39</title>
+    <title>ANALYZER Rev 2.2.40</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0b0d11; color: #ffffff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .kawaii-title { font-family: 'Squada One', cursive; color: #3b82f6; font-size: 2.2rem; line-height: 1.0; text-align: center; }
-        .main-btn { background-color: #1e3a8a; border-radius: 12px; border: 2px solid #3b82f6; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
-        .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fff; }
-        .result-card { background-color: #0f172a; border-radius: 12px; padding: 10px; border: 1px solid #1e293b; margin-bottom: 8px; flex-shrink: 0; }
-        .bar-bg { background-color: #020617; height: 8px; border-radius: 4px; overflow: hidden; margin-top: 2px; border: 1px solid #1e293b; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.4s ease-out; }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #1e293b; border-radius: 8px; background-color: #000; overflow: hidden; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #3b82f6; color: #fff; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 100; cursor: pointer; border: none; font-weight: bold; }
-        .future-log { padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #adbac7; line-height: 1.4; }
+        body { background-color: #1a1614; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.2rem; line-height: 1.0; text-align: center; }
+        .main-btn { background-color: #78350f; border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
+        .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fef3c7; }
+        .result-card { background-color: #2d241e; border-radius: 12px; padding: 10px; border: 1px solid #78350f; margin-bottom: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #1a1614; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #78350f; border-radius: 8px; background-color: #0c0a09; overflow: hidden; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 1000; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
+        .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #ffffff; line-height: 1.5; }
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
-        .api-input { background-color: #0f172a; color: #ffffff; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #1e293b; outline: none; }
-        .save-btn { background-color: #1e293b; color: #3b82f6; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #3b82f6; font-size: 10px; cursor: pointer; }
-        .c-s1 { color: #22d3ee; } .bg-s1 { background-color: #22d3ee; } .c-s2 { color: #facc15; } .bg-s2 { background-color: #facc15; } .c-s5 { color: #4ade80; } .bg-s5 { background-color: #4ade80; } .c-s6 { color: #f87171; } .bg-s6 { background-color: #f87171; }
+        .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
+        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
     </style>
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.39</div>
-        <div id="m-info" class="text-[9px] font-bold text-gray-500 text-center mb-1">GLOBAL SYNC LOGIC / BOUNDARY MONITOR</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.40</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">GLOBAL PHYSICAL SYNC / DESIGN PURIFIED</div>
     </div>
-    <div class="shrink-0"><label for="f-in" class="main-btn"><span>（０）ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
+    <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[11px] font-bold c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-        <div><div class="flex justify-between text-[11px] font-bold c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
+        <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
     </div>
     <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [定義表：完全無改変] ---
+// --- [定義表：指定された物理順を絶対守護] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -109,7 +112,7 @@ const VERSUS_CONFIG = [
 
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-const titleLog = (m) => addLog(`\n${m}`, "text-blue-400 font-bold underline");
+const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
 function calculateZStar(k, n, targetProb) {
     if (n === 0 || !targetProb) return "☆☆☆☆☆";
@@ -128,19 +131,18 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.39`, "text-blue-500 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.40`, "text-amber-400 font-bold");
 
     try {
+        let globalG = 0;
         let machine = null;
-        let globalG = 0; let globalVC = 0; let globalVG = 0;
-        let finalResults = []; // SlotIndex単位の確定データ
+        let finalStorage = []; 
         let rawFilesData = [];
 
         const fileList = Array.from(files);
         titleLog(`（２）複数画像処理ステータス`);
-        addLog(`Total Files: ${fileList.length} | BOUNDARY MONITORING: ACTIVE`);
+        addLog(`Total Files: ${fileList.length} | BOUNDARY SYNC MODE: LOCKED`);
 
-        // --- 1. OCR & 物理整列 (MaxDepth) ---
         for (let file of fileList) {
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
@@ -160,12 +162,14 @@ async function run(files) {
         // 機種判定
         let fullTxt = rawFilesData[0].lines.map(l=>l.text).join(" ");
         if (fullTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (fullTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
+        else if (fullTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        
         titleLog(`（１）画像情報・機種認定`);
         addLog(`DETECTED: 【${machine.name}】`);
+        finalStorage = Array.from({length: machine.def.length}, () => null);
 
-        // 画像の深さ（MaxIndex）でソートして物理順を確定
+        // 深さ(Index)で画像を物理整列
         rawFilesData.forEach(img => {
             let depths = [];
             img.lines.forEach(l => { machine.def.forEach((d, idx) => { if(l.text.includes(d.name.substring(0,2))) depths.push(idx); }); });
@@ -174,21 +178,20 @@ async function run(files) {
         });
         rawFilesData.sort((a,b) => a.maxDepth - b.maxDepth);
 
-        // --- 2. 境界線監視ロジックによるデータ抽出 ---
         titleLog(`（３）生データ (RAW)`);
-        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}] ${img.name}:`, "text-gray-500"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-600 text-[8px]")); });
+        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}] ${img.name}:`, "text-amber-800"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]")); });
 
         titleLog(`（５）仮想配列作成ログ`);
         let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
-            addLog(`\n[PROCESS] IMG${imgIdx} 同期監視開始`, "text-blue-400 font-bold");
+            addLog(`\n[PROCESS] IMG${imgIdx} 同期監視開始`, "text-amber-500 font-bold");
             let isSyncing = (imgIdx > 0); 
             let gate = (imgIdx > 0);
 
             img.lines.forEach((line, i) => {
                 if (line.text.includes("G") && line.text.includes("総")) {
                     const m = line.text.match(/([\d,]+)G/);
-                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`[HEADER] 総プレイ数: ${globalG}G`, "text-yellow-500"); gate = true; }
+                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`[G-GATE] 総プレイ数: ${globalG}G`, "text-green-500"); gate = true; }
                 }
 
                 if (gate && line.text.includes("/") && line.text.includes(".")) {
@@ -203,28 +206,28 @@ async function run(files) {
                     }
 
                     if (kVal !== null) {
-                        // 【物理同期：重複排除】
+                        // 【物理同期：境界線監視】
                         if (isSyncing) {
-                            const isDuplicate = finalResults.some(res => res.rawK === kVal && res.rawP === pVal);
-                            if (isDuplicate) {
-                                addLog(`[SYNC] SLOT[${slotIdx}] 重複検知 (1/${pVal}) => スキップ`, "text-gray-500");
+                            const found = finalStorage.some(res => res && res.rawK === kVal && res.rawP === pVal);
+                            if (found) {
+                                addLog(`[SYNC] SLOT[${slotIdx}] 重複検知 (1/${pVal}) => スキップ`, "text-gray-600");
                                 return;
                             } else {
                                 isSyncing = false;
-                                addLog(`[NEW_START] 未登録ペア検知。接合面 SLOT[${slotIdx}] から再開`, "text-blue-500 font-bold");
+                                addLog(`[NEW_START] 接合面検知。SLOT[${slotIdx}] から投入再開`, "text-amber-500");
                             }
                         }
 
-                        const item = machine.def[slotIdx];
-                        if (item) {
+                        if (slotIdx < machine.def.length) {
+                            const item = machine.def[slotIdx];
                             let n = globalG;
                             if (item.id === "vc" || item.id === "vg") n = Math.round(kVal * pVal);
                             else if (item.type === "big") {
-                                const bbK = finalResults.find(r => r.id === "bb")?.rawK || 0;
+                                const bbK = finalStorage.find(r => r && r.id === "bb")?.rawK || 0;
                                 n = bbK * machine.bG;
                             }
-                            finalResults[slotIdx] = { id: item.id, name: item.name, k: kVal, n: n, rawK: kVal, rawP: pVal, active: item.active, probs: item.probs, imgIdx };
-                            addLog(`ID:${String(slotIdx).padStart(2)} 【${item.name}】 ${kVal}回 (1/${pVal}) [投入]`);
+                            finalStorage[slotIdx] = { id: item.id, name: item.name, k: kVal, n: n, rawK: kVal, rawP: pVal, active: item.active, probs: item.probs, imgIdx };
+                            addLog(`ID:${String(slotIdx).padStart(2)} 看板:【${img.lines[i-1]?.text || "???"}】 => ${kVal}回 [OK]`);
                             slotIdx++;
                         }
                     }
@@ -232,14 +235,14 @@ async function run(files) {
             });
         });
 
-        titleLog(`（６）定義表当て込み（物理スタック結果）`);
-        finalResults.forEach((res, idx) => {
+        titleLog(`（６）定義表当て込み（物理スタック合算結果）`);
+        finalStorage.forEach((res, idx) => {
             if (res) addLog(`[MAP] ${res.name.padEnd(10)} | 式:(IMG${res.imgIdx}:${res.rawK}) = ${res.k}回 (N=${res.n})`, "text-green-400 font-bold");
         });
 
         titleLog(`（７）項目別尤度詳細`);
         let lls = {1:0, 2:0, 5:0, 6:0};
-        finalResults.forEach(res => {
+        finalStorage.forEach(res => {
             if (res && res.active && res.k > 0) {
                 let line = `<div class="text-[10px] font-bold">${res.name} ${res.k}回:1/${(res.n/res.k).toFixed(1)}</div><div class="flex gap-x-2 mb-2 text-[12px] font-black">`;
                 [1,2,5,6].forEach(s => {
@@ -259,7 +262,7 @@ async function run(files) {
             addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
         });
 
-    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500"); }
+    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
 document.getElementById('cp-btn').onclick = () => {
