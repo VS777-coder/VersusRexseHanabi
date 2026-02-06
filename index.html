@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.35</title>
+    <title>ANALYZER Rev 2.2.37</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.35</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOGISTIC EVIDENCE TRACKING</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.37</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT INDEX LOGISTICS / CONFIG SECURED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,6 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
+// --- [定義表：提示された物理規律を1ミリも変えず封入] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -128,32 +129,27 @@ function calculateZStar(k, n, targetProb) {
     return getStars(z);
 }
 
-// 看板同期ロジック: 名称でスロットを特定
-function findSlotIdx(label, config) {
+// 文字列判定を焼き払い、開始地点だけ特定する門番
+function findStartSlot(label, config) {
     const cleanL = label.replace(/\s+/g, '').replace(/[ＡA]/g, 'A').replace(/[ＢB]/g, 'B');
-    for (let i = 0; i < config.length; i++) {
-        const cleanN = config[i].name.replace(/\s+/g, '').replace(/[ＡA]/g, 'A').replace(/[ＢB]/g, 'B');
-        if (cleanL.includes(cleanN) || cleanN.includes(cleanL)) return i;
-    }
-    const kw = ["BB", "RB", "風鈴", "ベル", "氷", "スイカ", "チェリー", "ハズレ"];
-    for (let k of kw) { if (cleanL.includes(k)) return config.findIndex(c => c.name.includes(k)); }
-    return -1;
+    const matchedIdx = config.findIndex(d => cleanL.includes(d.name.substring(0,2)));
+    return matchedIdx !== -1 ? matchedIdx : 0;
 }
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.35`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.37`, "text-amber-400 font-bold");
 
     try {
-        let stackDetails = []; // スロットごとの画像別数値履歴
         let globalG = { total: 0, vc: 0, vg: 0 };
         let machine = null;
-        const fileList = Array.from(files);
+        let physicalStorage = []; // SlotIndexごとの画像別数値履歴
 
+        const fileList = Array.from(files);
         titleLog(`（２）複数画像処理ステータス`);
-        addLog(`Total Files: ${fileList.length} | G-GATE SECURITY: ENABLED`);
+        addLog(`Total Files: ${fileList.length} | PHYSICAL INDEX MODE: LOCKED`);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
@@ -172,35 +168,40 @@ async function run(files) {
             // （１）画像情報・機種認定
             if (fIdx === 0) {
                 titleLog(`（１）画像情報・機種認定 [${fileList[fIdx].name}]`);
-                let headSearch = "";
-                for (let line of rawLines) { headSearch += line.text; if (line.text.includes("G")) break; }
-                if (headSearch.includes("新 ハナビ")) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
-                else if (headSearch.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-                else if (headSearch.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
+                let head = ""; for (let l of rawLines) { head += l.text; if (l.text.includes("G")) break; }
+                if (head.includes("新 ハナビ")) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+                else if (head.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+                else if (head.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
                 else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
-                addLog(`DETECTED: 【${machine.name}】 (CONFIG LOCKED)`);
-                stackDetails = Array.from({length: machine.def.length}, () => ({}));
+                addLog(`DETECTED: 【${machine.name}】 (PHYSICAL CONFIG LOCKED)`);
+                physicalStorage = Array.from({length: machine.def.length}, () => ({}));
             }
 
             titleLog(`（３）生データ (RAW) [${fileList[fIdx].name}]`);
-            rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-white text-[8px]"));
+            rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-[8px]"));
 
             titleLog(`（５）仮想配列作成ログ [IMG${fIdx}]`);
-            let gateOpen = false; let gOrder = 0;
+            let gate = false; let gOrder = 0;
+            let currentCursor = 0; 
+            
+            // 2枚目以降の物理開始位置補正
+            if (fIdx > 0) {
+                currentCursor = findStartSlot(rawLines[0]?.text || "", machine.def);
+                addLog(`[IMG${fIdx}] RE-SYNC SLOT: ${currentCursor} (${machine.def[currentCursor]?.name || "START"})`, "text-amber-500");
+                gate = true;
+            }
+
             rawLines.forEach((line, i) => {
                 const mG = line.text.match(/([\d,]+)G/);
                 if (mG) {
                     const val = parseInt(mG[1].replace(/,/g, ''));
-                    if (gOrder === 0) { globalG.total = Math.max(globalG.total, val); addLog(`[G-GATE] OPEN: ${val}G (#${i})`, "text-green-400"); gateOpen = true; gOrder = 1; }
-                    else if (gOrder === 1) { globalG.vc = Math.max(globalG.vc, val); addLog(`[VC-G] ${val}G (#${i})`, "text-cyan-400"); gOrder = 2; }
-                    else if (gOrder === 2) { globalG.vg = Math.max(globalG.vg, val); addLog(`[VG-G] ${val}G (#${i})`, "text-cyan-400"); gOrder = 3; }
+                    if (gOrder === 0) { globalG.total = Math.max(globalG.total, val); addLog(`[G-GATE] OPEN: ${val}G (#${i})`, "text-green-400"); gate = true; gOrder = 1; }
+                    else if (gOrder === 1) { globalG.vc = Math.max(globalG.vc, val); addLog(`[G-VC] ${val}G (#${i})`, "text-cyan-400"); gOrder = 2; }
+                    else if (gOrder === 2) { globalG.vg = Math.max(globalG.vg, val); addLog(`[G-VG] ${val}G (#${i})`, "text-cyan-400"); gOrder = 3; }
                 }
 
-                // 絶対規律: 門番(G)が出るまでは全てゴミ
-                if (!gateOpen && fIdx === 0) return;
-                if (fIdx > 0) gateOpen = true; // 2枚目以降はG不要で開始（分割画像考慮）
-
-                if (line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
+                // 絶対規律：G通過後のIndexねじ込み
+                if (gate && line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
                     let kVal = null;
                     const sameMatch = line.text.match(/(\d+)[\s]*回/);
                     if (sameMatch) kVal = parseInt(sameMatch[1]);
@@ -213,11 +214,10 @@ async function run(files) {
                             }
                         }
                     }
-                    const headerTag = rawLines[i-1] ? rawLines[i-1].text : "???";
-                    const sIdx = findSlotIdx(headerTag, machine.def);
-                    if (sIdx !== -1 && kVal !== null) {
-                        stackDetails[sIdx][fIdx] = kVal;
-                        addLog(`ID:${String(sIdx).padStart(2)} 看板:【${headerTag}】 => 定義表[${machine.def[sIdx].name}] に同期`);
+                    if (kVal !== null && currentCursor < machine.def.length) {
+                        physicalStorage[currentCursor][fIdx] = kVal;
+                        addLog(`SLOT:${String(currentCursor).padStart(2)} 看板:【${rawLines[i-1]?.text || "???"}】 => ${kVal}回 [INJECTED]`);
+                        currentCursor++;
                     }
                 }
             });
@@ -226,14 +226,13 @@ async function run(files) {
         titleLog(`（６）定義表当て込み（物理スタック合算結果）`);
         let lls = {1:0, 2:0, 5:0, 6:0}; let itemScores = [];
         machine.def.forEach((slot, si) => {
-            let detail = stackDetails[si];
-            let vals = Object.entries(detail).map(([idx, val]) => `IMG${idx}:${val}回`);
+            let detail = physicalStorage[si];
             let sumK = Object.values(detail).reduce((a, b) => a + b, 0);
-            let n = (slot.type === "vc" || slot.type === "vg") ? (slot.type==="vc"?globalG.vc:globalG.vg) : (slot.type === "big" ? (Object.values(stackDetails[1]).reduce((a,b)=>a+b,0)) * machine.bG : globalG.total);
+            let formula = Object.entries(detail).map(([idx, val]) => `IMG${idx}:${val}`).join(" + ") || "0";
+            let n = (slot.type === "vc" || slot.type === "vg") ? (slot.type==="vc"?globalG.vc:globalG.vg) : (slot.type === "big" ? (Object.values(physicalStorage[1]).reduce((a,b)=>a+b,0)) * machine.bG : globalG.total);
             
-            addLog(`[MAP] ${slot.name.padEnd(10)} | 式:(${vals.join(" + ") || "0"}) = ${sumK}回 (N=${n})`, "text-lime-400 font-bold text-[10px]");
-
-            if(slot.active && n > 0) {
+            addLog(`[MAP] ${slot.name.padEnd(10)} | 式:(${formula}) = ${sumK}回 (N=${n})`, "text-lime-400 font-bold text-[10px]");
+            if(slot.active && n > 0 && sumK > 0) {
                 [1,2,5,6].forEach(s => { let tp = 1/slot.probs[s]; lls[s] += (sumK * Math.log(tp) + (n - sumK) * Math.log(1 - tp)); });
                 itemScores.push({ name: slot.name, k: sumK, n: n, probs: slot.probs });
             }
