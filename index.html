@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.56</title>
+    <title>ANALYZER Rev 2.2.57</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.56</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / FALLBACK-PROTECTED</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.57</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / STRRICT LOGIC DEPLOYED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,7 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// 定義表は Rev 2.2.55 の最新版を維持
+// 定義表は Rev 2.2.55/56 で整合性を取った画像並び順
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -132,7 +132,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.56`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.57`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -210,30 +210,26 @@ async function run(files) {
                         }
                     });
 
-                    let hasChar = false;
-                    [1,2,3,4].forEach(offset => {
-                        let tRow = img.lines[i-offset];
-                        if (tRow && /[^\d\s\/\.,G回]/.test(tRow.text)) hasChar = true;
-                    });
-
-                    // --- 修正箇所：整数欠損時の逆算救済ロジック ---
-                    if (kVal === null || !hasChar) {
+                    // --- 指示通り：文字列判定を完全に排除した救済処理 ---
+                    if (kVal === null) {
                         if (slotIdx < machine.def.length) {
                             const item = machine.def[slotIdx];
-                            // RTタイプ(vc/vg)以外で逆算を実行（RTは手順6で自走するため）
+                            // RT以外で数値欠損なら即座に逆算
                             if (item.type !== "vc" && item.type !== "vg" && globalG > 0) {
                                 kVal = Math.round(globalG / pVal);
                                 kaiWarn = "⚠️(逆算値)";
-                                addLog(`    [FALLBACK] SLOT[${slotIdx}] ${item.name} の項目名/回数欠損。1/${pVal} と総G数から逆算: ${kVal}回`, "text-red-400");
+                                addLog(`    [FALLBACK] SLOT[${slotIdx}] ${item.name} の数値欠損。1/${pVal} と総G数から逆算: ${kVal}回`, "text-red-400");
+                            } else if (item.type === "vc" || item.type === "vg") {
+                                kVal = 0; // 同期を壊さないための最低限の処置
+                                addLog(`    [SKIP] SLOT[${slotIdx}] ${item.name} の数値欠損のため0回として処理`, "text-gray-500");
                             } else {
-                                // RT等の場合は一旦スキップする（現状維持）
                                 return;
                             }
                         } else {
                             return;
                         }
                     }
-                    // ------------------------------------------
+                    // ----------------------------------------------
 
                     if (!hasKai && !kaiWarn.includes("逆算")) kaiWarn = "⚠️";
 
