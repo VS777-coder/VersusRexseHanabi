@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.55</title>
+    <title>ANALYZER Rev 2.2.56</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,7 +29,7 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.55</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.56</div>
         <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / TRIPLE-CHECK DISCIPLINE</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
@@ -44,7 +44,6 @@
 
 <script>
 // --- 正解の定義表 ---
-// 1. スマスロハナビ
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -67,7 +66,6 @@ const L_HANABI_CONFIG = [
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
 
-// 2. 新ハナビ
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -89,7 +87,6 @@ const HANABI_CONFIG = [
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
 
-// 3. バーサスリヴァイズ
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -115,9 +112,11 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
+// --- 数値抽出ロジック（修正） ---
 const getDenominator = (str) => { 
     if (!str || !str.includes('/')) return null; 
-    const match = str.split('/').pop().match(/\d+\.?\d*/);
+    const cleanStr = str.replace(/,/g, '');
+    const match = cleanStr.split('/').pop().match(/\d+\.?\d*/);
     return match ? parseFloat(match[0]) : null; 
 };
 
@@ -133,7 +132,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.55`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.56`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -194,7 +193,7 @@ async function run(files) {
                     if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`    [G-SCAN] 総ゲーム数: ${globalG}G`, "text-green-500 font-bold"); }
                 }
 
-                if (line.text.includes("/") && line.text.includes(".")) {
+                if (line.text.includes("/") && (line.text.includes(".") || line.text.match(/\d/))) {
                     const pVal = getDenominator(line.text);
                     if (pVal === null) return;
 
@@ -203,7 +202,7 @@ async function run(files) {
                         if (kVal !== null) return;
                         let tRow = img.lines[i-offset];
                         if (tRow && !tRow.text.includes("/")) {
-                            let match = tRow.text.replace(/,/g, '').match(/\d+/);
+                            let match = tRow.text.replace(/,/g, '').match(/\d+/); // カンマ除去対応
                             if (match) {
                                 kVal = parseInt(match[0]);
                                 if (tRow.text.includes("回")) hasKai = true;
@@ -221,7 +220,7 @@ async function run(files) {
                     if (!hasKai) kaiWarn = "⚠️";
 
                     if (isSyncing) {
-                        const probMatch = finalStorage.some(res => res && res.rawP === pVal);
+                        const probMatch = finalStorage.some(res => res && Math.abs(res.rawP - pVal) < 0.1);
                         if (probMatch) {
                             addLog(`    [SKIP] 既読スキップ: 1/${pVal} (${kVal}回)`);
                             return;
