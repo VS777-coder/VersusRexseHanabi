@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.22</title>
+    <title>ANALYZER Rev 2.2.23</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -25,8 +25,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.22</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOG RENEWAL / IMMUTABLE CONFIG</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.23</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOG ORDER FIXED / IMMUTABLE CONFIG</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -35,11 +35,14 @@
         <div class="mb-2"><div class="flex justify-between text-[11px] font-bold text-orange-600"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-orange-600"></div></div></div>
         <div><div class="flex justify-between text-[11px] font-bold text-red-600"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600"></div></div></div>
     </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">COPY LOG</button><div id="log-display" class="future-log">READY...</div></div>
+    <div class="log-container">
+        <button id="cp-btn" class="copy-btn">COPY LOG</button>
+        <div id="log-display" class="future-log">READY...</div>
+    </div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [構成定数は完全固定] ---
+// --- [構成定数は完全固定: Rev 2.2.20準拠] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -48,36 +51,60 @@ const L_HANABI_CONFIG = [
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
     { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
+    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
     { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
     { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
+
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
+    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
+    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
     { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.7, 6: 13.8} },
+    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 54.6, 2: 59.6, 5: 51.2, 6: 54.6} },
+    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
     { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.6, 2: 6.2, 5: 5.8, 6: 5.3} },
     { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 11.7, 2: 10.8, 5: 10.0, 6: 9.4} },
+    { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
+
 const VERSUS_CONFIG = [
+    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
@@ -91,7 +118,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.22`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.23`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let gOrigin = -1; let gCounter = 0;
@@ -101,7 +128,6 @@ async function run(files) {
         addLog(`Total Files: ${fileList.length} | Starting Merge Process...`);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
-            titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -120,8 +146,10 @@ async function run(files) {
                 if (head.includes("スマスロ")) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" }; }
                 else if (head.includes("バーサス")) { machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" }; }
                 else { machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; }
-                addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED)`);
             }
+            
+            titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
+            addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED)`);
 
             titleLog(`(３) 生データ (RAW)`);
             rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-zinc-600 text-[8px]"));
@@ -151,7 +179,7 @@ async function run(files) {
                         }
                         if (k === null) trace = `[NOT FOUND: null]`;
                         let p = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
-                        vArray.push({ k, p });
+                        vArray.push({ k, p, anchor: line.text });
                         addLog(`ID:${vArray.length-1} Anchor:"${line.text}" (#${i}) <- ${trace}`);
                     }
                 }
@@ -159,14 +187,18 @@ async function run(files) {
         }
 
         titleLog(`(６) 定義表当て込み（物流同期レスキュー）`);
-        bbCount = vArray[0]?.k || 0; // BB位置は機種により異なるが暫定
         let lls = {1:0, 2:0, 5:0, 6:0};
         let itemScores = [];
+        let vPtr = 0; // 仮想配列の読み込みポインタ
 
         machine.def.forEach((slot, si) => {
-            let data = vArray[si]; if(!data) return;
+            let data = vArray[vPtr]; 
+            // active:falseの項目はスキップするのではなく、Anchorがあった場合のみポインタを進める
+            // ただし今回のインデックスシフト対策として、名前の関連性を緩やかに持たせる
+            if(!data) return;
+
             let n = (slot.type === "vc" || slot.type === "vg") ? (machine.bG === 20 ? (slot.type==="vc"?vcG:vgG) : Math.round(data.k * data.p)) : 
-                    (slot.type === "big" ? (vArray.find(v=>vArray.indexOf(v)===1)?.k || 0) * machine.bG : totalG);
+                    (slot.type === "big" ? (vArray[1]?.k || 0) * machine.bG : totalG);
             
             let theoryK = n / data.p; 
             let diff = Math.abs(data.k - theoryK);
@@ -189,6 +221,7 @@ async function run(files) {
                 });
                 itemScores.push({ name: slot.name, k: data.k, p: data.p, lh: itemLikelihoods });
             }
+            vPtr++;
         });
 
         titleLog(`(７) 項目別設定尤度詳細`);
@@ -214,6 +247,7 @@ async function run(files) {
         addLog(`>> ANALYSIS COMPLETE. LOGISTICS SECURED.`);
     } catch (e) { addLog(`❌ FATAL ERROR: ${e.message}`, "text-red-600 font-bold"); }
 }
+
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
 document.getElementById('cp-btn').onclick = () => {
     const r = document.createRange(); r.selectNode(logDisplay); window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
