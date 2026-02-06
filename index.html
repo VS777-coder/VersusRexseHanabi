@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ハナビ＆バーサス Rev.1.0.0</title>
+    <title>ハナビ＆バーサス Rev.1.0.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
@@ -25,11 +25,14 @@
         .api-footer { flex-shrink: 0; display: flex; gap: 6px; padding-top: 6px; }
         .api-input { background-color: #0a1114; color: #00f2ff; border-radius: 4px; padding: 6px 10px; font-size: 10px; flex-grow: 1; border: 1px solid #004455; outline: none; }
         .save-btn { background-color: #004455; color: #00f2ff; font-weight: bold; padding: 0 12px; border-radius: 4px; border: 1px solid #00f2ff; font-size: 10px; }
+        
+        /* 統一配色 */
         .c-s1 { color: #3b82f6; } .bg-s1 { background: linear-gradient(90deg, #1d4ed8, #3b82f6); } 
         .c-s2 { color: #eab308; } .bg-s2 { background: linear-gradient(90deg, #a16207, #eab308); } 
         .c-s5 { color: #22c55e; } .bg-s5 { background: linear-gradient(90deg, #15803d, #22c55e); } 
         .c-s6 { color: #ef4444; } .bg-s6 { background: linear-gradient(90deg, #b91c1c, #ef4444); } 
         
+        /* (7) 強化レイアウト */
         .intensity-card { background: rgba(255, 255, 255, 0.03); border-left: 4px solid #00f2ff; padding: 10px; margin: 12px 0; border-radius: 0 6px 6px 0; }
         .intensity-head { font-size: 12px; font-weight: 900; color: #fff; display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid rgba(0, 242, 255, 0.2); padding-bottom: 4px; margin-bottom: 6px; }
         .real-val { color: #00f2ff; font-family: 'Share Tech Mono', monospace; font-size: 12px; font-weight: bold; }
@@ -39,7 +42,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.0 CORE ANALYSIS VIEW</div></div>
+    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.1 CALC_INTEGRITY_FIXED</div></div>
     <label for="f-in" class="main-btn"><span>よしこの<br>解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
     <div class="content-stack">
         <div class="graph-panel">
@@ -130,7 +133,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("VISION_API_KEY_REQUIRED");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: Rev.1.0.0`, "text-[#00f2ff] font-bold");
+    addLog(`>> SYSTEM BOOT: Rev.1.0.1`, "text-[#00f2ff] font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
@@ -159,7 +162,7 @@ async function run(files) {
         rawFilesData.forEach((img, i) => addLog(`>> [DEPTH_${i}] ${img.name}`));
 
         titleLog(3, "RAWデータダンプ");
-        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}]`, "text-[#006677]"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]")); });
+        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}]`, "text-[#006677]"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-600 text-[8px]")); });
 
         titleLog(4, "機種判定分析");
         let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
@@ -167,13 +170,13 @@ async function run(files) {
         else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else if (totalTxt.match(/ハナビ|新ハナ/)) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
         if (!machine) throw new Error("MACHINE_ERR");
-        addLog(`>> MATCH_MODEL: 【${machine.name}】`, "text-[#00f2ff] font-bold");
+        addLog(`>> DETECTED: 【${machine.name}】`, "text-[#00f2ff] font-bold");
 
         titleLog(5, "物理ポインタ同期・仮想配列構築");
         let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
             addLog(`\n[SYNC] ${img.name}`, "text-amber-500");
-            let isSyncing = (imgIdx > 0); let gLatch = false; 
+            let gLatch = false; 
             img.lines.forEach((line, i) => {
                 if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
@@ -188,22 +191,20 @@ async function run(files) {
                     if (slotIdx >= machine.def.length) return;
                     const pVal = getDenominator(line.text);
                     let kVal = null;
-                    [2,3].forEach(offset => {
-                        if (kVal !== null) return;
-                        let tRow = img.lines[i-offset];
+                    for (let offset = 0; offset <= 5; offset++) {
+                        let targetIdx = i - offset;
+                        if (targetIdx < 0) break;
+                        let tRow = img.lines[targetIdx];
                         if (tRow && !tRow.text.includes("/")) {
                             let match = tRow.text.replace(/,/g, '').match(/\d+/);
-                            if (match) kVal = parseInt(match[0]);
+                            if (match) { kVal = parseInt(match[0]); break; }
                         }
-                    });
-                    if (isSyncing && pVal !== null) {
-                        const isAlreadyFilled = finalStorage.some(res => res && res.rawP === pVal && res.fromImg !== imgIdx);
-                        if (isAlreadyFilled) return; else isSyncing = false;
+                        if (offset > 0 && tRow && tRow.text.includes("/")) break;
                     }
                     const item = machine.def[slotIdx];
                     if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
-                    addLog(`>> SLOT[${slotIdx}] ${item.name} | 1/${(pVal||'-')} -> ${kVal||0}回`);
-                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0, fromImg: imgIdx };
+                    addLog(`>> SLOT[${slotIdx}] ${item.name} | 1/${(pVal||'-')} <- 回数:${kVal||0}`);
+                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0 };
                     slotIdx++;
                 }
             });
@@ -215,7 +216,7 @@ async function run(files) {
             let n = totalG;
             if (res.type === "vc") n = vcG || Math.round(res.k * res.rawP);
             else if (res.type === "vg") n = vgG || Math.round(res.k * res.rawP);
-            else if (res.type === "big") n = bbCount * machine.bG;
+            else if (res.type === "big") n = bbCount * (machine.bG || 29);
             res.n = n;
             addLog(`>> ${res.name.padEnd(12)} | ${res.k}回 (N=${n})`);
         });
@@ -225,20 +226,21 @@ async function run(files) {
         finalStorage.forEach(res => {
             if (res && res.active && res.k >= 0 && res.n > 0) {
                 let itemLLs = {};
+                // 精密な分母(probs)を直接使用して尤度を計算（しきい値デグレード防止）
                 [1,2,5,6].forEach(s => {
-                    let tp = 1/res.probs[s];
+                    let tp = 1 / res.probs[s];
                     itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
-                const rawProb = (res.n / res.k).toFixed(1);
+                const rawProbStr = `1/${(res.n / res.k).toFixed(1)}`;
 
                 let html = `<div class="intensity-card">`;
-                html += `<div class="intensity-head"><span>${res.name}</span><span class="real-val">1/${rawProb}</span></div>`;
+                html += `<div class="intensity-head"><span>${res.name}</span><span class="real-val">${rawProbStr}</span></div>`;
                 [1,2,5,6].forEach(s => {
                     let gap = maxItem - itemLLs[s];
                     html += `<div class="intensity-row">
-                        <span class="c-s${s} font-black text-[11px]">設定${s}</span>
+                        <span class="c-s${s} font-bold text-[11px]">設定${s}</span>
                         <span class="theory-val">1/${res.probs[s].toFixed(1)}</span>
                         <span class="star-box text-[#fff]">${getStars(gap)}</span>
                     </div>`;
@@ -257,7 +259,7 @@ async function run(files) {
             addLog(`>> 設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
         });
 
-    } catch (e) { addLog(`!! CRITICAL: ${e.message}`, "text-red-500 font-bold bg-[#220000] p-2 mt-2"); }
+    } catch (e) { addLog(`!! ERROR: ${e.message}`, "text-red-500 font-bold bg-[#220000] p-2 mt-2"); }
 }
 
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("MASTER_KEY_SYNCED"); };
