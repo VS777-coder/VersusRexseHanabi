@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.53</title>
+    <title>ANALYZER Rev 2.2.54</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.53</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE TRIPLE-VALIDATION SYNC</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.54</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / TRIPLE-CHECK DISCIPLINE</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,7 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [定義表：構成定数完全固定] ---
+// 1. スマスロハナビ
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -66,6 +66,7 @@ const L_HANABI_CONFIG = [
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
 
+// 2. 新ハナビ
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -88,6 +89,7 @@ const HANABI_CONFIG = [
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
 
+// 3. バーサスリヴァイズ
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -132,7 +134,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.53`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.54`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -145,7 +147,6 @@ async function run(files) {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
-            if (!json.responses || !json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API読取失敗`);
             
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
                 let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
@@ -217,17 +218,19 @@ async function run(files) {
                         if (tRow && /[^\d\s\/\.,G回]/.test(tRow.text)) hasChar = true;
                     });
 
-                    // 規律：数値と名称の両方が欠損している場合はゴミと判定
-                    if (kVal === null || !hasChar) {
-                        if (!isSyncing) addLog(`    [DROSS] 不完全データスキップ: 1/${pVal}付近`, "text-gray-600 text-[8px]");
-                        return;
-                    }
+                    if (kVal === null || !hasChar) return;
                     if (!hasKai) kaiWarn = "⚠️";
 
+                    // 頑健な同期: 回数の誤読があっても分母が一致すれば既読スキップ
                     if (isSyncing) {
-                        const found = finalStorage.some(res => res && res.rawP === pVal && res.rawK === kVal);
-                        if (found) { addLog(`    [SKIP] 1/${pVal} (${kVal}回${kaiWarn}) 一致確認`); return; }
-                        else { isSyncing = false; addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400"); }
+                        const probMatch = finalStorage.some(res => res && res.rawP === pVal);
+                        if (probMatch) {
+                            addLog(`    [SKIP] 既読スキップ: 1/${pVal} (${kVal}回)`);
+                            return;
+                        } else {
+                            isSyncing = false;
+                            addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400");
+                        }
                     }
 
                     if (slotIdx < machine.def.length) {
