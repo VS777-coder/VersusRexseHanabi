@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.23</title>
+    <title>ANALYZER Rev 2.2.25</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -25,8 +25,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.23</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOG ORDER FIXED / IMMUTABLE CONFIG</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.25</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOG LOGISTICS FIXED / PHYSICAL TAGGING</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -42,7 +42,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [構成定数は完全固定: Rev 2.2.20準拠] ---
+// --- [構成定数は完全固定: Rev 2.2.20 準拠] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -64,7 +64,6 @@ const L_HANABI_CONFIG = [
     { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
-
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -86,7 +85,6 @@ const HANABI_CONFIG = [
     { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
-
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -118,10 +116,10 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.23`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.25`, "text-amber-400 font-bold");
 
     try {
-        let vArray = []; let totalG = 0, vcG = 0, vgG = 0, bbCount = 0; let machine = null; let gOrigin = -1; let gCounter = 0;
+        let vArray = []; let totalG = 0, vcG = 0, vgG = 0; let machine = null; let gOrigin = -1; let gCounter = 0;
         const fileList = Array.from(files);
 
         titleLog(`(２) 複数画像処理ステータス`);
@@ -179,8 +177,9 @@ async function run(files) {
                         }
                         if (k === null) trace = `[NOT FOUND: null]`;
                         let p = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
+                        const headerTag = rawLines[i-1] ? rawLines[i-1].text : "???";
                         vArray.push({ k, p, anchor: line.text });
-                        addLog(`ID:${vArray.length-1} Anchor:"${line.text}" (#${i}) <- ${trace}`);
+                        addLog(`ID:${String(vArray.length-1).padStart(2)} Anchor:"${line.text.padEnd(12)}" (#${i}) <- ${trace} | 看板:【${headerTag}】`);
                     }
                 }
             });
@@ -189,14 +188,9 @@ async function run(files) {
         titleLog(`(６) 定義表当て込み（物流同期レスキュー）`);
         let lls = {1:0, 2:0, 5:0, 6:0};
         let itemScores = [];
-        let vPtr = 0; // 仮想配列の読み込みポインタ
 
         machine.def.forEach((slot, si) => {
-            let data = vArray[vPtr]; 
-            // active:falseの項目はスキップするのではなく、Anchorがあった場合のみポインタを進める
-            // ただし今回のインデックスシフト対策として、名前の関連性を緩やかに持たせる
-            if(!data) return;
-
+            let data = vArray[si]; if(!data) return;
             let n = (slot.type === "vc" || slot.type === "vg") ? (machine.bG === 20 ? (slot.type==="vc"?vcG:vgG) : Math.round(data.k * data.p)) : 
                     (slot.type === "big" ? (vArray[1]?.k || 0) * machine.bG : totalG);
             
@@ -221,18 +215,20 @@ async function run(files) {
                 });
                 itemScores.push({ name: slot.name, k: data.k, p: data.p, lh: itemLikelihoods });
             }
-            vPtr++;
         });
 
         titleLog(`(７) 項目別設定尤度詳細`);
         itemScores.forEach(item => {
             let maxLH = Math.max(...Object.values(item.lh));
-            let line = `${item.name.padEnd(10)} ${item.k}回:1/${item.p.toFixed(1)}\n`;
+            let line = `<div class="text-[10px] mb-1 font-bold text-zinc-100">${item.name.padEnd(10)} ${item.k}回:1/${item.p.toFixed(1)}</div><div class="flex flex-wrap gap-x-2 mb-2 text-[12px] font-extrabold">`;
+            const colors = { 1: "text-amber-400", 2: "text-amber-500", 5: "text-orange-600", 6: "text-red-600" };
             [1,2,5,6].forEach(s => {
                 let gap = maxLH - item.lh[s];
-                line += `設定${s}:${getStars(gap)} `;
+                line += `<span class="${colors[s]}">設定${s}:${getStars(gap)}</span>`;
             });
-            addLog(line, "text-zinc-300");
+            line += `</div>`;
+            const wrapper = document.createElement('div'); wrapper.innerHTML = line;
+            logDisplay.appendChild(wrapper);
         });
 
         titleLog(`(８) 総合設定判別結果`);
