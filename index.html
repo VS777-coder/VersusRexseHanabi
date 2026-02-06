@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.44</title>
+    <title>ANALYZER Rev 2.2.45</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.44</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">GLOBAL PHYSICAL SYNC / LIKELIHOOD STARS</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.45</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">PHYSICAL SYNC / NOISE CLEANER</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,6 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
+// --- [定義表：物理順序を絶対守護] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -113,6 +114,13 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
+// 規律：14.8 . などの末尾ノイズを除去して純粋な分母数値を返す
+const getDenominator = (str) => { 
+    if (!str || !str.includes('/')) return null; 
+    const match = str.split('/').pop().match(/\d+\.?\d*/);
+    return match ? parseFloat(match[0]) : null; 
+};
+
 const getStars = (gap) => {
     if (gap < 0.1) return "★★★★★";
     if (gap < 0.5) return "★★★★☆";
@@ -125,7 +133,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.44`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.45`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -139,7 +147,7 @@ async function run(files) {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
-            if (!json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API抽出失敗`);
+            if (!json.responses || !json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API読込失敗`);
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
                 let y = Math.round(w.boundingPoly.vertices[0].y / 12) * 12;
                 let r = acc.find(row => row.y === y);
@@ -150,9 +158,9 @@ async function run(files) {
             rawFilesData.push({ name: file.name, lines });
         }
 
-        let fullTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        if (fullTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (fullTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
+        let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
+        if (totalTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+        else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
 
         rawFilesData.forEach(img => {
@@ -184,9 +192,12 @@ async function run(files) {
                     if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`    [G-SCAN] 総ゲーム数: ${globalG}G`, "text-green-500"); }
                 }
 
-                if (line.text.includes("/") && line.text.includes(".")) {
-                    const pVal = parseFloat(line.text.split('/').pop().replace(/[^0-9.]/g, ''));
+                if (line.text.includes("/") && (line.text.includes(".") || line.text.includes(","))) {
+                    const pVal = getDenominator(line.text);
+                    if (pVal === null) return;
+
                     let kVal = null;
+                    // 規律：回数は分母の上の2〜3行からのみ取得
                     for(let o of [2,3]) {
                         let t = img.lines[i-o];
                         if(t && !t.text.includes("/")) {
@@ -196,10 +207,11 @@ async function run(files) {
                     }
 
                     if (kVal !== null) {
+                        // 規律：同期（重なり）判定は分母と回数の完全一致(AND条件)を維持
                         if (isSyncing) {
-                            const found = finalStorage.some(res => res && res.rawK === kVal && res.rawP === pVal);
-                            if (found) { addLog(`    [SKIP] 1/${pVal} は既読データ`, "text-gray-600 text-[8px]"); return; }
-                            else { isSyncing = false; addLog(`    [MATCH] 重なり終了。SLOT[${slotIdx}]から新規`, "text-blue-400 text-[8px]"); }
+                            const found = finalStorage.some(res => res && res.rawP === pVal && res.rawK === kVal);
+                            if (found) { addLog(`    [SKIP] 1/${pVal} (${kVal}回) 既読一致スキップ`, "text-gray-600 text-[8px]"); return; }
+                            else { isSyncing = false; addLog(`    [MATCH] 重なり終了。SLOT[${slotIdx}]から新規投入`, "text-blue-400 text-[8px]"); }
                         }
 
                         if (slotIdx < machine.def.length) {
@@ -235,6 +247,7 @@ async function run(files) {
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
+                // 尤度ギャップに基づく星表示
                 addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[10px]">` +
                     [1,2,5,6].map(s => `<span class="c-s${s}">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
             }
