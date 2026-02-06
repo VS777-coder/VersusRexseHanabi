@@ -3,49 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev.1.1.1</title>
+    <title>ANALYZER ULTIMATE REBIRTH</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #050505; color: #e0faff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
-        .kawaii-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; color: #00f2ff; font-size: 1.8rem; line-height: 1.0; text-align: center; text-shadow: 0 0 10px rgba(0,242,255,0.5); }
-        .main-btn { background: linear-gradient(180deg, #003344 0%, #001122 100%); border-radius: 8px; border: 1px solid #00f2ff; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
-        .main-btn span { font-weight: 900; font-size: 1.4rem; color: #00f2ff; }
-        .result-card { background-color: #0a1114; border-radius: 8px; padding: 12px 16px; border: 1px solid #004455; margin-bottom: 8px; flex-shrink: 0; }
-        .bar-bg { background-color: #000; height: 12px; border-radius: 2px; overflow: hidden; margin-top: 2px; border: 1px solid #004455; }
+        .main-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.8rem; color: #00f2ff; text-align: center; text-shadow: 0 0 10px rgba(0,242,255,0.5); }
+        .main-btn { background: linear-gradient(180deg, #003344 0%, #001122 100%); border-radius: 8px; border: 1px solid #00f2ff; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
+        .main-btn span { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.4rem; color: #00f2ff; }
+        .result-card { background-color: #0a1114; border-radius: 8px; padding: 12px; border: 1px solid #004455; margin-bottom: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #000; height: 12px; border-radius: 2px; overflow: hidden; border: 1px solid #004455; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #004455; border-radius: 8px; background-color: #020405; overflow: hidden; }
+        .log-container { flex-grow: 1; min-height: 0; position: relative; border: 1px solid #004455; border-radius: 8px; background-color: #020405; overflow: hidden; }
         .copy-btn { position: absolute; top: 6px; right: 6px; background: #004455; color: #00f2ff; font-size: 10px; padding: 4px 10px; border-radius: 2px; z-index: 50; cursor: pointer; border: 1px solid #00f2ff; font-weight: bold; }
         .future-log { padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #00ccff; line-height: 1.5; }
-        
+        .intensity-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(0, 242, 255, 0.2); padding: 8px; margin: 8px 0; border-radius: 4px; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
         .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
-
-        .intensity-card { background: rgba(255, 255, 255, 0.03); border-left: 4px solid #00f2ff; padding: 10px; margin: 12px 0; border-radius: 0 6px 6px 0; }
-        .intensity-head { font-size: 12px; font-weight: 900; color: #fff; display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid rgba(0, 242, 255, 0.2); padding-bottom: 4px; margin-bottom: 6px; }
-        .real-val { color: #3b82f6; font-family: 'Share Tech Mono', monospace; font-size: 12px; font-weight: bold; }
-        .intensity-row { display: grid; grid-template-columns: 3.5rem 1fr 5rem; gap: 6px; align-items: center; margin-bottom: 2px; }
-        .star-box { font-size: 15px; text-align: right; line-height: 1; font-weight: bold; color: #fff; }
-        .theory-val { color: #fff; font-size: 12px; font-family: 'Share Tech Mono', monospace; }
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="kawaii-title uppercase">ANALYZER REV.1.1.1</div></div>
-    <label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
+    <div class="header-area"><div class="main-title">ANALYZER ULTIMATE</div></div>
+    <label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
     <div class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
+        <div class="mb-2"><div class="flex justify-between text-[11px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
+        <div><div class="flex justify-between text-[11px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
     </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
-    <div class="api-footer flex shrink-0 p-1 gap-1"><input type="password" id="api-key" class="bg-[#0a1114] text-[#00f2ff] text-xs flex-grow p-2 rounded border border-[#004455]" placeholder="VISION API KEY"><button id="sv-key" class="bg-[#004455] text-[#00f2ff] px-4 rounded border border-[#00f2ff] text-xs font-bold">SAVE</button></div>
+    <div class="log-container"><button id="cp-btn" class="copy-btn">COPY</button><div id="log-display" class="future-log">READY...</div></div>
+    <div class="api-footer flex p-1 gap-1"><input type="password" id="api-key" class="bg-[#0a1114] text-[#00f2ff] text-xs flex-grow p-2 rounded border border-[#004455]" placeholder="VISION API KEY"><button id="sv-key" class="bg-[#004455] text-[#00f2ff] px-4 rounded border border-[#00f2ff] text-xs font-bold">SAVE</button></div>
 
 <script>
-// --- [指示：提供された全機種の最新定義表を完全適用] ---
+// --- 最新確定定義データ ---
+const HANABI_CONFIG = [
+    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 181.5, 2: 172.5, 5: 161.4, 6: 149.6} },
+    { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 273.1, 5: 262.1, 6: 248.2} },
+    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 555.4, 2: 546.2, 5: 524.2, 6: 496.4} },
+    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 546.2, 5: 524.2, 6: 496.4} },
+    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 524.3, 464.8, 5: 417.4, 6: 376.6} },
+    { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.2, 5: 14.9, 6: 14.4} },
+    { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 48.2, 2: 48.2, 5: 48.2, 6: 48.2} },
+    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 11.8, 2: 11.5, 5: 11.4, 6: 11.1} },
+    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 52.9, 2: 52.9, 5: 52.9, 6: 52.9} },
+    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
+    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 51.2, 2: 51.2, 5: 51.2, 6: 51.2} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 18.2, 2: 17.5, 5: 16.8, 6: 15.9} },
+    { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.0, 2: 5.8, 5: 5.4, 6: 5.1} },
+    { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 13.4, 2: 11.8, 5: 10.4, 6: 9.5} }
+];
+
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -58,36 +68,12 @@ const L_HANABI_CONFIG = [
     { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
     { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1560.4, 2: 1560.4, 5: 1560.4, 6: 1560.4} },
     { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 44.9, 2: 45.9, 5: 44.8, 6: 46.0} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.4, 2: 99.4, 5: 99.4, 6: 99.3} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
-    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.3, 2: 15.3, 5: 16.0, 6: 15.4} },
     { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
     { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
     { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
-];
-
-const HANABI_CONFIG = [
-    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
-    { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 7.7, 2: 7.6, 5: 7.5, 6: 7.3} },
-    { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
-    { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
-    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 51.2, 2: 51.8, 5: 48.2, 6: 49.3} },
-    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
-    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
-    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.4, 2: 15.3, 5: 16.1, 6: 15.6} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 1, 2: 1, 5: 1, 6: 1} },
-    { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-    { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
-    { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} },
-    { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-    { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
 
 const VERSUS_CONFIG = [
@@ -96,147 +82,128 @@ const VERSUS_CONFIG = [
     { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
-const getDenominator = (str) => { if (!str || !str.includes('/')) return null; const match = str.split('/').pop().match(/\d+\.?\d*/); return match ? parseFloat(match[0]) : null; };
-const getStars = (gap) => { if (gap < 0.1) return "★★★★★"; if (gap < 0.5) return "★★★★☆"; if (gap < 1.0) return "★★★☆☆"; if (gap < 2.0) return "★★☆☆☆"; return "★☆☆☆☆"; };
+const MACHINES = [
+    { id: "l_hanabi", name: "スマスロハナビ", config: L_HANABI_CONFIG, bG: 20, vG: 20 },
+    { id: "hanabi", name: "新ハナビ", config: HANABI_CONFIG, bG: 20, vG: 20 },
+    { id: "versus", name: "バーサスリヴァイズ", config: VERSUS_CONFIG, bG: 24, vG: 20 }
+];
 
-async function run(files) {
-    const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("Vision API Key Required");
-    logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev.1.1.1`, "text-[#00f2ff] font-bold");
+// --- 完動エンジンロジック移植 ---
+const logDisp = document.getElementById('log-display');
+const addLog = (txt, cls) => { const d = document.createElement('div'); if(cls) d.className = cls; d.innerHTML = txt; logDisp.appendChild(d); logDisp.scrollTop = logDisp.scrollHeight; };
+const getStars = (gap) => gap < 0.1 ? "★★★★★" : gap < 0.5 ? "★★★★" : gap < 1.2 ? "★★★" : gap < 2.5 ? "★★" : "★";
+
+document.getElementById('f-in').onchange = async (e) => {
+    const files = Array.from(e.target.files);
+    const key = localStorage.getItem('v_key');
+    if(!key) return alert("API KEY ERROR");
+    logDisp.innerHTML = "";
+    addLog("--- 解析開始 ---", "text-[#00f2ff] font-bold");
 
     try {
-        let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = []; let bbCount = 0;
+        const rawFilesData = await Promise.all(files.map(async (f) => {
+            const base64 = (await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(f); })).split(',')[1];
+            const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${key}`, {
+                method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION' }] }] })
+            }).then(r => r.json());
+            const lines = res.responses[0]?.textAnnotations?.slice(1).map(a => ({ text: a.description, box: a.boundingPoly.vertices })) || [];
+            
+            // 精密物理深度スコア（完動.htmlロジック）
+            let score = 999;
+            if(lines.some(l => l.text.includes("累計"))) score = -1;
+            else if(lines.some(l => l.text.match(/^[0-9,]+$/) && l.text.length > 3)) score = 0;
+            return { lines, score };
+        }));
 
-        for (let file of Array.from(files)) {
-            addLog(`  [SCAN] ${file.name}...`);
-            const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
-            const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
-                method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
-            });
-            const json = await resp.json();
-            const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
-                let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
-                let r = acc.find(row => row.y === y);
-                if(r) r.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
-                else acc.push({y, words:[{x: w.boundingPoly.vertices[0].x, text: w.description}]});
-                return acc;
-            }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
-            rawFilesData.push({ name: file.name, lines });
-        }
+        // 脳（ソート順）の修復
+        rawFilesData.sort((a, b) => a.score - b.score);
 
-        let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        if (totalTxt.match(/バーサス|VS/)) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
-        else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        let machine = null, globalG = 0, bbCount = 0, rbCount = 0, finalStorage = [];
+        let isSyncing = false;
 
-        rawFilesData.sort((a,b) => (a.lines.some(l => l.text.includes("総") && l.text.includes("G")) ? -1 : 0));
-        addLog(`DETECTED: 【${machine.name}】`, "text-[#00f2ff] font-bold");
+        rawFilesData.forEach(fd => {
+            const lines = fd.lines;
+            // 機種・累計G特定
+            if(!machine) {
+                if(lines.some(l => l.text.includes("新ハナビ"))) machine = MACHINES[1];
+                else if(lines.some(l => l.text.includes("VERSUS"))) machine = MACHINES[2];
+                else machine = MACHINES[0];
+                addLog(`TARGET: ${machine.name}`, "text-yellow-400 font-bold");
+            }
 
-        // --- 物理同期ロジック (Rev 2.2.54 完動版を完全移植) ---
-        let slotIdx = 0;
-        rawFilesData.forEach((img, imgIdx) => {
-            let isSyncing = (imgIdx > 0); 
-            img.lines.forEach((line, i) => {
-                if (line.text.includes("G") && (line.text.includes("総") || line.text.includes("プレイ"))) {
-                    const m = line.text.match(/([\d,]+)G/);
-                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); }
+            lines.forEach((l, i) => {
+                const txt = l.text.replace(/,/g, '');
+                if(txt === "累計" || txt === "通常") {
+                    const val = parseInt(lines[i+1]?.text.replace(/,/g, ''));
+                    if(!isNaN(val) && val > globalG) globalG = val;
                 }
+                if(txt === "BB") bbCount = parseInt(lines[i+1]?.text) || bbCount;
+                if(txt === "RB") rbCount = parseInt(lines[i+1]?.text) || rbCount;
 
-                if (line.text.includes("/") && line.text.includes(".")) {
-                    const pVal = getDenominator(line.text);
-                    if (pVal === null) return;
-                    let kVal = null;
-                    [1,2,3].forEach(offset => {
-                        if (kVal !== null) return;
-                        let tRow = img.lines[i-offset];
-                        if (tRow && !tRow.text.includes("/")) {
-                            let match = tRow.text.replace(/,/g, '').match(/\d+/);
-                            if (match) kVal = parseInt(match[0]);
+                // 頑健な同期・重複排除
+                machine.config.forEach(conf => {
+                    if(l.text.includes(conf.name)) {
+                        const rawP = lines[i+1]?.text;
+                        const kVal = parseInt(lines[i+2]?.text);
+                        if(rawP && !isNaN(kVal) && !finalStorage.some(s => s.id === conf.id && s.rawP === rawP)) {
+                            finalStorage.push({ ...conf, k: kVal, rawP });
                         }
-                    });
-                    let hasChar = false;
-                    [1,2,3,4].forEach(offset => {
-                        let tRow = img.lines[i-offset];
-                        if (tRow && /[^\d\s\/\.,G回]/.test(tRow.text)) hasChar = true;
-                    });
-                    if (kVal === null || !hasChar) return;
-                    if (isSyncing) {
-                        if (finalStorage.some(res => res && res.rawP === pVal)) return;
-                        else isSyncing = false;
                     }
-                    if (slotIdx < machine.def.length) {
-                        const item = machine.def[slotIdx];
-                        if (item.id === "bb") bbCount = kVal;
-                        finalStorage[slotIdx] = { ...item, k: kVal, rawP: pVal };
-                        slotIdx++;
-                    }
-                }
+                });
             });
         });
 
-        titleLog(`尤度計算・強度マトリックス`);
+        if(globalG === 0) throw new Error("累計ゲーム数を取得できませんでした");
+        addLog(`TOTAL G: ${globalG} | BB: ${bbCount} | RB: ${rbCount}`, "text-white");
+
+        // 尤度計算 & マトリックス表示
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if (res && res.active && res.k > 0) {
-                let n = globalG;
-                if (res.type === "vc" || res.type === "vg") n = Math.round(res.k * res.rawP);
-                else if (res.type === "big") n = bbCount * (machine.bG || 29);
-                if (n <= 0) return;
-                let itemLLs = {};
-                // 精密な probs を直接使用
-                [1,2,5,6].forEach(s => {
-                    let tp = 1/res.probs[s];
-                    itemLLs[s] = (res.k * Math.log(tp) + (n - res.k) * Math.log(1 - tp));
-                    lls[s] += itemLLs[s];
-                });
-                const maxItem = Math.max(...Object.values(itemLLs));
-                let html = `<div class="intensity-card">`;
-                html += `<div class="intensity-head"><span>${res.name}</span><span class="real-val">1/${(n/res.k).toFixed(1)}</span></div>`;
-                [1,2,5,6].forEach(s => {
-                    let gap = maxItem - itemLLs[s];
-                    html += `<div class="intensity-row"><span class="c-s${s} font-bold text-[11px]">設定${s}</span><span class="theory-val">1/${res.probs[s].toFixed(1)}</span><span class="star-box">${getStars(gap)}</span></div>`;
-                });
-                html += `</div>`;
-                addLog(html);
-            }
+            let n = res.type === "vc" ? bbCount * machine.bG : res.type === "vg" ? bbCount * machine.vG : globalG;
+            if(res.id === "bb") res.k = bbCount;
+            if(res.id === "rb") res.k = rbCount;
+
+            const itemLLs = {};
+            [1,2,5,6].forEach(s => {
+                const p = 1/res.probs[s];
+                const l = res.k * Math.log(p) + (n - res.k) * Math.log(1 - p);
+                lls[s] += l;
+                itemLLs[s] = l;
+            });
+
+            // 強度マトリックス（index.htmlデザイン）
+            const maxItem = Math.max(...Object.values(itemLLs));
+            let html = `<div class="intensity-card"><div class="text-[11px] font-bold text-yellow-300 mb-1">${res.name} (n=${n}, k=${res.k})</div><div class="grid grid-cols-4 gap-1">`;
+            [1,2,5,6].forEach(s => {
+                html += `<div class="flex flex-col items-center bg-[#000] p-1 rounded border border-[#004455]"><span class="c-s${s} text-[9px]">設${s}</span><span class="text-white text-[9px]">${getStars(maxItem - itemLLs[s])}</span></div>`;
+            });
+            html += `</div></div>`;
+            addLog(html);
         });
 
-        const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
+        const maxLL = Math.max(...Object.values(lls)), sumExp = Object.values(lls).reduce((a, l) => a + Math.exp(l - maxLL), 0);
         [1,2,5,6].forEach(s => {
-            let prob = (sum === 0) ? 0 : (Math.exp(lls[s] - max) / sum) * 100;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; 
+            const prob = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
+            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
             document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`>> 設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+            addLog(`>> 設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold text-[11px]`);
         });
-    } catch (e) { addLog(`❌ ERR: ${e.message}`, "text-red-500 font-bold bg-white p-2"); }
-}
-document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
-document.getElementById('cp-btn').onclick = () => {
-    const r = document.createRange(); r.selectNode(logDisplay); window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
-    document.execCommand('copy'); alert('LOG_COPIED');
+
+    } catch (e) { addLog(`!! ERROR: ${e.message}`, "text-red-500 font-bold bg-[#330000] p-2"); }
 };
-window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
-document.getElementById('f-in').onchange = e => run(e.target.files);
+
+document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
+document.getElementById('cp-btn').onclick = () => { const r = document.createRange(); r.selectNode(logDisp); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert("COPIED"); };
 </script>
 </body>
 </html>
