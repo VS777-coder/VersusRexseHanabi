@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.61</title>
+    <title>ANALYZER Rev 2.2.62</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.61</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT LOGGING / ABSOLUTE ORDER</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.62</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT START-G / NORMALIZED MAP</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,7 +43,6 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- 機種定義（絶対規律） ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -114,9 +113,11 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
-const getDenominator = (str) => { 
+// 分母抽出：同一行内からカンマ・ドットを除去して確実に取得
+const getDenominatorNormalized = (str) => { 
     if (!str || !str.includes('/')) return null; 
-    const match = str.split('/').pop().replace(/,/g, '').match(/\d+\.?\d*/);
+    const afterSlash = str.split('/').pop().trim();
+    const match = afterSlash.match(/^[\d.]+/); // カンマは事前除去済み
     return match ? parseFloat(match[0]) : null; 
 };
 
@@ -132,7 +133,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.61`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.62`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -151,12 +152,14 @@ async function run(files) {
                 if(r) r.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
                 else acc.push({y, words:[{x: w.boundingPoly.vertices[0].x, text: w.description}]});
                 return acc;
-            }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
+            }, []).sort((a,b)=>a.y-b.y).map(r=>({
+                text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ").replace(/,/g, ''), // 【規律】生データ段階でカンマ排除
+                y: r.y
+            }));
             rawFilesData.push({ name: file.name, lines });
         }
 
         titleLog(`（２）画像の順番の判定処理`);
-        // シンプルに読み込み順
         rawFilesData.forEach((img, idx) => addLog(`  [ORDER] ${idx}: ${img.name}`));
 
         titleLog(`（３）画像別の生データ`);
@@ -181,11 +184,11 @@ async function run(files) {
             let isSyncing = (imgIdx > 0);
 
             img.lines.forEach((line, i) => {
-                // 総プレイ数検知
+                // 総プレイ数検知：カンマ除去済みなので (\d+)G で確実
                 if (line.text.includes("G") && (line.text.includes("総") || line.text.includes("プレイ"))) {
-                    const m = line.text.match(/([\d,]+)G/);
+                    const m = line.text.match(/(\d+)G/);
                     if (m) { 
-                        globalG = parseInt(m[1].replace(/,/g, '')); 
+                        globalG = parseInt(m[1]); 
                         addLog(`  [START-TRIGGER] ${globalG}G を検知。配列作成を開始します。`, "text-green-500");
                         hasStarted = true; return;
                     }
@@ -194,47 +197,57 @@ async function run(files) {
                 if (!hasStarted) return;
 
                 if (line.text.includes("/")) {
-                    const pVal = getDenominator(line.text);
+                    const pVal = getDenominatorNormalized(line.text);
                     if (pVal === null && files.length > 1) {
-                        const err = `❌ ERROR: 複数画像解析中に 1/- を検知しました（同期不能）`;
+                        const err = `❌ ERROR: 複数画像解析中に 1/- を検知（同期不能）`;
                         addLog(err, "text-red-500 font-bold bg-white p-1");
                         throw new Error(err);
                     }
 
+                    // 【正規化】回数(k)の抽出ロジック強化
                     let kVal = 0; let foundK = false;
-                    // 回数検索（5行上方まで探索）
-                    for (let offset = 1; offset <= 5; offset++) {
-                        let tRow = img.lines[i - offset];
-                        if (tRow && tRow.text.includes("回")) {
-                            let m = tRow.text.match(/(\d+)回/);
-                            if (m) { kVal = parseInt(m[1]); foundK = true; break; }
+                    
+                    // A. 同一行内から抽出 (例: "2回 ... 1/3312.0")
+                    if (line.text.includes("回")) {
+                        let m = line.text.match(/(\d+)回/);
+                        if (m) { kVal = parseInt(m[1]); foundK = true; }
+                    }
+
+                    // B. 同一行になければ直近5行を探索
+                    if (!foundK) {
+                        for (let offset = 1; offset <= 5; offset++) {
+                            let tRow = img.lines[i - offset];
+                            if (!tRow) continue;
+                            if (tRow.text.includes("回")) {
+                                let m = tRow.text.match(/(\d+)回/);
+                                if (m) { kVal = parseInt(m[1]); foundK = true; break; }
+                            }
                         }
                     }
+                    // C. それでもなければ数値のみ
                     if (!foundK) {
-                        [1,2,3,4].forEach(offset => {
-                            if (foundK) return;
+                        for (let offset = 1; offset <= 3; offset++) {
                             let tRow = img.lines[i - offset];
                             if (tRow && !tRow.text.includes("/")) {
-                                let m = tRow.text.replace(/,/g, '').match(/\d+/);
-                                if (m) { kVal = parseInt(m[0]); foundK = true; }
+                                let m = tRow.text.match(/\d+/);
+                                if (m) { kVal = parseInt(m[0]); foundK = true; break; }
                             }
-                        });
+                        }
                     }
 
-                    addLog(`    [PARSE] 確率 1/${pVal || '-'} → 回数 ${kVal}`);
+                    addLog(`  [PARSE] 確率 1/${pVal || '-'} → 回数 ${kVal}`);
 
-                    // 同期判定（完全一致）
                     if (isSyncing && pVal !== null && finalStorage.some(res => res && res.rawP === pVal)) {
-                        addLog(`      -> [SKIP] 重複データをスキップします。`);
+                        addLog(`    -> [SKIP] 重複データをスキップします。`);
                         return;
                     }
                     isSyncing = false;
 
-                    titleLog(`（６）定義表への当て込み`);
+                    // （６）定義表への当て込み（正規化）
                     if (slotIdx < machine.def.length) {
                         const item = machine.def[slotIdx];
                         if (item.id === "bb") bbCount = kVal;
-                        addLog(`    [MAP] SLOT[${slotIdx}] ${item.name} | ${kVal}回 : 1/${pVal || '-'}`);
+                        addLog(`    [MAP] SLOT[${slotIdx}] ${item.name.padEnd(10)} | ${kVal}回 : 1/${pVal || '-'}`);
                         finalStorage[slotIdx] = { ...item, k: kVal, rawP: pVal, isValid: (pVal !== null) };
                         slotIdx++;
                     }
@@ -249,7 +262,6 @@ async function run(files) {
                 if(res) addLog(`  [SKIP] ${res.name} は未当選(1/-)のため計算から除外。`, "text-gray-500");
                 return;
             }
-            
             if (res.type === "vc" || res.type === "vg") res.n = Math.round(res.k * res.rawP);
             else if (res.type === "big") res.n = bbCount * machine.bG;
             else res.n = globalG;
