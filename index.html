@@ -3,47 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.56</title>
+    <title>ハナビ＆バーサス Rev.1.0.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #1a1614; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.2rem; line-height: 1.0; text-align: center; }
-        .main-btn { background-color: #78350f; border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
-        .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fef3c7; }
-        .result-card { background-color: #2d241e; border-radius: 12px; padding: 10px; border: 1px solid #78350f; margin-bottom: 8px; flex-shrink: 0; }
-        .bar-bg { background-color: #1a1614; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #78350f; border-radius: 8px; background-color: #0c0a09; overflow: hidden; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 1000; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
-        .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #ffffff; line-height: 1.5; }
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
-        .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
-        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
+        body { background-color: #050505; color: #e0faff; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
+        .header-area { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
+        .main-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.8rem; color: #00f2ff; line-height: 1.0; text-shadow: 0 0 10px rgba(0,242,255,0.5); }
+        .rev-text { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: #006677; display: block; }
+        .main-btn { background: linear-gradient(180deg, #003344 0%, #001122 100%); border-radius: 8px; border: 1px solid #00f2ff; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2); }
+        .main-btn span { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.4rem; color: #00f2ff; line-height: 1.2; text-align: center; }
+        .content-stack { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
+        .graph-panel { flex: 1; background-color: #0a1114; border-radius: 8px; padding: 12px 16px; border: 1px solid #004455; display: flex; flex-direction: column; justify-content: space-around; overflow: hidden; position: relative; }
+        .graph-label { display: flex; justify-content: space-between; font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 16px; margin-bottom: 2px; }
+        .bar-bg { background-color: #000; height: 14px; border-radius: 2px; overflow: hidden; border: 1px solid #004455; width: 100%; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        .log-panel { flex: 1; border: 1px solid #004455; border-radius: 4px; background-color: #020405; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #004455; color: #00f2ff; font-size: 10px; padding: 4px 10px; border-radius: 2px; z-index: 50; cursor: pointer; border: 1px solid #00f2ff; font-weight: bold; }
+        .future-log { padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #00ccff; line-height: 1.5; }
+        .api-footer { flex-shrink: 0; display: flex; gap: 6px; padding-top: 6px; }
+        .api-input { background-color: #0a1114; color: #00f2ff; border-radius: 4px; padding: 6px 10px; font-size: 10px; flex-grow: 1; border: 1px solid #004455; outline: none; }
+        .save-btn { background-color: #004455; color: #00f2ff; font-weight: bold; padding: 0 12px; border-radius: 4px; border: 1px solid #00f2ff; font-size: 10px; }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background: linear-gradient(90deg, #1d4ed8, #3b82f6); } 
+        .c-s2 { color: #eab308; } .bg-s2 { background: linear-gradient(90deg, #a16207, #eab308); } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background: linear-gradient(90deg, #15803d, #22c55e); } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background: linear-gradient(90deg, #b91c1c, #ef4444); } 
+        .intensity-card { background: rgba(255, 255, 255, 0.03); border-left: 3px solid #00f2ff; padding: 8px; margin: 10px 0; border-radius: 0 4px 4px 0; }
+        .intensity-title { font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .intensity-grid { display: grid; gap: 2px; font-size: 11px; margin-top: 4px; border-top: 1px solid rgba(0, 242, 255, 0.1); padding-top: 4px; }
+        .theoretical-box { color: #00ccff; font-size: 9px; display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; opacity: 0.8; }
     </style>
 </head>
 <body>
-    <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.56</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / TRIPLE-CHECK DISCIPLINE</div>
+    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.0 ULTIMATE MASTER</div></div>
+    <label for="f-in" class="main-btn"><span>よしこの<br>解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
+    <div class="content-stack">
+        <div class="graph-panel">
+            <div class="graph-item"><div class="graph-label c-s1"><span>設定1</span><span id="p1">--%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
+            <div class="graph-item"><div class="graph-label c-s2"><span>設定2</span><span id="p2">--%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
+            <div class="graph-item"><div class="graph-label c-s5"><span>設定5</span><span id="p5">--%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
+            <div class="graph-item"><div class="graph-label c-s6"><span>設定6</span><span id="p6">--%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+        </div>
+        <div class="log-panel"><div id="cp-btn" class="copy-btn">COPY</div><div id="log-display" class="future-log">SYSTEM STANDBY.</div></div>
     </div>
-    <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
-    <div class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
-    </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
-    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
+    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="ACCESS_KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- 正解の定義表 ---
+// --- [定義表：全機種提供データに完全差し替え] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -70,7 +77,7 @@ const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
     { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
+    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
     { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 7.7, 2: 7.6, 5: 7.5, 6: 7.3} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
@@ -79,6 +86,7 @@ const HANABI_CONFIG = [
     { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
     { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
     { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.4, 2: 15.3, 5: 16.1, 6: 15.6} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 1, 2: 1, 5: 1, 6: 1} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
     { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
@@ -104,48 +112,35 @@ const VERSUS_CONFIG = [
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
 const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
-
-// --- 数値抽出ロジック（修正） ---
-const getDenominator = (str) => { 
-    if (!str || !str.includes('/')) return null; 
-    const cleanStr = str.replace(/,/g, '');
-    const match = cleanStr.split('/').pop().match(/\d+\.?\d*/);
-    return match ? parseFloat(match[0]) : null; 
-};
-
-const getStars = (gap) => {
-    if (gap < 0.1) return "★★★★★";
-    if (gap < 0.5) return "★★★★☆";
-    if (gap < 1.0) return "★★★☆☆";
-    if (gap < 2.0) return "★★☆☆☆";
-    return "★☆☆☆☆";
-};
+const addLog = (m, c="") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
+const titleLog = (num, m) => addLog(`\n（${num}）${m}`, "text-yellow-500 font-bold underline border-b border-yellow-900 pb-1");
+const getDenominator = (str) => { if (!str || !str.includes('/')) return null; const cleanStr = str.replace(/,/g, ''); const match = cleanStr.split('/').pop().match(/\d+\.?\d*/); return match ? parseFloat(match[0]) : null; };
+const getStars = (gap) => { if (gap < 0.1) return "★★★★★"; if (gap < 0.5) return "★★★★☆"; if (gap < 1.0) return "★★★☆☆"; if (gap < 2.0) return "★★☆☆☆"; return "★☆☆☆☆"; };
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("Vision API Key Required");
+    if(!k) return alert("VISION_API_KEY_REQUIRED");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.56`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM_INITIALIZING_REV.1.0.0...`, "text-[#00f2ff] font-bold");
 
     try {
-        let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
+        let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
+        let machine = null; let finalStorage = []; let rawFilesData = [];
 
-        titleLog(`（１）画像情報`);
+        titleLog(1, "画像情報収集");
         for (let file of Array.from(files)) {
-            addLog(`  [READING] ${file.name}...`);
+            addLog(`>> READ: ${file.name}`);
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
-            
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
                 let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
                 let r = acc.find(row => row.y === y);
@@ -156,105 +151,76 @@ async function run(files) {
             rawFilesData.push({ name: file.name, lines });
         }
 
+        titleLog(2, "物理深度ソート");
+        rawFilesData.sort((a,b) => (a.lines.some(l=>l.text.includes("G")) ? -1 : 0) - (b.lines.some(l=>l.text.includes("G")) ? -1 : 0));
+        rawFilesData.forEach((img, i) => addLog(`>> DEPTH_${i}: ${img.name}`));
+
+        titleLog(3, "RAW生データ・ダンプ");
+        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}]`, "text-[#006677]"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-600 text-[8px]")); });
+
+        titleLog(4, "機種判定シグネチャ分析");
         let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        if (totalTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+        if (totalTxt.match(/バーサス|VS|リヴァイズ/)) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
         else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
-        else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        else if (totalTxt.match(/ハナビ|新ハナ/)) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        if (!machine) throw new Error("MACHINE_NOT_MATCHED");
+        addLog(`>> DETECTED: 【${machine.name}】`, "text-[#00f2ff] font-bold");
 
-        rawFilesData.forEach(img => {
-            let matches = [];
-            img.lines.forEach(l => { machine.def.forEach((d, idx) => { if(l.text.includes(d.name.substring(0,2))) matches.push(idx); }); });
-            img.score = matches.length > 0 ? Math.max(...matches) : 0;
-            if (img.lines.some(l => l.text.includes("総") && l.text.includes("G"))) img.score = -1;
-        });
-        rawFilesData.sort((a,b) => a.score - b.score);
-
-        titleLog(`（２）画像の順番の判定処理`);
-        rawFilesData.forEach((img, i) => addLog(`  [DEPTH_${i}] ${img.name}`));
-
-        titleLog(`（３）画像別の生データ`);
-        rawFilesData.forEach((img, i) => {
-            addLog(`[IMG${i}] ${img.name}:`, "text-amber-800");
-            img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]"));
-        });
-
-        titleLog(`（４）機種判定`);
-        addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
-
-        titleLog(`（５）仮想配列作成部分のログ`);
-        let slotIdx = 0; let bbCount = 0;
+        titleLog(5, "物理ポインタ同期・仮想配列構築");
+        let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
-            addLog(`\n[SYNC] IMG${imgIdx} 同期監視開始`, "text-amber-500 font-bold");
-            let isSyncing = (imgIdx > 0); 
-
+            addLog(`\n[SYNC] ${img.name}`, "text-amber-500");
+            let isSyncing = (imgIdx > 0); let gLatch = false; 
             img.lines.forEach((line, i) => {
-                if (line.text.includes("G") && (line.text.includes("総") || line.text.includes("プレイ"))) {
+                if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
-                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`    [G-SCAN] 総ゲーム数: ${globalG}G`, "text-green-500 font-bold"); }
+                    if (m) {
+                        const val = parseInt(m[1].replace(/,/g, ''));
+                        if (line.text.match(/総|プレイ/)) { if (totalG === 0) { totalG = val; addLog(`>> LATCH: ${totalG}G`, "text-[#00ffcc] font-bold"); } gLatch = true; }
+                        else if (line.text.match(/チャンス|チャレンジ/)) { if (vcG === 0) vcG = val; }
+                        else if (line.text.includes("GAME")) { if (vgG === 0) vgG = val; }
+                    }
                 }
-
-                if (line.text.includes("/") && (line.text.includes(".") || line.text.match(/\d/))) {
+                if (line.text.includes("/") && gLatch) {
+                    if (slotIdx >= machine.def.length) return;
                     const pVal = getDenominator(line.text);
-                    if (pVal === null) return;
-
-                    let kVal = null; let kaiWarn = ""; let hasKai = false;
+                    let kVal = null;
                     [2,3].forEach(offset => {
                         if (kVal !== null) return;
                         let tRow = img.lines[i-offset];
                         if (tRow && !tRow.text.includes("/")) {
-                            let match = tRow.text.replace(/,/g, '').match(/\d+/); // カンマ除去対応
-                            if (match) {
-                                kVal = parseInt(match[0]);
-                                if (tRow.text.includes("回")) hasKai = true;
-                            }
+                            let match = tRow.text.replace(/,/g, '').match(/\d+/);
+                            if (match) kVal = parseInt(match[0]);
                         }
                     });
-
-                    let hasChar = false;
-                    [1,2,3,4].forEach(offset => {
-                        let tRow = img.lines[i-offset];
-                        if (tRow && /[^\d\s\/\.,G回]/.test(tRow.text)) hasChar = true;
-                    });
-
-                    if (kVal === null || !hasChar) return;
-                    if (!hasKai) kaiWarn = "⚠️";
-
-                    if (isSyncing) {
-                        const probMatch = finalStorage.some(res => res && Math.abs(res.rawP - pVal) < 0.1);
-                        if (probMatch) {
-                            addLog(`    [SKIP] 既読スキップ: 1/${pVal} (${kVal}回)`);
-                            return;
-                        } else {
-                            isSyncing = false;
-                            addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400");
-                        }
+                    if (isSyncing && pVal !== null) {
+                        const isAlreadyFilled = finalStorage.some(res => res && res.rawP === pVal && res.fromImg !== imgIdx);
+                        if (isAlreadyFilled) return; else isSyncing = false;
                     }
-
-                    if (slotIdx < machine.def.length) {
-                        const item = machine.def[slotIdx];
-                        if (item.id === "bb") bbCount = kVal;
-                        addLog(`    [V-ARRAY] SLOT[${slotIdx}] ${item.name} | 1/${pVal} -> ${kVal}回${kaiWarn}`);
-                        finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal };
-                        slotIdx++;
-                    }
+                    const item = machine.def[slotIdx];
+                    if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
+                    addLog(`>> SLOT[${slotIdx}] ${item.name} | 1/${(pVal||'-')} -> ${kVal||0}回`);
+                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0, fromImg: imgIdx };
+                    slotIdx++;
                 }
             });
         });
 
-        titleLog(`（６）定義表への当て込み`);
+        titleLog(6, "定義マッピング");
         finalStorage.forEach((res, idx) => {
             if (!res) return;
-            let n = globalG;
-            if (res.type === "vc" || res.type === "vg") n = Math.round(res.k * res.rawP);
-            else if (res.type === "big") n = bbCount * (machine.bG || 29);
+            let n = totalG;
+            if (res.type === "vc") n = vcG || Math.round(res.k * res.rawP);
+            else if (res.type === "vg") n = vgG || Math.round(res.k * res.rawP);
+            else if (res.type === "big") n = bbCount * machine.bG;
             res.n = n;
-            addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
+            addLog(`>> ${res.name.padEnd(12)} | ${res.k}回 (N=${n})`);
         });
 
-        titleLog(`（７）尤度計算`);
+        titleLog(7, "尤度演算・強度マトリックス（MAIN）");
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if (res && res.active && res.k > 0 && res.n > 0) {
+            if (res && res.active && res.k >= 0 && res.n > 0) {
                 let itemLLs = {};
                 [1,2,5,6].forEach(s => {
                     let tp = 1/res.probs[s];
@@ -262,26 +228,38 @@ async function run(files) {
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
-                addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[10px]">` +
-                    [1,2,5,6].map(s => `<span class="c-s${s}">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
+                const rawProb = (res.n / res.k).toFixed(1);
+
+                let html = `<div class="intensity-card">`;
+                html += `<div class="intensity-title"><span>${res.name}</span> <span class="text-[#00f2ff]">1/${rawProb}</span></div>`;
+                html += `<div class="theoretical-box">`;
+                [1,2,5,6].forEach(s => { html += `<span class="c-s${s}">設${s}:1/${res.probs[s].toFixed(1)}</span>`; });
+                html += `</div><div class="intensity-grid">`;
+                [1,2,5,6].forEach(s => {
+                    let gap = maxItem - itemLLs[s];
+                    html += `<div class="flex justify-between items-center"><span class="c-s${s} font-bold">設定${s}</span><span class="text-[#fff]">${getStars(gap)}</span></div>`;
+                });
+                html += `</div></div>`;
+                addLog(html);
             }
         });
 
-        titleLog(`（８）設定判別処理`);
+        titleLog(8, "最終判別計算完了");
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
-            let prob = (sum === 0) ? 0 : (Math.exp(lls[s] - max) / sum) * 100;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+            let prob = (sum === 0) ? 25 : (Math.exp(lls[s] - max) / sum) * 100;
+            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; 
+            document.getElementById(`b${s}`).style.width = prob + "%";
+            addLog(`>> 設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
         });
 
-    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-1"); }
+    } catch (e) { addLog(`!! ERROR: ${e.message}`, "text-red-500 font-bold bg-[#220000] p-2 mt-2"); }
 }
 
-document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
+document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("KEY_SAVED"); };
 document.getElementById('cp-btn').onclick = () => {
     const r = document.createRange(); r.selectNode(logDisplay); window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
-    document.execCommand('copy'); alert('LOG COPIED');
+    document.execCommand('copy'); alert('LOG_COPIED');
 };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
 document.getElementById('f-in').onchange = e => run(e.target.files);
