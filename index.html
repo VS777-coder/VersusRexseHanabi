@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.46</title>
+    <title>ANALYZER Rev 2.2.47-TEST</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -21,29 +21,21 @@
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
         .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
     </style>
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.46</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE PHYSICAL SEPARATION / AND-SYNC</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.47-TEST</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">PHYSICAL ZERO-SYNC / FULL DEFINITION</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
-    <div class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
-    </div>
+    <div class="result-card" id="res-area">
+        </div>
     <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [定義表：絶対規律] ---
+// --- [定義表：完全復元] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -114,7 +106,6 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
-// 規律：ノイズを除去して純粋な分母を抽出
 const getDenominator = (str) => { 
     if (!str || !str.includes('/')) return null; 
     const match = str.split('/').pop().match(/\d+\.?\d*/);
@@ -133,25 +124,24 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.46`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.47-TEST`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
-        const fileList = Array.from(files);
 
         titleLog(`（１）画像情報`);
-        for (let file of fileList) {
+        for (let file of Array.from(files)) {
             addLog(`  [READING] ${file.name}...`);
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
-            if (!json.responses || !json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API抽出失敗`);
+            if (!json.responses || !json.responses[0]?.textAnnotations) throw new Error(`${file.name}: API読込失敗`);
             
-            // 物理分離の徹底：しきい値 8 でバラバラに刻む
+            // 物理分離の徹底：しきい値 0
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
-                let y = Math.round(w.boundingPoly.vertices[0].y / 8) * 8; 
+                let y = w.boundingPoly.vertices[0].y; 
                 let r = acc.find(row => row.y === y);
                 if(r) r.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
                 else acc.push({y, words:[{x: w.boundingPoly.vertices[0].x, text: w.description}]});
@@ -176,8 +166,11 @@ async function run(files) {
         titleLog(`（２）画像の順番の判定処理`);
         rawFilesData.forEach((img, i) => addLog(`  [DEPTH_${i}] ${img.name} (MaxIdx:${img.score})`));
 
-        titleLog(`（３）画像別の生データ`);
-        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}] ${img.name}:`, "text-amber-800"); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]")); });
+        titleLog(`（３）画像別の生データ (THRESHOLD 0)`);
+        rawFilesData.forEach((img, i) => {
+            addLog(`[IMG${i}] ${img.name}:`, "text-amber-500");
+            img.lines.forEach(l => addLog(`  Y:${l.y.toString().padStart(4)} | ${l.text}`, "text-gray-500 text-[8px]"));
+        });
 
         titleLog(`（４）機種判定`);
         addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
@@ -199,8 +192,8 @@ async function run(files) {
                     if (pVal === null) return;
 
                     let kVal = null;
-                    // 段数差（i-2, i-3）による特定を死守
-                    for(let o of [2,3]) {
+                    // 分離試験のため探索範囲を広げる
+                    for(let o of [2,3,4,5,6,7,8]) {
                         let t = img.lines[i-o];
                         if(t && !t.text.includes("/")) {
                             const num = t.text.replace(/,/g, '').match(/\d+/);
@@ -211,15 +204,14 @@ async function run(files) {
                     if (kVal !== null) {
                         if (isSyncing) {
                             const found = finalStorage.some(res => res && res.rawP === pVal && res.rawK === kVal);
-                            if (found) { addLog(`    [SKIP] 1/${pVal} (${kVal}回) 一致スキップ`, "text-gray-600 text-[8px]"); return; }
-                            else { isSyncing = false; addLog(`    [MATCH] 重なり終了。SLOT[${slotIdx}]から新規投入`, "text-blue-400 text-[8px]"); }
+                            if (found) { addLog(`    [SKIP] 1/${pVal} (${kVal}回) 既読一致スキップ`); return; }
+                            else { isSyncing = false; addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`); }
                         }
-
                         if (slotIdx < machine.def.length) {
                             const item = machine.def[slotIdx];
                             if (item.id === "bb") bbCount = kVal;
                             addLog(`    [V-ARRAY] SLOT[${slotIdx}] 1/${pVal} -> ${kVal}回`);
-                            finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal, imgIdx };
+                            finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal };
                             slotIdx++;
                         }
                     }
@@ -249,7 +241,7 @@ async function run(files) {
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
                 addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[10px]">` +
-                    [1,2,5,6].map(s => `<span class="c-s${s}">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
+                    [1,2,5,6].map(s => `<span class="text-blue-400">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
             }
         });
 
@@ -257,8 +249,7 @@ async function run(files) {
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (Math.exp(lls[s] - max) / sum) * 100;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`);
         });
 
     } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
