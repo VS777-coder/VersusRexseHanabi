@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ハナビ＆バーサス Rev.1.0.2</title>
+    <title>ハナビ＆バーサス Rev.1.0.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@900&display=swap');
@@ -36,7 +36,7 @@
     </style>
 </head>
 <body>
-    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.2 ULTIMATE MASTER (Repaired)</div></div>
+    <div class="header-area"><div class="main-title">ハナビ＆バーサス</div><div class="rev-text">Rev.1.0.3 STABILIZED MASTER</div></div>
     <label for="f-in" class="main-btn"><span>よしこの<br>解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*">
     <div class="content-stack">
         <div class="graph-panel">
@@ -50,7 +50,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="ACCESS_KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [絶対規律：提供済み定義表] ---
+// --- [絶対規律：管理定義表] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -120,14 +120,23 @@ const VERSUS_CONFIG = [
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (num, m) => addLog(`\n（${num}）${m}`, "text-yellow-500 font-bold underline border-b border-yellow-900 pb-1");
-const getDenominator = (str) => { if (!str || !str.includes('/')) return null; const cleanStr = str.replace(/,/g, ''); const match = cleanStr.split('/').pop().match(/\d+\.?\d*/); return match ? parseFloat(match[0]) : null; };
+
+// 分母抽出：カンマを完全除去し、小数点を含む数値を取得
+const getDenominator = (str) => { 
+    if (!str || !str.includes('/')) return null; 
+    const cleanStr = str.replace(/,/g, ''); 
+    const parts = cleanStr.split('/');
+    const match = parts[parts.length - 1].match(/\d+\.?\d*/); 
+    return match ? parseFloat(match[0]) : null; 
+};
+
 const getStars = (gap) => { if (gap < 0.1) return "★★★★★"; if (gap < 0.5) return "★★★★☆"; if (gap < 1.0) return "★★★☆☆"; if (gap < 2.0) return "★★☆☆☆"; return "★☆☆☆☆"; };
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("VISION_API_KEY_REQUIRED");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM_INITIALIZING_REV.1.0.2...`, "text-[#00f2ff] font-bold");
+    addLog(`>> SYSTEM_INITIALIZING_REV.1.0.3...`, "text-[#00f2ff] font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
@@ -165,7 +174,7 @@ async function run(files) {
         if (!machine) throw new Error("MACHINE_NOT_MATCHED");
         addLog(`>> DETECTED: 【${machine.name}】`, "text-[#00f2ff] font-bold");
 
-        titleLog(5, "物理ポインタ同期・仮想配列構築");
+        titleLog(5, "物理ポインタ同期 (Stabilized)");
         let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
             addLog(`\n[SYNC] ${img.name}`, "text-amber-500");
@@ -184,22 +193,23 @@ async function run(files) {
                     if (slotIdx >= machine.def.length) return;
                     const pVal = getDenominator(line.text);
                     let kVal = null;
-                    [2,3].forEach(offset => {
+                    // 双方向サーチ：項目名の前後3行から数値を特定
+                    [-3, -2, -1, 1, 2, 3].forEach(offset => {
                         if (kVal !== null) return;
-                        let tRow = img.lines[i-offset];
+                        let tRow = img.lines[i + offset];
                         if (tRow && !tRow.text.includes("/")) {
                             let match = tRow.text.replace(/,/g, '').match(/\d+/);
                             if (match) kVal = parseInt(match[0]);
                         }
                     });
                     if (isSyncing && pVal !== null) {
-                        const isAlreadyFilled = finalStorage.some(res => res && res.rawP === pVal && res.fromImg !== imgIdx);
+                        const isAlreadyFilled = finalStorage.some(res => res && res.rawP === pVal);
                         if (isAlreadyFilled) return; else isSyncing = false;
                     }
                     const item = machine.def[slotIdx];
-                    if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
+                    if (item.id === "bb") bbCount = kVal || 0;
                     addLog(`>> SLOT[${slotIdx}] ${item.name} | 1/${(pVal||'-')} -> ${kVal||0}回`);
-                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0, fromImg: imgIdx };
+                    finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0 };
                     slotIdx++;
                 }
             });
@@ -216,7 +226,7 @@ async function run(files) {
             addLog(`>> ${res.name.padEnd(12)} | ${res.k}回 (N=${n})`);
         });
 
-        titleLog(7, "尤度演算・強度マトリックス（MAIN）");
+        titleLog(7, "尤度演算・強度マトリックス (MAIN)");
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
             if (res && res.active && res.k >= 0 && res.n > 0) {
