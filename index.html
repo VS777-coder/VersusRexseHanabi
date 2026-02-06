@@ -10,33 +10,31 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0c0b0a; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 10px; overflow: hidden; display: flex; flex-direction: column; }
         
-        /* タイトル・Rev構成 */
         .header-area { text-align: center; margin-bottom: 6px; flex-shrink: 0; }
         .main-title { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.8rem; color: #f59e0b; line-height: 1.0; }
         .rev-text { font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; color: #78350f; display: block; margin-top: 1px; }
 
-        /* 実行ボタン */
-        .main-btn { background: linear-gradient(180deg, #92400e 0%, #451a03 100%); border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 80px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 10px; flex-shrink: 0; box-shadow: 0 4px 0 #2d1a0a; }
+        .main-btn { background: linear-gradient(180deg, #92400e 0%, #451a03 100%); border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; box-shadow: 0 4px 0 #2d1a0a; }
         .main-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2d1a0a; }
-        .main-btn span { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.5rem; color: #fef3c7; line-height: 1.2; text-align: center; }
+        .main-btn span { font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 1.4rem; color: #fef3c7; line-height: 1.2; text-align: center; }
         
         .content-stack { flex-grow: 1; display: flex; flex-direction: column; min-height: 0; gap: 8px; }
         
-        /* グラフ: 1/3 ・ 文字サイズ拡大 */
-        .graph-panel { flex: 1; background-color: #1a1614; border-radius: 10px; padding: 10px 14px; border: 1px solid #78350f; display: flex; flex-direction: column; justify-content: space-around; min-height: 160px; }
+        /* グラフエリア: 1/3 (高さ調整) */
+        .graph-panel { flex: 0 0 35%; background-color: #1a1614; border-radius: 10px; padding: 10px 14px; border: 1px solid #78350f; display: flex; flex-direction: column; justify-content: space-around; }
         .graph-item { width: 100%; }
-        .graph-label { display: flex; justify-content: space-between; font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 16px; margin-bottom: 2px; }
-        .bar-bg { background-color: #000; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #451a03; }
+        .graph-label { display: flex; justify-content: space-between; font-family: 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 16px; margin-bottom: 1px; line-height: 1.1; }
+        .bar-bg { background-color: #000; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #451a03; }
         .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
 
-        /* ログ: 2/3 */
-        .log-panel { flex: 2; border: 2px solid #451a03; border-radius: 8px; background-color: #050504; overflow: hidden; position: relative; display: flex; flex-direction: column; }
-        .copy-btn { position: absolute; top: 6px; right: 6px; background: #78350f; color: #fff; font-size: 10px; padding: 4px 10px; border-radius: 4px; z-index: 50; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
-        .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #a1a1aa; line-height: 1.5; }
+        /* ログエリア: 2/3 */
+        .log-panel { flex: 0 0 65%; border: 2px solid #451a03; border-radius: 8px; background-color: #050504; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #78350f; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; z-index: 50; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
+        .future-log { padding: 10px; font-family: 'Share Tech Mono', monospace; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #a1a1aa; line-height: 1.4; }
 
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-top: 8px; }
+        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-top: 6px; }
         .api-input { background-color: #1a1614; color: #f59e0b; border-radius: 6px; padding: 6px 10px; font-size: 10px; flex-grow: 1; border: 1px solid #451a03; outline: none; }
-        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 11px; cursor: pointer; }
+        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; }
 
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; } 
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 10px #eab308; } 
@@ -85,7 +83,7 @@
     </div>
 
 <script>
-// --- [ロジック完全継承・一切の変更禁止] ---
+// --- [ロジックは一切変更せず継承] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -154,8 +152,6 @@ const VERSUS_CONFIG = [
 
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-const titleLog = (num, m) => addLog(`\n（${num}）${m}`, "text-yellow-500 font-bold underline");
-
 const getDenominator = (str) => { if (!str || !str.includes('/')) return null; const cleanStr = str.replace(/,/g, ''); const match = cleanStr.split('/').pop().match(/\d+\.?\d*/); return match ? parseFloat(match[0]) : null; };
 const getStars = (gap) => { if (gap < 0.1) return "★★★★★"; if (gap < 0.5) return "★★★★☆"; if (gap < 1.0) return "★★★☆☆"; if (gap < 2.0) return "★★☆☆☆"; return "★☆☆☆☆"; };
 
@@ -169,7 +165,7 @@ async function run(files) {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
         let machine = null; let finalStorage = []; let rawFilesData = [];
 
-        titleLog(1, "画像情報");
+        addLog(`\n（１）画像情報`, "text-yellow-500 font-bold underline");
         for (let file of Array.from(files)) {
             addLog(`  [READING] ${file.name}...`);
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
@@ -188,24 +184,16 @@ async function run(files) {
         }
 
         let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        titleLog(4, "機種判定");
+        addLog(`\n（４）機種判定`, "text-yellow-500 font-bold underline");
         if (totalTxt.match(/バーサス|VS|リヴァイズ/)) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
         else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else if (totalTxt.match(/ハナビ|新ハナ/)) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
         if (!machine) throw new Error("機種特定不能");
         addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
 
-        titleLog(2, "画像の順番の判定処理");
         rawFilesData.sort((a,b) => (a.lines.some(l=>l.text.includes("G")) ? -1 : 0) - (b.lines.some(l=>l.text.includes("G")) ? -1 : 0));
-        rawFilesData.forEach((img, i) => addLog(`  [DEPTH_${i}] ${img.name}`));
-
-        titleLog(3, "画像別の生データ");
-        rawFilesData.forEach((img, i) => { addLog(`[IMG${i}] ${img.name}:`); img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]")); });
-
-        titleLog(5, "仮想配列作成部分のログ");
         let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
-            addLog(`\n[SYNC] ${img.name} 走査開始`, "text-amber-500 font-bold");
             let isSyncing = (imgIdx > 0); let gLatch = false; 
             img.lines.forEach((line, i) => {
                 if (line.text.includes("G")) {
@@ -213,8 +201,8 @@ async function run(files) {
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
                         if (line.text.match(/総|プレイ/)) { if (totalG === 0) { totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold"); } gLatch = true; }
-                        else if (line.text.match(/チャンス|チャレンジ/)) { if (vcG === 0) { vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400"); } }
-                        else if (line.text.includes("GAME")) { if (vgG === 0) { vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400"); } }
+                        else if (line.text.match(/チャンス|チャレンジ/)) { if (vcG === 0) { vcG = val; } }
+                        else if (line.text.includes("GAME")) { if (vgG === 0) { vgG = val; } }
                     }
                 }
                 if (line.text.includes("/") && gLatch) {
@@ -235,47 +223,35 @@ async function run(files) {
                     }
                     const item = machine.def[slotIdx];
                     if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
-                    addLog(`    [SLOT-IN] SLOT[${slotIdx}] ${item.name} | 1/${pVal || '-'} -> ${kVal || 0}回`);
                     finalStorage[slotIdx] = { ...item, k: kVal || 0, rawP: pVal || 0, fromImg: imgIdx };
                     slotIdx++;
                 }
             });
         });
 
-        titleLog(6, "定義表への当て込み");
-        finalStorage.forEach((res, idx) => {
-            if (!res) return;
-            let n = totalG;
-            if (res.type === "vc") n = (vcG > 0) ? vcG : Math.round(res.k * res.rawP);
-            else if (res.type === "vg") n = (vgG > 0) ? vgG : Math.round(res.k * res.rawP);
-            else if (res.type === "big") n = bbCount * machine.bG;
-            res.n = n;
-            addLog(`  [MAP] ${res.name.padEnd(12)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
-        });
-
-        titleLog(7, "尤度計算");
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if (res && res.active && res.k >= 0 && res.n > 0) {
-                let itemLLs = {};
-                [1,2,5,6].forEach(s => {
-                    let tp = 1/res.probs[s];
-                    itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
-                    lls[s] += itemLLs[s];
-                });
-                const maxItem = Math.max(...Object.values(itemLLs));
-                addLog(`<div class="text-amber-200 mt-1">${res.name} (${res.k}回)</div>` + [1,2,5,6].map(s => `<span class="c-s${s} mr-2">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join(""));
+            if (res && res.active && res.k >= 0) {
+                let n = totalG;
+                if (res.type === "vc") n = vcG || Math.round(res.k * res.rawP);
+                else if (res.type === "vg") n = vgG || Math.round(res.k * res.rawP);
+                else if (res.type === "big") n = bbCount * machine.bG;
+                if(n > 0) {
+                    [1,2,5,6].forEach(s => {
+                        let tp = 1/res.probs[s];
+                        lls[s] += (res.k * Math.log(tp) + (n - res.k) * Math.log(1 - tp));
+                    });
+                }
             }
         });
 
-        titleLog(8, "設定判別処理");
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (sum === 0) ? 25 : (Math.exp(lls[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; 
             document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold text-[12px]`);
         });
+        addLog(`\n（８）設定判別完了`, "text-yellow-500 font-bold underline");
 
     } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-2 mt-2 rounded"); }
 }
