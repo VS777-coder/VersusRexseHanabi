@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.58</title>
+    <title>ANALYZER Rev 2.2.64</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.58</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">SMASLO TRI-METRIC SYNC / COMMA-FIX</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.64</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">TRI-METRIC FIX / PHYSICAL BOUNDARY GUARD</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -90,24 +90,26 @@ const HANABI_CONFIG = [
 
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+    { id: "bb_tot", name: "BB合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
     { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "red7", name: "赤7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "rb", name: "RB", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
+    { id: "f_tot", name: "小役合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "s_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
     { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-    { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-    { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+    { id: "vc", name: "VSチャンスハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+    { id: "vg", name: "VSGAMEハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+    { id: "b_bel", name: "BIG中ベル", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} },
+    { id: "rb_d1", name: "RB中1枚役(ゴミ箱)", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "rb_d2", name: "RB中ハズレ(ゴミ箱)", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} }
 ];
 
 const logDisplay = document.getElementById('log-display');
@@ -116,8 +118,7 @@ const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
 const getDenominator = (str) => { 
     if (!str || !str.includes('/')) return null; 
-    // 修正：カンマを除去してから数値を抽出
-    const cleanStr = str.replace(/,/g, '');
+    const cleanStr = str.replace(/,/g, ''); 
     const match = cleanStr.split('/').pop().match(/\d+\.?\d*/);
     return match ? parseFloat(match[0]) : null; 
 };
@@ -134,7 +135,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.58`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.64`, "text-amber-400 font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
@@ -148,7 +149,6 @@ async function run(files) {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
             });
             const json = await resp.json();
-            
             const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
                 let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
                 let r = acc.find(row => row.y === y);
@@ -160,14 +160,22 @@ async function run(files) {
         }
 
         let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        if (totalTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
-        else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        titleLog(`（４）機種判定`);
+        if (totalTxt.includes("バーサス") || totalTxt.includes("VS") || totalTxt.includes("リヴァイズ")) {
+            machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+        } else if (totalTxt.includes("スマスロ")) {
+            machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
+        } else if (totalTxt.includes("ハナビ") || totalTxt.includes("新ハナ")) {
+            machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        }
+
+        if (!machine) throw new Error("❌ 判定不能: 機種キーワードなし。");
+        addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
 
         rawFilesData.forEach(img => {
             let matches = [];
             img.lines.forEach(l => { machine.def.forEach((d, idx) => { if(l.text.includes(d.name.substring(0,2))) matches.push(idx); }); });
-            img.score = matches.length > 0 ? Math.max(...matches) : 0;
+            img.score = (matches.length > 0) ? Math.max(...matches) : 0;
             if (img.lines.some(l => l.text.includes("総") && l.text.includes("G"))) img.score = -1;
         });
         rawFilesData.sort((a,b) => a.score - b.score);
@@ -181,9 +189,6 @@ async function run(files) {
             img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]"));
         });
 
-        titleLog(`（４）機種判定`);
-        addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
-
         titleLog(`（５）仮想配列作成部分のログ`);
         let slotIdx = 0;
         rawFilesData.forEach((img, imgIdx) => {
@@ -191,13 +196,14 @@ async function run(files) {
             let isSyncing = (imgIdx > 0); 
 
             img.lines.forEach((line, i) => {
+                // 母数排他スキャンの規律（代入漏れ修正）
                 if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
                         if ((line.text.includes("総") || line.text.includes("プレイ")) && totalG === 0) {
                             totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold");
-                        } else if (line.text.includes("チャレンジ") && vcG === 0) {
+                        } else if ((line.text.includes("チャンス") || line.text.includes("チャレンジ")) && vcG === 0) {
                             vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400 font-bold");
                         } else if (line.text.includes("GAME") && vgG === 0) {
                             vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400 font-bold");
@@ -206,6 +212,11 @@ async function run(files) {
                 }
 
                 if (line.text.includes("/") && line.text.includes(".")) {
+                    if (slotIdx >= machine.def.length) {
+                        addLog(`    [DROSS] 定義外データ破棄: ${line.text}`, "text-gray-600 text-[8px]");
+                        return;
+                    }
+
                     const pVal = getDenominator(line.text);
                     if (pVal === null) return;
 
@@ -219,28 +230,20 @@ async function run(files) {
                         }
                     });
 
-                    let hasChar = false;
-                    [1,2,3,4].forEach(offset => {
-                        let tRow = img.lines[i-offset];
-                        if (tRow && /[^\d\s\/\.,G回]/.test(tRow.text)) hasChar = true;
-                    });
-
-                    if (kVal === null || !hasChar) return;
+                    if (kVal === null) return;
                     if (!hasKai) kaiWarn = "⚠️";
 
                     if (isSyncing) {
                         const probMatch = finalStorage.some(res => res && res.rawP === pVal);
-                        if (probMatch) { addLog(`    [SKIP] 同期済スキップ: 1/${pVal} (${kVal}回)`); return; }
-                        else { isSyncing = false; addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400"); }
+                        if (probMatch) return; 
+                        else isSyncing = false;
                     }
 
-                    if (slotIdx < machine.def.length) {
-                        const item = machine.def[slotIdx];
-                        if (item.id === "bb") bbCount = kVal;
-                        addLog(`    [V-ARRAY] SLOT[${slotIdx}] ${item.name} | 1/${pVal} -> ${kVal}回${kaiWarn}`);
-                        finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal };
-                        slotIdx++;
-                    }
+                    const item = machine.def[slotIdx];
+                    if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal;
+                    addLog(`    [V-ARRAY] SLOT[${slotIdx}] ${item.name} | 1/${pVal} -> ${kVal}回${kaiWarn}`);
+                    finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal };
+                    slotIdx++;
                 }
             });
         });
@@ -249,11 +252,12 @@ async function run(files) {
         finalStorage.forEach((res, idx) => {
             if (!res) return;
             let n = totalG;
+            if (n === 0 && res.type === "normal") n = Math.round(res.k * res.rawP);
             if (res.type === "vc") n = (vcG > 0) ? vcG : Math.round(res.k * res.rawP);
             else if (res.type === "vg") n = (vgG > 0) ? vgG : Math.round(res.k * res.rawP);
-            else if (res.type === "big") n = bbCount * (machine.bG || 20);
+            else if (res.type === "big") n = bbCount * machine.bG;
             res.n = n;
-            addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 確率1/${res.rawP} (N=${n})`);
+            addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
         });
 
         titleLog(`（７）尤度計算`);
@@ -275,7 +279,7 @@ async function run(files) {
         titleLog(`（８）設定判別処理`);
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
-            let prob = (sum === 0) ? 0 : (Math.exp(lls[s] - max) / sum) * 100;
+            let prob = (sum === 0) ? 25 : (Math.exp(lls[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
             addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
         });
