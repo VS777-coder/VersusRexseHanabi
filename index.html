@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.57</title>
+    <title>ANALYZER Rev 2.2.58</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.57</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STABLE SMASLO LOGIC / PARALLEL G-SCAN</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.58</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">SMASLO TRI-METRIC SYNC / COMMA-FIX</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -116,7 +116,9 @@ const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
 
 const getDenominator = (str) => { 
     if (!str || !str.includes('/')) return null; 
-    const match = str.split('/').pop().match(/\d+\.?\d*/);
+    // 修正：カンマを除去してから数値を抽出
+    const cleanStr = str.replace(/,/g, '');
+    const match = cleanStr.split('/').pop().match(/\d+\.?\d*/);
     return match ? parseFloat(match[0]) : null; 
 };
 
@@ -132,11 +134,10 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.57`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.58`, "text-amber-400 font-bold");
 
     try {
-        let totalG = 0, vcG = 0, vgG = 0; // 3つの母数を定義
-        let bbCount = 0;
+        let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
         let machine = null; let finalStorage = []; let rawFilesData = [];
 
         titleLog(`（１）画像情報`);
@@ -190,20 +191,16 @@ async function run(files) {
             let isSyncing = (imgIdx > 0); 
 
             img.lines.forEach((line, i) => {
-                // 母数3分割スキャン（修正：排他処理）
                 if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
                         if ((line.text.includes("総") || line.text.includes("プレイ")) && totalG === 0) {
-                            totalG = val;
-                            addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold");
+                            totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500 font-bold");
                         } else if (line.text.includes("チャレンジ") && vcG === 0) {
-                            vcG = val;
-                            addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400 font-bold");
+                            vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400 font-bold");
                         } else if (line.text.includes("GAME") && vgG === 0) {
-                            vgG = val;
-                            addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400 font-bold");
+                            vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400 font-bold");
                         }
                     }
                 }
@@ -218,10 +215,7 @@ async function run(files) {
                         let tRow = img.lines[i-offset];
                         if (tRow && !tRow.text.includes("/")) {
                             let match = tRow.text.replace(/,/g, '').match(/\d+/);
-                            if (match) {
-                                kVal = parseInt(match[0]);
-                                if (tRow.text.includes("回")) hasKai = true;
-                            }
+                            if (match) { kVal = parseInt(match[0]); if (tRow.text.includes("回")) hasKai = true; }
                         }
                     });
 
@@ -236,13 +230,8 @@ async function run(files) {
 
                     if (isSyncing) {
                         const probMatch = finalStorage.some(res => res && res.rawP === pVal);
-                        if (probMatch) {
-                            addLog(`    [SKIP] 同期済スキップ: 1/${pVal} (${kVal}回)`);
-                            return;
-                        } else {
-                            isSyncing = false;
-                            addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400");
-                        }
+                        if (probMatch) { addLog(`    [SKIP] 同期済スキップ: 1/${pVal} (${kVal}回)`); return; }
+                        else { isSyncing = false; addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400"); }
                     }
 
                     if (slotIdx < machine.def.length) {
@@ -263,7 +252,6 @@ async function run(files) {
             if (res.type === "vc") n = (vcG > 0) ? vcG : Math.round(res.k * res.rawP);
             else if (res.type === "vg") n = (vgG > 0) ? vgG : Math.round(res.k * res.rawP);
             else if (res.type === "big") n = bbCount * (machine.bG || 20);
-            
             res.n = n;
             addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 確率1/${res.rawP} (N=${n})`);
         });
