@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.26</title>
+    <title>ANALYZER Rev 2.2.27</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -22,16 +22,16 @@
         .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
         .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
         /* 物理色規律定義 */
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } /* 青 */
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } /* 黄 */
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } /* 緑 */
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } /* 赤 */
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
     </style>
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.26</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">COLOR DEGRADE FIXED / LOG PURIFIED</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.27</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">Z-SCORE EVALUATION / LOGISTICS FIXED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -47,7 +47,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// --- [構成定数は完全固定: Rev 2.2.20] ---
+// --- [構成定数は完全固定: Rev 2.2.20 準拠] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -74,21 +74,29 @@ const L_HANABI_CONFIG = [
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
-const getStars = (gap) => gap < 0.1 ? "★★★★★" : gap < 0.4 ? "★★★★☆" : gap < 0.8 ? "★★★☆☆" : gap < 1.5 ? "★★☆☆☆" : "★☆☆☆☆";
+
+function calculateStar(k, n, targetProb) {
+    if (n === 0) return "☆☆☆☆☆";
+    const p = 1 / targetProb;
+    const expected = n * p;
+    const sigma = Math.sqrt(n * p * (1 - p));
+    const z = Math.abs(k - expected) / sigma;
+    if (z < 0.5) return "★★★★★";
+    if (z < 1.0) return "★★★★☆";
+    if (z < 1.5) return "★★★☆☆";
+    if (z < 2.0) return "★★☆☆☆";
+    return "★☆☆☆☆";
+}
 
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.26`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.27`, "text-amber-400 font-bold");
 
     try {
         let vArray = []; let totalG = 0, vcG = 0, vgG = 0; let machine = null; let gOrigin = -1; let gCounter = 0;
         const fileList = Array.from(files);
-
-        // (２) ステータスを先行出力
-        titleLog(`(２) 複数画像処理ステータス`);
-        addLog(`Total Files: ${fileList.length} | Starting Merge Process...`);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
@@ -104,12 +112,13 @@ async function run(files) {
                 return acc;
             }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
 
-            if (fIdx === 0) {
-                machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
-            }
-            
+            if (fIdx === 0) { machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" }; }
+
             titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
             addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED)`);
+
+            titleLog(`(２) 画像順序判定処理`);
+            addLog(`Image Index: ${fIdx} / Total: ${fileList.length}`);
 
             titleLog(`(３) 生データ (RAW)`);
             rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-white text-[8px]"));
@@ -139,7 +148,7 @@ async function run(files) {
                         }
                         let p = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
                         const headerTag = rawLines[i-1] ? rawLines[i-1].text : "???";
-                        vArray.push({ k, p, anchor: line.text });
+                        vArray.push({ k, p });
                         addLog(`ID:${String(vArray.length-1).padStart(2)} Anchor:"${line.text.padEnd(12)}" (#${i}) <- ${trace} | 看板:【${headerTag}】`);
                     }
                 }
@@ -156,24 +165,28 @@ async function run(files) {
             if(data.k === null || Math.abs(data.k - theoryK) > Math.max(5, Math.sqrt(theoryK)*4.5)) {
                 data.k = Math.round(theoryK); addLog(`[RESCUE] ${slot.name} -> FIX:${data.k}`, "text-red-400");
             } else {
-                addLog(`[MAP] ${slot.name.padEnd(10)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`, "text-lime-400");
+                addLog(`[MAP] ${slot.name.padEnd(10)} | ${data.k}回 : 1/${data.p.toFixed(1)} (N=${n})`, "text-lime-400 font-bold");
             }
             if(slot.active && n > 0) {
                 let itemLikelihoods = {}; [1,2,5,6].forEach(s => {
                     let tp = 1/slot.probs[s]; let logL = (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
                     lls[s] += logL; itemLikelihoods[s] = logL;
                 });
-                itemScores.push({ name: slot.name, k: data.k, p: data.p, lh: itemLikelihoods });
+                itemScores.push({ name: slot.name, k: data.k, n: n, p: data.p, lh: itemLikelihoods, probs: slot.probs });
             }
         });
 
-        titleLog(`(７) 項目別設定尤度詳細`);
+        titleLog(`(７) 項目別設定尤度詳細 (Z-SCORE EVAL)`);
         itemScores.forEach(item => {
             let maxLH = Math.max(...Object.values(item.lh));
-            let line = `<div class="text-[10px] mb-0 font-bold text-zinc-100">${item.name} ${item.k}回:1/${item.p.toFixed(1)}</div><div class="flex gap-x-3 mb-2 text-[12px] font-black">`;
+            let line = `<div class="text-[10px] mb-0 font-bold text-zinc-100">${item.name} ${item.k}回:1/${item.p.toFixed(1)} (N=${item.n})</div><div class="flex gap-x-2 mb-2 text-[12px] font-black">`;
             const colorClass = { 1: "c-s1", 2: "c-s2", 5: "c-s5", 6: "c-s6" };
-            [1,2,5,6].forEach(s => { let gap = maxLH - item.lh[s]; line += `<span class="${colorClass[s]}">設定${s}:${getStars(gap)}</span>`; });
-            line += `</div>`; let wrapper = document.createElement('div'); wrapper.innerHTML = line; logDisplay.appendChild(wrapper);
+            [1,2,5,6].forEach(s => {
+                let star = calculateStar(item.k, item.n, item.probs[s]);
+                line += `<span class="${colorClass[s]}">設定${s}:${star}</span>`;
+            });
+            line += `</div>`;
+            let wrapper = document.createElement('div'); wrapper.innerHTML = line; logDisplay.appendChild(wrapper);
         });
 
         titleLog(`(８) 総合設定判別結果`);
