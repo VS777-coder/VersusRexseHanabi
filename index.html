@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.31</title>
+    <title>ANALYZER Rev 2.2.32</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.31</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">HEADER-BASED DETECTION / PHYSICAL STACK</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.32</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">IMAGE-PHYSICAL ORDER SYNCED</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,6 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
+// --- [定義表絶対規律: 提示された通り] ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -90,14 +91,21 @@ const HANABI_CONFIG = [
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
+    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
     { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
+    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
+    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
+    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
@@ -127,7 +135,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.31`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.32`, "text-amber-400 font-bold");
 
     try {
         let stackData = { totalG: 0, vcG: 0, vgG: 0, vArraySum: [] };
@@ -135,7 +143,7 @@ async function run(files) {
         const fileList = Array.from(files);
 
         titleLog(`(２) 複数画像処理ステータス`);
-        addLog(`Total Files: ${fileList.length} | Starting Sequence...`);
+        addLog(`Total Files: ${fileList.length} | Starting Stack Merge...`);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
             let currentTotalG = 0, currentVcG = 0, currentVgG = 0;
@@ -155,7 +163,7 @@ async function run(files) {
                 return acc;
             }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
 
-            // (１) 機種認定: 1枚目のヘッダー領域（G発見まで）で物理確定
+            // (１) 機種認定: 1枚目のG発見までの範囲で絶対確定
             if (fIdx === 0) {
                 titleLog(`(１) 画像情報・機種認定 [${fileList[fIdx].name}]`);
                 let headerTxt = "";
@@ -166,8 +174,8 @@ async function run(files) {
                 if (headerTxt.includes("新 ハナビ")) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
                 else if (headerTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
                 else if (headerTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
-                else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; // フォールバック
-                addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED BY HEADER)`);
+                else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; // Fallback
+                addLog(`DETECTED: 【${machine.name}】 (IMMUTABLE CONFIG LOADED)`);
             } else {
                 titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
             }
@@ -206,6 +214,7 @@ async function run(files) {
                 }
             });
 
+            // スタック接合
             stackData.totalG += currentTotalG;
             stackData.vcG += currentVcG;
             stackData.vgG += currentVgG;
@@ -215,7 +224,7 @@ async function run(files) {
             });
         }
 
-        titleLog(`(６) 定義表当て込み（物理スタック接合）`);
+        titleLog(`(６) 定義表当て込み（物理スタック合算）`);
         let lls = {1:0, 2:0, 5:0, 6:0};
         let itemScores = [];
         machine.def.forEach((slot, si) => {
