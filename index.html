@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.33</title>
+    <title>ANALYZER Rev 2.2.35</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.33</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOG & CONFIG SECURED</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.35</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">LOGISTIC EVIDENCE TRACKING</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,7 +43,6 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// 1. スマスロハナビ：画像物理順（A -> B -> 合算 の順）
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -65,7 +64,6 @@ const L_HANABI_CONFIG = [
     { id: "b_ba", name: "BIG中風鈴Ａ", active: true, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
-// 2. 新ハナビ：画像物理順（合算 -> A -> B の順）
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -87,7 +85,6 @@ const HANABI_CONFIG = [
     { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
-// 3. バーサスリヴァイズ：画像物理順（合算 -> A -> B の順）
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -131,25 +128,34 @@ function calculateZStar(k, n, targetProb) {
     return getStars(z);
 }
 
+// 看板同期ロジック: 名称でスロットを特定
+function findSlotIdx(label, config) {
+    const cleanL = label.replace(/\s+/g, '').replace(/[ＡA]/g, 'A').replace(/[ＢB]/g, 'B');
+    for (let i = 0; i < config.length; i++) {
+        const cleanN = config[i].name.replace(/\s+/g, '').replace(/[ＡA]/g, 'A').replace(/[ＢB]/g, 'B');
+        if (cleanL.includes(cleanN) || cleanN.includes(cleanL)) return i;
+    }
+    const kw = ["BB", "RB", "風鈴", "ベル", "氷", "スイカ", "チェリー", "ハズレ"];
+    for (let k of kw) { if (cleanL.includes(k)) return config.findIndex(c => c.name.includes(k)); }
+    return -1;
+}
+
 async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.33`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.35`, "text-amber-400 font-bold");
 
     try {
-        let stackData = { totalG: 0, vcG: 0, vgG: 0, vArraySum: [] };
+        let stackDetails = []; // スロットごとの画像別数値履歴
+        let globalG = { total: 0, vc: 0, vg: 0 };
         let machine = null;
         const fileList = Array.from(files);
 
-        titleLog(`(２) 複数画像処理ステータス`);
-        addLog(`Total Files: ${fileList.length} | Starting Extraction Sequence...`);
+        titleLog(`（２）複数画像処理ステータス`);
+        addLog(`Total Files: ${fileList.length} | G-GATE SECURITY: ENABLED`);
 
         for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
-            let currentTotalG = 0, currentVcG = 0, currentVgG = 0;
-            let currentVArray = [];
-            let gOriginLine = -1; 
-
             const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(fileList[fIdx]); });
             const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
                 method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
@@ -163,109 +169,90 @@ async function run(files) {
                 return acc;
             }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
 
-            // 機種判定: 1枚目のG発見までの絶対規律
+            // （１）画像情報・機種認定
             if (fIdx === 0) {
-                titleLog(`(１) 画像情報・機種認定 [${fileList[fIdx].name}]`);
-                let headTxt = "";
-                for (let i = 0; i < Math.min(rawLines.length, 30); i++) {
-                    headTxt += rawLines[i].text;
-                    if (rawLines[i].text.includes("G")) break;
-                }
-                if (headTxt.includes("新 ハナビ")) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
-                else if (headTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-                else if (headTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
-                else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" }; 
+                titleLog(`（１）画像情報・機種認定 [${fileList[fIdx].name}]`);
+                let headSearch = "";
+                for (let line of rawLines) { headSearch += line.text; if (line.text.includes("G")) break; }
+                if (headSearch.includes("新 ハナビ")) machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+                else if (headSearch.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
+                else if (headSearch.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロ" };
+                else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
                 addLog(`DETECTED: 【${machine.name}】 (CONFIG LOCKED)`);
-            } else {
-                titleLog(`(１) 画像情報 [${fileList[fIdx].name}]`);
+                stackDetails = Array.from({length: machine.def.length}, () => ({}));
             }
 
-            titleLog(`(３) 生データ (RAW) [IMG${fIdx}]`);
+            titleLog(`（３）生データ (RAW) [${fileList[fIdx].name}]`);
             rawLines.forEach((l, i) => addLog(`[IMG${fIdx}] #${String(i).padStart(2,'0')} | ${l.text}`, "text-white text-[8px]"));
 
-            titleLog(`(５) 仮想配列作成ログ [IMG${fIdx}]`);
-            let currentGCounter = 0;
+            titleLog(`（５）仮想配列作成ログ [IMG${fIdx}]`);
+            let gateOpen = false; let gOrder = 0;
             rawLines.forEach((line, i) => {
-                // Gの検索
                 const mG = line.text.match(/([\d,]+)G/);
                 if (mG) {
                     const val = parseInt(mG[1].replace(/,/g, ''));
-                    if (currentGCounter === 0) { currentTotalG = val; gOriginLine = i; currentGCounter = 1; addLog(`[G-1] TotalG: ${val}G (#${i})`, "text-green-400"); }
-                    else if (currentGCounter === 1 && i < gOriginLine + 20) { currentVcG = val; currentGCounter = 2; addLog(`[G-2] VC-G: ${val}G (#${i})`, "text-cyan-400"); }
-                    else if (currentGCounter === 2 && i < gOriginLine + 20) { currentVgG = val; currentGCounter = 3; addLog(`[G-3] VG-G: ${val}G (#${i})`, "text-cyan-400"); }
+                    if (gOrder === 0) { globalG.total = Math.max(globalG.total, val); addLog(`[G-GATE] OPEN: ${val}G (#${i})`, "text-green-400"); gateOpen = true; gOrder = 1; }
+                    else if (gOrder === 1) { globalG.vc = Math.max(globalG.vc, val); addLog(`[VC-G] ${val}G (#${i})`, "text-cyan-400"); gOrder = 2; }
+                    else if (gOrder === 2) { globalG.vg = Math.max(globalG.vg, val); addLog(`[VG-G] ${val}G (#${i})`, "text-cyan-400"); gOrder = 3; }
                 }
 
-                // 数値抽出
+                // 絶対規律: 門番(G)が出るまでは全てゴミ
+                if (!gateOpen && fIdx === 0) return;
+                if (fIdx > 0) gateOpen = true; // 2枚目以降はG不要で開始（分割画像考慮）
+
                 if (line.text.includes("/") && !line.text.includes(":") && !line.text.match(/\d{4}\//)) {
-                    if (currentVArray.length < machine.def.length) {
-                        let kVal = null; let trace = "";
-                        const sameMatch = line.text.match(/(\d+)[\s]*回/);
-                        if (sameMatch) { kVal = parseInt(sameMatch[1]); trace = `[Same-Line: ${kVal}回]`; }
-                        if (kVal === null) {
-                            for(let o of [2,3]) {
-                                let t = rawLines[i-o];
-                                if(t && !t.text.includes("/")) {
-                                    const numMatch = t.text.replace(/,/g, '').match(/\d+/);
-                                    if (numMatch) { kVal = parseInt(numMatch[0]); trace = `[TB(#${i-o}): ${kVal}回]`; break; }
-                                }
+                    let kVal = null;
+                    const sameMatch = line.text.match(/(\d+)[\s]*回/);
+                    if (sameMatch) kVal = parseInt(sameMatch[1]);
+                    if (kVal === null) {
+                        for(let o of [2,3]) {
+                            let t = rawLines[i-o];
+                            if(t && !t.text.includes("/")) {
+                                const numMatch = t.text.replace(/,/g, '').match(/\d+/);
+                                if (numMatch) { kVal = parseInt(numMatch[0]); break; }
                             }
                         }
-                        let pVal = parseFloat(line.text.split("/")[1].replace(/,/g, '')) || 999999;
-                        const headerTag = rawLines[i-1] ? rawLines[i-1].text : "???";
-                        currentVArray.push({ k: kVal, p: pVal, tag: headerTag });
-                        addLog(`ID:${String(currentVArray.length-1).padStart(2)} Anchor:"${line.text.padEnd(12)}" <- ${trace} | 看板:【${headerTag}】`);
+                    }
+                    const headerTag = rawLines[i-1] ? rawLines[i-1].text : "???";
+                    const sIdx = findSlotIdx(headerTag, machine.def);
+                    if (sIdx !== -1 && kVal !== null) {
+                        stackDetails[sIdx][fIdx] = kVal;
+                        addLog(`ID:${String(sIdx).padStart(2)} 看板:【${headerTag}】 => 定義表[${machine.def[sIdx].name}] に同期`);
                     }
                 }
             });
-
-            // スタックマージ
-            stackData.totalG += currentTotalG;
-            stackData.vcG += currentVcG;
-            stackData.vgG += currentVgG;
-            currentVArray.forEach((item, idx) => {
-                if (!stackData.vArraySum[idx]) stackData.vArraySum[idx] = { k: 0 };
-                stackData.vArraySum[idx].k += (item.k || 0);
-            });
         }
 
-        titleLog(`(６) 定義表当て込み（物理スタック合算結果）`);
-        let lls = {1:0, 2:0, 5:0, 6:0};
-        let itemScores = [];
+        titleLog(`（６）定義表当て込み（物理スタック合算結果）`);
+        let lls = {1:0, 2:0, 5:0, 6:0}; let itemScores = [];
         machine.def.forEach((slot, si) => {
-            let data = stackData.vArraySum[si]; if(!data) return;
-            let n = (slot.type === "vc" || slot.type === "vg") ? (slot.type==="vc"?stackData.vcG:stackData.vgG) : (slot.type === "big" ? (stackData.vArraySum[1]?.k || 0) * machine.bG : stackData.totalG);
-            let combinedP = n / (data.k || 0.0001);
-            addLog(`[MAP] ${slot.name.padEnd(10)} | ${data.k}回 : 1/${combinedP.toFixed(1)} (N=${n})`, "text-lime-400 font-bold");
+            let detail = stackDetails[si];
+            let vals = Object.entries(detail).map(([idx, val]) => `IMG${idx}:${val}回`);
+            let sumK = Object.values(detail).reduce((a, b) => a + b, 0);
+            let n = (slot.type === "vc" || slot.type === "vg") ? (slot.type==="vc"?globalG.vc:globalG.vg) : (slot.type === "big" ? (Object.values(stackDetails[1]).reduce((a,b)=>a+b,0)) * machine.bG : globalG.total);
+            
+            addLog(`[MAP] ${slot.name.padEnd(10)} | 式:(${vals.join(" + ") || "0"}) = ${sumK}回 (N=${n})`, "text-lime-400 font-bold text-[10px]");
+
             if(slot.active && n > 0) {
-                let itemLikelihoods = {}; [1,2,5,6].forEach(s => {
-                    let tp = 1/slot.probs[s];
-                    let logL = (data.k * Math.log(tp) + (n - data.k) * Math.log(1 - tp));
-                    lls[s] += logL; itemLikelihoods[s] = logL;
-                });
-                itemScores.push({ name: slot.name, k: data.k, n: n, p: combinedP, lh: itemLikelihoods, probs: slot.probs });
+                [1,2,5,6].forEach(s => { let tp = 1/slot.probs[s]; lls[s] += (sumK * Math.log(tp) + (n - sumK) * Math.log(1 - tp)); });
+                itemScores.push({ name: slot.name, k: sumK, n: n, probs: slot.probs });
             }
         });
 
-        titleLog(`(７) 項目別尤度詳細 (STACK EVAL)`);
+        titleLog(`（７）項目別尤度詳細`);
         itemScores.forEach(item => {
-            let line = `<div class="text-[10px] mb-0 font-bold text-zinc-100">${item.name} ${item.k}回:1/${item.p.toFixed(1)}</div><div class="flex gap-x-2 mb-2 text-[12px] font-black">`;
-            const colorClass = { 1: "c-s1", 2: "c-s2", 5: "c-s5", 6: "c-s6" };
-            [1,2,5,6].forEach(s => {
-                let star = calculateZStar(item.k, item.n, item.probs[s]);
-                line += `<span class="${colorClass[s]}">設定${s}:${star}</span>`;
-            });
-            line += `</div>`;
-            let wrapper = document.createElement('div'); wrapper.innerHTML = line; logDisplay.appendChild(wrapper);
+            let line = `<div class="text-[10px] font-bold">${item.name} ${item.k}回:1/${(item.n/item.k).toFixed(1)}</div><div class="flex gap-x-2 mb-2 text-[12px] font-black">`;
+            [1,2,5,6].forEach(s => line += `<span class="c-s${s}">設定${s}:${calculateZStar(item.k, item.n, item.probs[s])}</span>`);
+            let wrapper = document.createElement('div'); wrapper.innerHTML = line + `</div>`; logDisplay.appendChild(wrapper);
         });
 
-        titleLog(`(８) 総合設定判別結果`);
+        titleLog(`（８）総合設定判別結果`);
         const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (Math.exp(lls[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
             addLog(`<span class="c-s${s} text-[13px] font-black">設定${s}: ${prob.toFixed(2).padStart(6)}% | ${getStars(max - lls[s])}</span>`);
         });
-        addLog(`>> ANALYSIS COMPLETE. LOGISTICS SECURED.`);
     } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-600 font-bold"); }
 }
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
