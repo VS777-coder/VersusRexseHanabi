@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.65</title>
+    <title>ANALYZER Rev 2.2.66</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.65</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT POSITION SYNC / TRI-G READY</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.66</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">PHYSICAL G-LATCH SYNC / STABLE POSITION</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card" id="res-area">
@@ -70,7 +70,7 @@ const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
     { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
-    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
+    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
     { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1:1,2:1,5:1,6:1} },
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.6, 2: 15.3, 5: 15.1, 6: 14.9} },
@@ -133,7 +133,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.65`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.66`, "text-amber-400 font-bold");
 
     try {
         let totalG = 0, vcG = 0, vgG = 0, bbCount = 0;
@@ -166,7 +166,7 @@ async function run(files) {
         } else if (totalTxt.includes("ハナビ") || totalTxt.includes("新ハナ")) {
             machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
         }
-        if (!machine) throw new Error("❌ 判定不能: 該当キーワードなし。");
+        if (!machine) throw new Error("❌ 判定不能: 機種キーワードなし。");
         addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
 
         titleLog(`（５）仮想配列作成部分のログ`);
@@ -174,31 +174,35 @@ async function run(files) {
         rawFilesData.forEach((img, imgIdx) => {
             addLog(`\n[SYNC] IMG${imgIdx} 同期監視開始`, "text-amber-500 font-bold");
             let isSyncing = (imgIdx > 0); 
+            let gLatch = false; // Gを見つけるまで偽
 
             img.lines.forEach((line, i) => {
-                // 母数排他スキャンの復旧
+                // 母数スキャン & 物理ラッチ確定
                 if (line.text.includes("G")) {
                     const m = line.text.match(/([\d,]+)G/);
                     if (m) {
                         const val = parseInt(m[1].replace(/,/g, ''));
-                        if ((line.text.includes("総") || line.text.includes("プレイ")) && totalG === 0) {
-                            totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500");
-                        } else if ((line.text.includes("チャンス") || line.text.includes("チャレンジ")) && vcG === 0) {
-                            vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400");
-                        } else if (line.text.includes("GAME") && vgG === 0) {
-                            vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400");
+                        if (line.text.includes("総") || line.text.includes("プレイ")) {
+                            if (totalG === 0) { totalG = val; addLog(`    [G-SCAN] 総G数確定: ${totalG}G`, "text-green-500"); }
+                            gLatch = true; // 総プレイ数を見つけたらラッチ解除
+                        } else if (line.text.includes("チャンス") || line.text.includes("チャレンジ")) {
+                            if (vcG === 0) { vcG = val; addLog(`    [G-SCAN] VC-G数確定: ${vcG}G`, "text-cyan-400"); }
+                        } else if (line.text.includes("GAME")) {
+                            if (vgG === 0) { vgG = val; addLog(`    [G-SCAN] VG-G数確定: ${vgG}G`, "text-blue-400"); }
                         }
+                        // 単純に「〇〇〇G」だけでもラッチ解除の補助とする
+                        if (!gLatch && val > 10) gLatch = true;
                     }
                 }
 
-                // --- 物理ポインタ絶対規律：/があれば必ずスロット消費 ---
-                if (line.text.includes("/")) {
+                // 物理ポインタ絶対同期：/があればスロット消費。ただしGラッチ解除後のみ。
+                if (line.text.includes("/") && gLatch) {
                     if (slotIdx >= machine.def.length) {
                         addLog(`    [DROSS] 定義外データ破棄: ${line.text}`, "text-gray-600 text-[8px]");
                         return;
                     }
 
-                    const pVal = getDenominator(line.text); // 数値がなければnull
+                    const pVal = getDenominator(line.text); 
                     
                     let kVal = null; let kaiWarn = ""; let hasKai = false;
                     [2,3].forEach(offset => {
@@ -209,17 +213,15 @@ async function run(files) {
                             if (match) { kVal = parseInt(match[0]); if (tRow.text.includes("回")) hasKai = true; }
                         }
                     });
-
                     if (kVal !== null && !hasKai) kaiWarn = "⚠️";
 
-                    // 同期規律：分母が数値化可能かつ既読ならスキップ
+                    // 同期：数値分母が既読ならスキップ
                     if (isSyncing && pVal !== null) {
                         const probMatch = finalStorage.some(res => res && res.rawP === pVal);
-                        if (probMatch) { addLog(`    [SKIP] 既読スキップ: 1/${pVal}`); return; }
-                        else { isSyncing = false; addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400"); }
+                        if (probMatch) return; 
+                        else isSyncing = false;
                     }
 
-                    // 格納（数値が取れなくても枠は埋める。文字ゴミ前提）
                     const item = machine.def[slotIdx];
                     if (item.id === "bb" || item.id === "bb_tot") bbCount = kVal || 0;
                     
