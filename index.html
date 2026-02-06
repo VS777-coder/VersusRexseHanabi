@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.58</title>
+    <title>ANALYZER Rev 2.2.60</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
@@ -29,8 +29,8 @@
 </head>
 <body>
     <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.58</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">ROBUST SYNC / SINGLE-1/- TOLERANCE</div>
+        <div class="kawaii-title uppercase">ANALYZER REV 2.2.60</div>
+        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT START-G / ABSOLUTE ORDER</div>
     </div>
     <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
     <div class="result-card">
@@ -43,7 +43,7 @@
     <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
 
 <script>
-// 1. スマスロハナビ定義
+// 1. スマスロハナビ：最新「絶対規律」定義
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -66,7 +66,7 @@ const L_HANABI_CONFIG = [
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
 
-// 2. 新ハナビ定義
+// 2. 新ハナビ：最新「絶対規律」定義
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -89,7 +89,7 @@ const HANABI_CONFIG = [
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
 
-// 3. バーサスリヴァイズ定義 (物理順)
+// 3. バーサスリヴァイズ：最新「絶対規律」定義
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -134,7 +134,7 @@ async function run(files) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.58`, "text-amber-400 font-bold");
+    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.60`, "text-amber-400 font-bold");
 
     try {
         let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
@@ -162,28 +162,40 @@ async function run(files) {
         else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
 
-        titleLog(`（２）マッピング（1/- ズレ補正モード）`);
+        titleLog(`（２）マッピング（G数起点フラグ監視）`);
         let slotIdx = 0; let bbCount = 0;
+        let hasStarted = false; // スイッチ：G数を検知するまでゴミを遮断
+
         rawFilesData.forEach((img, imgIdx) => {
             addLog(`\n[SCAN] IMG${imgIdx} 解析開始`, "text-amber-500 font-bold");
             let isSyncing = (imgIdx > 0); 
 
             img.lines.forEach((line, i) => {
+                // 1. G数（総プレイ数）を検知：ここから配列作成を許可
                 if (line.text.includes("G") && (line.text.includes("総") || line.text.includes("プレイ"))) {
                     const m = line.text.match(/([\d,]+)G/);
-                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`    [G] 総プレイ数: ${globalG}G`, "text-green-500"); }
+                    if (m) { 
+                        globalG = parseInt(m[1].replace(/,/g, '')); 
+                        addLog(`    [TRIGGER] 総プレイ数: ${globalG}G (これより解析開始)`, "text-green-500 font-bold");
+                        hasStarted = true; // スイッチON
+                        return; // G数の行自体はスロットに数えない
+                    }
                 }
 
+                // スイッチOFFの間はスラッシュがあってもゴミとして無視
+                if (!hasStarted) return;
+
+                // 2. スイッチON以降のみ、定義表の規律に従いマッピング実行
                 if (line.text.includes("/")) {
-                    const pVal = getDenominator(line.text); // 1/- の時は null になる
+                    const pVal = getDenominator(line.text); // 1/- の時は null
                     let kVal = 0;
 
                     // 複数画像時に 1/- が出た場合は同期不全リスクのためエラー停止
                     if (pVal === null && files.length > 1) {
-                        throw new Error("複数画像解析中に未当選項目(1/-)を検知。同期キー不明のため中断します。1枚ずつ解析してください。");
+                        throw new Error("複数画像解析中に未当選項目(1/-)を検知。中断。1枚ずつ解析してください。");
                     }
 
-                    // 回数検索
+                    // 回数検索（分母より上の行を探索）
                     [1,2,3].forEach(offset => {
                         let tRow = img.lines[i-offset];
                         if (tRow && !tRow.text.includes("/")) {
@@ -200,7 +212,7 @@ async function run(files) {
                         const item = machine.def[slotIdx];
                         if (item.id === "bb") bbCount = kVal;
                         
-                        // マッピング：1/- でも 0回として slotIdx を進めて玉突き事故を防止
+                        // マッピング：1/- でも 0回として slotIdx を進めて順序（規律）を維持
                         addLog(`    [MAP] SLOT[${slotIdx}] ${item.name} | ${pVal ? '1/'+pVal : '1/-'} (${kVal}回)`);
                         finalStorage[slotIdx] = { ...item, k: kVal, rawP: pVal, isValid: (pVal !== null) };
                         slotIdx++;
@@ -209,10 +221,10 @@ async function run(files) {
             });
         });
 
-        titleLog(`（３）尤度計算・判定`);
+        titleLog(`（３）設定推測計算`);
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if (!res || !res.active || !res.isValid) return; // 1/- または非アクティブは無視
+            if (!res || !res.active || !res.isValid) return; // 1/- は計算除外
             
             if (res.type === "vc" || res.type === "vg") res.n = Math.round(res.k * res.rawP);
             else if (res.type === "big") res.n = bbCount * machine.bG;
