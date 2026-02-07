@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.0.6</title>
+    <title>ANALYZER Rev 3.0.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -85,7 +85,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI & VERSUS</div>
-        <div class="sub-title">Rev 3.0.6 (Full Logs / K-Priority)</div>
+        <div class="sub-title">Rev 3.0.7 (G-Anchor / Unit-Check)</div>
     </div>
 
     <div class="shrink-0 mb-3">
@@ -125,7 +125,7 @@
     </div>
 
 <script>
-// 定義表の更新
+// --- 最新定義表の適用 ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -253,32 +253,48 @@ async function run(file) {
 
         for (let i = 0; i < sortedTokens.length; i++) {
             const token = sortedTokens[i];
+
+            // A. 起点決定：最初に「G」を含むトークンを検知
             if (!anchorFound && token.text.includes('G')) {
-                const val = parseInt(token.text);
+                const val = parseInt(token.text.replace(/[^0-9]/g, ''));
                 if (!isNaN(val)) {
-                    gCounts.push(val); addLog(`  [ANCHOR] ${val}G 検出`, "text-blue-400 font-bold");
+                    gCounts.push(val);
+                    addLog(`  [ANCHOR] ${val}G 検出`, "text-blue-400 font-bold");
+                    
                     if (machine.name === "スマスロハナビ") {
-                        for(let n=1; n<=4; n++) { 
-                            if(sortedTokens[i+n] && sortedTokens[i+n].text.includes('G')) {
-                                let v = parseInt(sortedTokens[i+n].text); if(!isNaN(v)) gCounts.push(v);
+                        let searchLimit = Math.min(i + 15, sortedTokens.length);
+                        for (let j = i + 1; j < searchLimit; j++) {
+                            if (sortedTokens[j].text.includes('G')) {
+                                let v = parseInt(sortedTokens[j].text.replace(/[^0-9]/g, ''));
+                                if (!isNaN(v)) gCounts.push(v);
                             }
+                            if (gCounts.length >= 3) break;
                         }
                     }
                     anchorFound = true;
                 }
                 continue;
             }
-            if (anchorFound && token.text.includes('/')) {
+
+            if (!anchorFound) continue;
+
+            // B. 数値・分母ペア抽出
+            if (token.text.includes('/')) {
                 const pMatch = token.text.match(/\d+\.?\d*/);
                 const prob = pMatch ? parseFloat(pMatch[0]) : null;
                 if (prob) {
                     let count = 0;
+                    let unitWarn = "";
                     for (let j = 1; j <= 5; j++) {
                         const prev = sortedTokens[i - j];
-                        if (prev && /^\d+$/.test(prev.text)) { count = parseInt(prev.text); break; }
+                        if (prev && /\d/.test(prev.text)) {
+                            if (!prev.text.includes('回')) unitWarn = "⚠️回なし";
+                            count = parseInt(prev.text.replace(/[^0-9]/g, ''));
+                            break;
+                        }
                     }
-                    extractedPairs.push({ count, prob });
-                    addLog(`  ARRAY[${extractedPairs.length-1}]: 1/${prob} -> ${count}回`);
+                    extractedPairs.push({ count, prob, warn: unitWarn });
+                    addLog(`  ARRAY[${extractedPairs.length-1}]: 1/${prob} -> ${count}回 ${unitWarn}`);
                 }
             }
         }
