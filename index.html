@@ -3,50 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.0.1</title>
+    <title>ANALYZER Rev 3.0.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #0c0a09; color: #fbbf24; font-family: 'Share Tech Mono', monospace; height: 100dvh; width: 100%; margin: 0; padding: 15px; overflow: hidden; display: flex; flex-direction: column; }
+        body { background-color: #0c0a09; color: #fbbf24; font-family: 'Share Tech Mono', monospace; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .panel-border { border: 2px solid #78350f; border-radius: 4px; background: rgba(28, 25, 23, 0.8); box-shadow: inset 0 0 15px rgba(120, 53, 15, 0.5); }
-        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.5rem; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); text-align: center; letter-spacing: 2px; }
-        .main-btn { background: #451a03; border: 1px solid #f59e0b; cursor: pointer; height: 60px; display: flex; align-items: center; justify-content: center; width: 100%; transition: all 0.2s; position: relative; overflow: hidden; }
+        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.2rem; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); text-align: center; letter-spacing: 2px; line-height: 1; }
+        .main-btn { background: #451a03; border: 1px solid #f59e0b; cursor: pointer; height: 50px; display: flex; align-items: center; justify-content: center; width: 100%; transition: all 0.2s; position: relative; overflow: hidden; }
         .main-btn:active { background: #78350f; transform: translateY(2px); }
-        .main-btn span { font-weight: bold; font-size: 1.2rem; color: #fbbf24; text-transform: uppercase; }
-        .result-card { padding: 15px; margin-top: 10px; flex-shrink: 0; }
-        .bar-bg { background-color: #1a1614; height: 8px; border-radius: 2px; overflow: hidden; margin-top: 4px; border: 1px solid #451a03; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s ease-out; }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin: 10px 0; border: 1px solid #451a03; background-color: #050505; overflow: hidden; display: flex; flex-direction: column; }
-        .future-log { padding: 10px; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #d97706; line-height: 1.4; }
+        .main-btn span { font-weight: bold; font-size: 1.1rem; color: #fbbf24; text-transform: uppercase; }
+        
+        /* 判定結果エリアの強化 */
+        .result-card { padding: 15px; margin-top: 8px; flex-shrink: 0; }
+        .bar-bg { background-color: #1a1614; height: 16px; border-radius: 2px; overflow: hidden; margin-top: 6px; border: 1px solid #451a03; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        /* ログエリアの縮小 */
+        .log-container { flex-grow: 1; min-height: 100px; max-height: 180px; position: relative; margin: 8px 0; border: 1px solid #451a03; background-color: #050505; overflow: hidden; display: flex; flex-direction: column; }
+        .future-log { padding: 8px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #d97706; line-height: 1.3; }
+        
         .api-input { background: #1c1917; color: #fbbf24; border: 1px solid #78350f; padding: 5px 10px; font-size: 10px; flex-grow: 1; outline: none; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 8px #eab308; } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 10px #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 10px #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
         .status-tag { font-size: 9px; padding: 2px 5px; background: #78350f; color: #fcd34d; border-radius: 2px; }
     </style>
 </head>
 <body>
-    <div class="header-area mb-2">
-        <div class="kawaii-title">ANALYZER REV 3.0.1</div>
+    <div class="header-area mb-1">
+        <div class="kawaii-title uppercase">Analyzer Rev 3.0.2</div>
         <div class="flex justify-between items-center px-1">
             <span class="status-tag">CORE: NUMERIC-INDEX ENGINE</span>
-            <span id="machine-type" class="text-xs font-bold text-amber-500">READY</span>
+            <span id="machine-type" class="text-xs font-bold text-amber-500 tracking-tighter">READY</span>
         </div>
     </div>
 
     <div class="shrink-0">
-        <label for="f-in" class="main-btn panel-border"><span>ANALYSIS START</span></label>
+        <label for="f-in" class="main-btn panel-border"><span>Analysis Start</span></label>
         <input type="file" id="f-in" class="hidden" accept="image/*">
     </div>
 
     <div class="result-card panel-border">
-        <div class="grid grid-cols-2 gap-x-4">
-            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s1"><span>SET 1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s2"><span>SET 2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s5"><span>SET 5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s6"><span>SET 6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+        <div class="space-y-4">
+            <div>
+                <div class="flex justify-between items-end text-lg font-black c-s1">
+                    <span class="tracking-widest">SETTING 1</span>
+                    <span id="p1" class="text-2xl">---</span>
+                </div>
+                <div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between items-end text-lg font-black c-s2">
+                    <span class="tracking-widest">SETTING 2</span>
+                    <span id="p2" class="text-2xl">---</span>
+                </div>
+                <div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between items-end text-lg font-black c-s5">
+                    <span class="tracking-widest">SETTING 5</span>
+                    <span id="p5" class="text-2xl">---</span>
+                </div>
+                <div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div>
+            </div>
+            <div>
+                <div class="flex justify-between items-end text-lg font-black c-s6">
+                    <span class="tracking-widest">SETTING 6</span>
+                    <span id="p6" class="text-2xl">---</span>
+                </div>
+                <div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div>
+            </div>
         </div>
     </div>
 
@@ -56,11 +85,11 @@
 
     <div class="api-footer flex gap-2">
         <input type="password" id="api-key" class="api-input" placeholder="GOOGLE VISION API KEY">
-        <button id="sv-key" class="px-4 py-2 bg-amber-900 text-[10px] border border-amber-600 font-bold">SAVE</button>
+        <button id="sv-key" class="px-3 py-2 bg-amber-900 text-[10px] border border-amber-600 font-bold">SAVE</button>
     </div>
 
 <script>
-// --- 更新された定義表 ( Rev 3.0.1 ) ---
+// --- 定義表（不変） ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -127,7 +156,7 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-// --- 共通処理ロジック ---
+// --- 共通処理（ロジック） ---
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-amber-600") => { 
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; 
@@ -149,14 +178,16 @@ const getStars = (gap) => {
     return "★☆☆☆☆";
 };
 
+function titleLog(m) { addLog(`\n--- ${m} ---`, "text-amber-500 font-black tracking-widest border-b border-amber-900 mb-1 uppercase"); }
+
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> INITIALIZING ANALYZER REV 3.0.1...`, "text-amber-400 font-bold");
+    addLog(`>> INITIALIZING CORE...`, "text-amber-400 font-bold");
 
     try {
-        titleLog(`（１）画像情報`);
+        titleLog("（１）画像情報");
         addLog(`FILE: ${file.name}`);
 
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
@@ -172,7 +203,7 @@ async function run(file) {
             x: w.boundingPoly.vertices[0].x
         }));
 
-        titleLog(`（２）画像の生データ`);
+        titleLog("（２）画像の生データ");
         const rows = [];
         tokens.forEach(t => {
             let r = rows.find(row => Math.abs(row.y - t.y) < 10);
@@ -189,7 +220,7 @@ async function run(file) {
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-type').innerText = machine.name;
 
-        titleLog(`（３）仮想配列作成部分のログ`);
+        titleLog("（３）仮想配列作成");
         let anchorFound = false;
         let gCounts = [];
         let extractedPairs = [];
@@ -204,7 +235,7 @@ async function run(file) {
                 const val = parseInt(token.text);
                 if (!isNaN(val)) {
                     gCounts.push(val);
-                    addLog(`[ANCHOR] G-DETECTED: ${val}G`, "text-green-500 font-bold");
+                    addLog(`[ANCHOR] G: ${val}`, "text-green-500 font-bold");
                     if (machine.name === "スマスロハナビ") {
                         for(let next=1; next<=4; next++){
                             if(sortedTokens[i+next] && sortedTokens[i+next].text.includes('G')){
@@ -223,21 +254,17 @@ async function run(file) {
             if (token.text.includes('/')) {
                 const prob = getDenominator(token.text);
                 if (!prob) continue;
-
                 let count = 0;
                 for (let j = 1; j <= 5; j++) {
                     const prev = sortedTokens[i - j];
-                    if (prev && /^\d+$/.test(prev.text)) {
-                        count = parseInt(prev.text);
-                        break;
-                    }
+                    if (prev && /^\d+$/.test(prev.text)) { count = parseInt(prev.text); break; }
                 }
                 extractedPairs.push({ count, prob });
-                addLog(`[V-ARRAY] IDX[${extractedPairs.length-1}] 1/${prob} → ${count}回`);
+                addLog(`IDX[${extractedPairs.length-1}] 1/${prob} -> ${count}回`);
             }
         }
 
-        titleLog(`（４）定義表への当て込み`);
+        titleLog("（４）定義表当て込み");
         const finalStorage = [];
         const globalG = gCounts[0] || 0;
         const hcG = (machine.name === "スマスロハナビ") ? (gCounts[1] || 0) : 0;
@@ -246,19 +273,16 @@ async function run(file) {
         machine.def.forEach((def, idx) => {
             const data = extractedPairs[idx];
             if (!data) return;
-
             let n = globalG;
             if (def.type === "vc") n = (machine.name === "スマスロハナビ") ? hcG : Math.round(data.count * data.prob);
             if (def.type === "vg") n = (machine.name === "スマスロハナビ") ? hgG : Math.round(data.count * data.prob);
             if (def.type === "big") n = bbCount * machine.bG;
-            
             if (def.id === "bb") bbCount = data.count;
-
             finalStorage.push({ ...def, k: data.count, n: n, rawP: data.prob });
-            addLog(`${def.name.padEnd(10)} ${data.count}回 : 1/${data.prob} (N=${n})`, def.active ? "text-zinc-200" : "text-zinc-500");
+            addLog(`${def.name.padEnd(10)} ${data.count}回 : 1/${data.prob}`, def.active ? "text-zinc-200" : "text-zinc-500");
         });
 
-        titleLog(`（５）尤度計算`);
+        titleLog("（５）尤度計算");
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
             if (res.active && res.k >= 0 && res.n > 0) {
@@ -269,12 +293,12 @@ async function run(file) {
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
-                addLog(`<div class="text-amber-400 mt-1">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[9px]">` +
+                addLog(`<div class="text-amber-400 mt-1">${res.name} (${res.k})</div><div class="flex gap-x-2 text-[9px]">` +
                     [1,2,5,6].map(s => `<span class="c-s${s}">S${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
             }
         });
 
-        titleLog(`（６）設定判別処理`);
+        titleLog("（６）設定判別処理");
         const max = Math.max(...Object.values(lls));
         const sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
@@ -286,11 +310,8 @@ async function run(file) {
 
     } catch (e) { 
         addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold border border-red-500 p-2 my-2");
-        console.error(e);
     }
 }
-
-function titleLog(m) { addLog(`\n--- ${m} ---`, "text-amber-500 font-black tracking-widest border-b border-amber-900 mb-1"); }
 
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("KEY SAVED"); };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
