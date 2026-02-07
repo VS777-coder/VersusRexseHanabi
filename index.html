@@ -16,7 +16,6 @@
             overflow: hidden; display: flex; flex-direction: column;
         }
 
-        /* ヘッダーセクション */
         .app-header { text-align: center; margin-bottom: 12px; }
         .main-title { 
             font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; 
@@ -24,7 +23,6 @@
         }
         .sub-title { font-size: 10px; color: #4b5563; font-family: 'Share Tech Mono', monospace; }
 
-        /* メイン解析ボタン */
         .main-btn { 
             background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
             border: 2px solid #3b82f6; border-radius: 12px;
@@ -35,15 +33,17 @@
         .main-btn:active { transform: translateY(2px); box-shadow: 0 1px 5px rgba(0,0,0,0.8); }
         .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
 
-        /* 結果カードパネル */
         .panel-frame { 
             border: 2px solid #1e293b; background: #0f172a; border-radius: 12px;
             padding: 16px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
+        
         .machine-badge {
-            position: absolute; top: 12px; right: 16px;
+            position: absolute; top: 10px; right: 12px;
             font-size: 10px; font-weight: 900; color: #60a5fa;
-            border-bottom: 1px solid #1e40af;
+            background: rgba(30, 41, 59, 0.8); padding: 2px 8px;
+            border-radius: 4px; border: 1px solid #1e40af;
+            z-index: 5;
         }
 
         .bar-container { margin-bottom: 14px; }
@@ -51,27 +51,35 @@
         .bar-bg { background-color: #020617; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #1e293b; }
         .bar-fill { height: 100%; width: 0%; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
         
-        /* ログモニター */
         .log-container { 
             flex-grow: 1; min-height: 0; margin: 12px 0; 
             border: 2px solid #1e293b; background-color: #000000; 
-            border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;
+            border-radius: 8px; display: flex; flex-direction: column; 
+            overflow: hidden; position: relative;
         }
+        .copy-btn {
+            position: absolute; top: 8px; right: 8px;
+            background: #2563eb; color: #fff; font-size: 9px; font-weight: 900;
+            padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6;
+            cursor: pointer; z-index: 10;
+        }
+        .copy-btn:active { opacity: 0.7; }
+
         .log-body { 
             padding: 12px; font-size: 9px; width: 100%; height: 100%; 
             overflow-y: auto; white-space: pre-wrap; color: #94a3b8; 
             line-height: 1.5; font-family: 'Share Tech Mono', monospace;
+            padding-top: 35px;
         }
         
-        /* フッター */
         .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 4px; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; outline: none; border-radius: 8px; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
 
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 10px rgba(234, 179, 8, 0.4); } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; box-shadow: 0 0 10px rgba(34, 197, 94, 0.4); } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
     </style>
 </head>
 <body>
@@ -88,7 +96,7 @@
     <div class="result-card panel-frame">
         <div id="machine-type" class="machine-badge">待機中</div>
         
-        <div class="bar-container">
+        <div class="bar-container mt-4">
             <div class="label-row"><span class="c-s1 font-black text-xs">設定1</span><span id="p1" class="c-s1 font-black text-sm">0.0%</span></div>
             <div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div>
         </div>
@@ -107,6 +115,7 @@
     </div>
 
     <div class="log-container">
+        <button id="copy-log" class="copy-btn">COPY</button>
         <div id="log-display" class="log-body">READY FOR SCANNING...</div>
     </div>
 
@@ -116,7 +125,7 @@
     </div>
 
 <script>
-// ご提示いただいた定義表を完全に反映
+// 定義表の更新
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -189,19 +198,17 @@ const addLog = (m, c="text-slate-400") => {
     logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-const getDenominator = (str) => {
-    if (!str.includes('/')) return null;
-    const parts = str.split('/');
-    const match = parts[parts.length - 1].match(/\d+\.?\d*/);
-    return match ? parseFloat(match[0]) : null;
-};
-
 const getStars = (gap) => {
     if (gap < 0.2) return "★★★★★";
     if (gap < 0.7) return "★★★★☆";
     if (gap < 1.5) return "★★★☆☆";
     if (gap < 3.0) return "★★☆☆☆";
     return "★☆☆☆☆";
+};
+
+document.getElementById('copy-log').onclick = () => {
+    const text = logDisplay.innerText;
+    navigator.clipboard.writeText(text).then(() => alert("LOG COPIED!"));
 };
 
 async function run(file) {
