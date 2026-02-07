@@ -3,47 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 2.2.58</title>
+    <title>ANALYZER Rev 3.0.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #1a1614; color: #f3e8d2; font-family: 'Inter', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.2rem; line-height: 1.0; text-align: center; }
-        .main-btn { background-color: #78350f; border-radius: 12px; border: 2px solid #f59e0b; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 8px; flex-shrink: 0; }
-        .main-btn span { font-weight: 900; font-size: 1.5rem; color: #fef3c7; }
-        .result-card { background-color: #2d241e; border-radius: 12px; padding: 10px; border: 1px solid #78350f; margin-bottom: 8px; flex-shrink: 0; }
-        .bar-bg { background-color: #1a1614; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px; border: 1px solid #451a03; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
-        .log-container { flex-grow: 1; min-height: 0; position: relative; margin-bottom: 4px; display: flex; flex-direction: column; border: 1px solid #78350f; border-radius: 8px; background-color: #0c0a09; overflow: hidden; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: #b45309; color: #fef3c7; font-size: 10px; padding: 6px 12px; border-radius: 4px; z-index: 1000; cursor: pointer; border: 1px solid #f59e0b; font-weight: bold; }
-        .future-log { padding: 12px; font-family: 'Share Tech Mono', monospace; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #ffffff; line-height: 1.5; }
-        .api-footer { flex-shrink: 0; display: flex; gap: 8px; padding-bottom: 2px; }
-        .api-input { background-color: #2d241e; color: #fef3c7; border-radius: 6px; padding: 8px 10px; font-size: 11px; flex-grow: 1; border: 1px solid #78350f; outline: none; }
-        .save-btn { background-color: #451a03; color: #f59e0b; font-weight: bold; padding: 0 12px; border-radius: 6px; border: 1px solid #f59e0b; font-size: 10px; cursor: pointer; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; } 
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; } 
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; } 
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; } 
+        body { background-color: #0c0a09; color: #fbbf24; font-family: 'Share Tech Mono', monospace; height: 100dvh; width: 100%; margin: 0; padding: 15px; overflow: hidden; display: flex; flex-direction: column; }
+        .panel-border { border: 2px solid #78350f; border-radius: 4px; background: rgba(28, 25, 23, 0.8); box-shadow: inset 0 0 15px rgba(120, 53, 15, 0.5); }
+        .kawaii-title { font-family: 'Squada One', cursive; color: #f59e0b; font-size: 2.5rem; text-shadow: 0 0 10px rgba(245, 158, 11, 0.5); text-align: center; letter-spacing: 2px; }
+        .main-btn { background: #451a03; border: 1px solid #f59e0b; cursor: pointer; height: 60px; display: flex; align-items: center; justify-content: center; width: 100%; transition: all 0.2s; position: relative; overflow: hidden; }
+        .main-btn:active { background: #78350f; transform: translateY(2px); }
+        .main-btn span { font-weight: bold; font-size: 1.2rem; color: #fbbf24; text-transform: uppercase; }
+        .result-card { padding: 15px; margin-top: 10px; flex-shrink: 0; }
+        .bar-bg { background-color: #1a1614; height: 8px; border-radius: 2px; overflow: hidden; margin-top: 4px; border: 1px solid #451a03; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1s ease-out; }
+        .log-container { flex-grow: 1; min-height: 0; position: relative; margin: 10px 0; border: 1px solid #451a03; background-color: #050505; overflow: hidden; display: flex; flex-direction: column; }
+        .future-log { padding: 10px; font-size: 10px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #d97706; line-height: 1.4; }
+        .api-input { background: #1c1917; color: #fbbf24; border: 1px solid #78350f; padding: 5px 10px; font-size: 10px; flex-grow: 1; outline: none; }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; box-shadow: 0 0 8px #3b82f6; } 
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; box-shadow: 0 0 8px #eab308; } 
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; } 
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .status-tag { font-size: 9px; padding: 2px 5px; background: #78350f; color: #fcd34d; border-radius: 2px; }
     </style>
 </head>
 <body>
-    <div class="header-area">
-        <div class="kawaii-title uppercase">ANALYZER REV 2.2.58</div>
-        <div id="m-info" class="text-[9px] font-bold text-amber-800 text-center mb-1">STRICT NUMERIC-ONLY FALLBACK</div>
+    <div class="header-area mb-2">
+        <div class="kawaii-title">ANALYZER REV 3.0.1</div>
+        <div class="flex justify-between items-center px-1">
+            <span class="status-tag">CORE: NUMERIC-INDEX ENGINE</span>
+            <span id="machine-type" class="text-xs font-bold text-amber-500">READY</span>
+        </div>
     </div>
-    <div class="shrink-0"><label for="f-in" class="main-btn"><span>よしこの 解析実行</span></label><input type="file" id="f-in" class="hidden" multiple accept="image/*"></div>
-    <div class="result-card">
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s1"><span>設定1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s2"><span>設定2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-        <div class="mb-2"><div class="flex justify-between text-[12px] font-black c-s5"><span>設定5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-        <div><div class="flex justify-between text-[12px] font-black c-s6"><span>設定6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+
+    <div class="shrink-0">
+        <label for="f-in" class="main-btn panel-border"><span>ANALYSIS START</span></label>
+        <input type="file" id="f-in" class="hidden" accept="image/*">
     </div>
-    <div class="log-container"><button id="cp-btn" class="copy-btn">LOG COPY</button><div id="log-display" class="future-log">READY...</div></div>
-    <div class="api-footer"><input type="password" id="api-key" class="api-input" placeholder="VISION API KEY"><button id="sv-key" class="save-btn">SAVE</button></div>
+
+    <div class="result-card panel-border">
+        <div class="grid grid-cols-2 gap-x-4">
+            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s1"><span>SET 1</span><span id="p1">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s2"><span>SET 2</span><span id="p2">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s5"><span>SET 5</span><span id="p5">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between text-[11px] font-bold c-s6"><span>SET 6</span><span id="p6">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+        </div>
+    </div>
+
+    <div class="log-container">
+        <div id="log-display" class="future-log">SYSTEM STANDBY...</div>
+    </div>
+
+    <div class="api-footer flex gap-2">
+        <input type="password" id="api-key" class="api-input" placeholder="GOOGLE VISION API KEY">
+        <button id="sv-key" class="px-4 py-2 bg-amber-900 text-[10px] border border-amber-600 font-bold">SAVE</button>
+    </div>
 
 <script>
-// 定義表（不変）
+// --- 更新された定義表 ( Rev 3.0.1 ) ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -110,164 +127,141 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
+// --- 共通処理ロジック ---
 const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-white") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-const titleLog = (m) => addLog(`\n${m}`, "text-yellow-500 font-bold underline");
+const addLog = (m, c="text-amber-600") => { 
+    const e=document.createElement('div'); e.className=c; e.innerHTML=m; 
+    logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
+};
 
-const getDenominator = (str) => { 
-    if (!str || !str.includes('/')) return null; 
-    const match = str.split('/').pop().match(/\d+\.?\d*/);
-    return match ? parseFloat(match[0]) : null; 
+const getDenominator = (str) => {
+    if (!str.includes('/')) return null;
+    const parts = str.split('/');
+    const match = parts[parts.length - 1].match(/\d+\.?\d*/);
+    return match ? parseFloat(match[0]) : null;
 };
 
 const getStars = (gap) => {
-    if (gap < 0.1) return "★★★★★";
-    if (gap < 0.5) return "★★★★☆";
-    if (gap < 1.0) return "★★★☆☆";
-    if (gap < 2.0) return "★★☆☆☆";
+    if (gap < 0.2) return "★★★★★";
+    if (gap < 0.7) return "★★★★☆";
+    if (gap < 1.5) return "★★★☆☆";
+    if (gap < 3.0) return "★★☆☆☆";
     return "★☆☆☆☆";
 };
 
-async function run(files) {
+async function run(file) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("Vision API Key Required");
     logDisplay.innerHTML = "";
-    addLog(`>> SYSTEM BOOT: ANALYZER Rev 2.2.58`, "text-amber-400 font-bold");
+    addLog(`>> INITIALIZING ANALYZER REV 3.0.1...`, "text-amber-400 font-bold");
 
     try {
-        let globalG = 0; let machine = null; let finalStorage = []; let rawFilesData = [];
-
         titleLog(`（１）画像情報`);
-        for (let file of Array.from(files)) {
-            addLog(`  [READING] ${file.name}...`);
-            const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
-            const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
-                method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
-            });
-            const json = await resp.json();
-            
-            const lines = json.responses[0].textAnnotations.slice(1).reduce((acc, w) => {
-                let y = Math.round(w.boundingPoly.vertices[0].y / 10) * 10; 
-                let r = acc.find(row => row.y === y);
-                if(r) r.words.push({x: w.boundingPoly.vertices[0].x, text: w.description});
-                else acc.push({y, words:[{x: w.boundingPoly.vertices[0].x, text: w.description}]});
-                return acc;
-            }, []).sort((a,b)=>a.y-b.y).map(r=>({text: r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" "), y: r.y}));
-            rawFilesData.push({ name: file.name, lines });
+        addLog(`FILE: ${file.name}`);
+
+        const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
+        const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
+            method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
+        });
+        const json = await resp.json();
+        if (!json.responses[0].textAnnotations) throw new Error("OCR Failed: No text detected");
+
+        const tokens = json.responses[0].textAnnotations.slice(1).map(w => ({
+            text: w.description.replace(/,/g, ''),
+            y: w.boundingPoly.vertices[0].y,
+            x: w.boundingPoly.vertices[0].x
+        }));
+
+        titleLog(`（２）画像の生データ`);
+        const rows = [];
+        tokens.forEach(t => {
+            let r = rows.find(row => Math.abs(row.y - t.y) < 10);
+            if(r) r.words.push(t); else rows.push({y: t.y, words: [t]});
+        });
+        rows.sort((a,b)=>a.y-b.y).forEach(r => {
+            const line = r.words.sort((a,b)=>a.x-b.x).map(w=>w.text).join(" ");
+            addLog(`| ${line}`, "text-[8px] text-zinc-600");
+        });
+
+        const fullText = json.responses[0].fullTextAnnotation.text;
+        let machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        if (fullText.includes("バーサス") || fullText.includes("VERSUS")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサスリヴァイズ" };
+        else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
+        document.getElementById('machine-type').innerText = machine.name;
+
+        titleLog(`（３）仮想配列作成部分のログ`);
+        let anchorFound = false;
+        let gCounts = [];
+        let extractedPairs = [];
+        let bbCount = 0;
+
+        const sortedTokens = tokens.sort((a,b) => (a.y !== b.y) ? a.y - b.y : a.x - b.x);
+
+        for (let i = 0; i < sortedTokens.length; i++) {
+            const token = sortedTokens[i];
+
+            if (!anchorFound && token.text.includes('G')) {
+                const val = parseInt(token.text);
+                if (!isNaN(val)) {
+                    gCounts.push(val);
+                    addLog(`[ANCHOR] G-DETECTED: ${val}G`, "text-green-500 font-bold");
+                    if (machine.name === "スマスロハナビ") {
+                        for(let next=1; next<=4; next++){
+                            if(sortedTokens[i+next] && sortedTokens[i+next].text.includes('G')){
+                                let v = parseInt(sortedTokens[i+next].text);
+                                if(!isNaN(v)) gCounts.push(v);
+                            }
+                        }
+                    }
+                    anchorFound = true;
+                }
+                continue;
+            }
+
+            if (!anchorFound) continue;
+
+            if (token.text.includes('/')) {
+                const prob = getDenominator(token.text);
+                if (!prob) continue;
+
+                let count = 0;
+                for (let j = 1; j <= 5; j++) {
+                    const prev = sortedTokens[i - j];
+                    if (prev && /^\d+$/.test(prev.text)) {
+                        count = parseInt(prev.text);
+                        break;
+                    }
+                }
+                extractedPairs.push({ count, prob });
+                addLog(`[V-ARRAY] IDX[${extractedPairs.length-1}] 1/${prob} → ${count}回`);
+            }
         }
 
-        let totalTxt = rawFilesData.map(img => img.lines.map(l=>l.text).join(" ")).join(" ");
-        if (totalTxt.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (totalTxt.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
-        else machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        titleLog(`（４）定義表への当て込み`);
+        const finalStorage = [];
+        const globalG = gCounts[0] || 0;
+        const hcG = (machine.name === "スマスロハナビ") ? (gCounts[1] || 0) : 0;
+        const hgG = (machine.name === "スマスロハナビ") ? (gCounts[2] || 0) : 0;
 
-        rawFilesData.forEach(img => {
-            let matches = [];
-            img.lines.forEach(l => { machine.def.forEach((d, idx) => { if(l.text.includes(d.name.substring(0,2))) matches.push(idx); }); });
-            img.score = matches.length > 0 ? Math.max(...matches) : 0;
-            if (img.lines.some(l => l.text.includes("総") && l.text.includes("G"))) img.score = -1;
-        });
-        rawFilesData.sort((a,b) => a.score - b.score);
+        machine.def.forEach((def, idx) => {
+            const data = extractedPairs[idx];
+            if (!data) return;
 
-        titleLog(`（２）画像の順番の判定処理`);
-        rawFilesData.forEach((img, i) => addLog(`  [DEPTH_${i}] ${img.name}`));
-
-        titleLog(`（３）画像別の生データ`);
-        rawFilesData.forEach((img, i) => {
-            addLog(`[IMG${i}] ${img.name}:`, "text-amber-800");
-            img.lines.forEach(l => addLog(`  | ${l.text}`, "text-gray-500 text-[8px]"));
-        });
-
-        titleLog(`（４）機種判定`);
-        addLog(`DETECTED: 【${machine.name}】`, "text-yellow-400 font-bold");
-
-        titleLog(`（５）仮想配列作成部分のログ`);
-        let slotIdx = 0; let bbCount = 0;
-        rawFilesData.forEach((img, imgIdx) => {
-            addLog(`\n[SYNC] IMG${imgIdx} 同期監視開始`, "text-amber-500 font-bold");
-            let isSyncing = (imgIdx > 0); 
-
-            img.lines.forEach((line, i) => {
-                if (line.text.includes("G") && (line.text.includes("総") || line.text.includes("プレイ"))) {
-                    const m = line.text.match(/([\d,]+)G/);
-                    if (m) { globalG = parseInt(m[1].replace(/,/g, '')); addLog(`    [G-SCAN] 総ゲーム数: ${globalG}G`, "text-green-500 font-bold"); }
-                }
-
-                if (line.text.includes("/") && line.text.includes(".")) {
-                    const pVal = getDenominator(line.text);
-                    if (pVal === null) return;
-
-                    let kVal = null; let kaiWarn = ""; let hasKai = false;
-                    
-                    // --- 指示通り：指定の位置（2つ上・3つ上）のみを厳格に走査 ---
-                    [2,3].forEach(offset => {
-                        if (kVal !== null) return;
-                        let tRow = img.lines[i-offset];
-                        // 確率行（/を含む）は絶対に無視。純粋な数値行のみを対象。
-                        if (tRow && !tRow.text.includes("/")) {
-                            let match = tRow.text.replace(/,/g, '').match(/\d+/);
-                            if (match) {
-                                kVal = parseInt(match[0]);
-                                if (tRow.text.includes("回")) hasKai = true;
-                            }
-                        }
-                    });
-
-                    // 指定位置に数値がない場合は、余計な探索をせず即座に逆算へ
-                    if (kVal === null) {
-                        if (slotIdx < machine.def.length) {
-                            const item = machine.def[slotIdx];
-                            if (item.type !== "vc" && item.type !== "vg" && globalG > 0) {
-                                kVal = Math.round(globalG / pVal);
-                                kaiWarn = "⚠️(逆算値)";
-                                addLog(`    [FALLBACK] SLOT[${slotIdx}] ${item.name} 数値取得失敗。1/${pVal} から逆算: ${kVal}回`, "text-red-400");
-                            } else {
-                                // RT等は現状の0回避
-                                kVal = 0;
-                                addLog(`    [SKIP] SLOT[${slotIdx}] ${item.name} 数値欠損(0回処理)`, "text-gray-500");
-                            }
-                        } else return;
-                    }
-                    // ------------------------------------------------------
-
-                    if (!hasKai && !kaiWarn.includes("逆算")) kaiWarn = "⚠️";
-
-                    if (isSyncing) {
-                        const probMatch = finalStorage.some(res => res && res.rawP === pVal);
-                        if (probMatch) {
-                            addLog(`    [SKIP] 既読スキップ: 1/${pVal} (${kVal}回)`);
-                            return;
-                        } else {
-                            isSyncing = false;
-                            addLog(`    [MATCH] 重なり終了 SLOT[${slotIdx}]へ`, "text-blue-400");
-                        }
-                    }
-
-                    if (slotIdx < machine.def.length) {
-                        const item = machine.def[slotIdx];
-                        if (item.id === "bb") bbCount = kVal;
-                        addLog(`    [V-ARRAY] SLOT[${slotIdx}] ${item.name} | 1/${pVal} -> ${kVal}回${kaiWarn}`);
-                        finalStorage[slotIdx] = { ...item, k: kVal, rawK: kVal, rawP: pVal };
-                        slotIdx++;
-                    }
-                }
-            });
-        });
-
-        titleLog(`（６）定義表への当て込み`);
-        finalStorage.forEach((res, idx) => {
-            if (!res) return;
             let n = globalG;
-            if (res.type === "vc" || res.type === "vg") n = Math.round(res.k * res.rawP);
-            else if (res.type === "big") n = bbCount * (machine.bG || 29);
-            res.n = n;
-            addLog(`  [MAP] SLOT[${idx}] ${res.name.padEnd(10)} | ${res.k}回 : 1/${res.rawP} (N=${n})`);
+            if (def.type === "vc") n = (machine.name === "スマスロハナビ") ? hcG : Math.round(data.count * data.prob);
+            if (def.type === "vg") n = (machine.name === "スマスロハナビ") ? hgG : Math.round(data.count * data.prob);
+            if (def.type === "big") n = bbCount * machine.bG;
+            
+            if (def.id === "bb") bbCount = data.count;
+
+            finalStorage.push({ ...def, k: data.count, n: n, rawP: data.prob });
+            addLog(`${def.name.padEnd(10)} ${data.count}回 : 1/${data.prob} (N=${n})`, def.active ? "text-zinc-200" : "text-zinc-500");
         });
 
-        titleLog(`（７）尤度計算`);
+        titleLog(`（５）尤度計算`);
         let lls = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if (res && res.active && res.k > 0 && res.n > 0) {
+            if (res.active && res.k >= 0 && res.n > 0) {
                 let itemLLs = {};
                 [1,2,5,6].forEach(s => {
                     let tp = 1/res.probs[s];
@@ -275,29 +269,32 @@ async function run(files) {
                     lls[s] += itemLLs[s];
                 });
                 const maxItem = Math.max(...Object.values(itemLLs));
-                addLog(`<div class="text-amber-200">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[10px]">` +
-                    [1,2,5,6].map(s => `<span class="c-s${s}">設${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
+                addLog(`<div class="text-amber-400 mt-1">${res.name} (${res.k}回)</div><div class="flex gap-x-2 text-[9px]">` +
+                    [1,2,5,6].map(s => `<span class="c-s${s}">S${s}:${getStars(maxItem - itemLLs[s])}</span>`).join("") + `</div>`);
             }
         });
 
-        titleLog(`（８）設定判別処理`);
-        const max = Math.max(...Object.values(lls)), sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
+        titleLog(`（６）設定判別処理`);
+        const max = Math.max(...Object.values(lls));
+        const sum = Object.values(lls).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (sum === 0) ? 0 : (Math.exp(lls[s] - max) / sum) * 100;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`設定${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold`);
+            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
+            document.getElementById(`b${s}`).style.width = prob + "%";
+            addLog(`SETTING ${s}: ${prob.toFixed(2).padStart(6)}%`, `c-s${s} font-bold text-sm`);
         });
 
-    } catch (e) { addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold bg-white p-1"); }
+    } catch (e) { 
+        addLog(`❌ ERROR: ${e.message}`, "text-red-500 font-bold border border-red-500 p-2 my-2");
+        console.error(e);
+    }
 }
 
-document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
-document.getElementById('cp-btn').onclick = () => {
-    const r = document.createRange(); r.selectNode(logDisplay); window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
-    document.execCommand('copy'); alert('LOG COPIED');
-};
+function titleLog(m) { addLog(`\n--- ${m} ---`, "text-amber-500 font-black tracking-widest border-b border-amber-900 mb-1"); }
+
+document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("KEY SAVED"); };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
-document.getElementById('f-in').onchange = e => run(e.target.files);
+document.getElementById('f-in').onchange = e => { if(e.target.files[0]) run(e.target.files[0]); };
 </script>
 </body>
 </html>
