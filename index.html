@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.15</title>
+    <title>ANALYZER Rev 3.2.16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -28,31 +28,30 @@
         .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.15 - Physical Debug ONLY</div>
+        <div class="rev-tag">Revision 3.2.16 - Precision Logic</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
         <div id="machine-type" class="absolute top-2 right-3 text-[10px] text-blue-400 font-bold">READY</div>
         <div class="mt-4">
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s1 font-black text-xs">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s2 font-black text-xs">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s5 font-black text-xs">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s6 font-black text-xs">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="text-blue-400 font-black text-xs">設定1</span><span id="p1" class="text-blue-400 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-600"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="text-yellow-500 font-black text-xs">設定2</span><span id="p2" class="text-yellow-500 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="text-green-500 font-black text-xs">設定5</span><span id="p5" class="text-green-500 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="text-red-500 font-black text-xs">設定6</span><span id="p6" class="text-red-500 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-600"></div></div></div>
         </div>
     </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY LOG</button><div id="log-display" class="log-body">READY...</div></div>
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
+/* ============================================================
+   CONFIGURATIONS (DEFINITIONS)
+   ============================================================ */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -124,20 +123,16 @@ const addLog = (m, c="text-slate-400") => {
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-// コピーボタン修正
-document.getElementById('copy-log').onclick = async () => {
-    try {
-        await navigator.clipboard.writeText(logDisplay.innerText);
-        alert("OK");
-    } catch (err) {
-        const area = document.createElement('textarea');
-        area.value = logDisplay.innerText;
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand('copy');
-        document.body.removeChild(area);
-        alert("OK");
-    }
+// 【修正済】コピーボタン
+document.getElementById('copy-log').onclick = () => {
+    const text = logDisplay.innerText;
+    const area = document.createElement('textarea');
+    area.value = text;
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    document.body.removeChild(area);
+    alert("OK");
 };
 
 async function run(file) {
@@ -156,15 +151,24 @@ async function run(file) {
         });
         const json = await resp.json();
         
+        // --- しきい値8による物理マージ処理 ---
         const annotations = json.responses[0].textAnnotations;
         const THRESHOLD_Y = 8;
         let mergedLines = [];
         let currentLine = { y: -100, text: "" };
-        const sortedBlocks = annotations.slice(1).map(a => ({ text: a.description, y: a.boundingPoly.vertices[0].y })).sort((a,b) => a.y - b.y);
+
+        const sortedBlocks = annotations.slice(1).map(a => ({
+            text: a.description,
+            y: a.boundingPoly.vertices[0].y
+        })).sort((a,b) => a.y - b.y);
 
         sortedBlocks.forEach(block => {
-            if (Math.abs(block.y - currentLine.y) < THRESHOLD_Y) { currentLine.text += " " + block.text; } 
-            else { if (currentLine.text) mergedLines.push(currentLine.text); currentLine = { y: block.y, text: block.text }; }
+            if (Math.abs(block.y - currentLine.y) < THRESHOLD_Y) {
+                currentLine.text += " " + block.text;
+            } else {
+                if (currentLine.text) mergedLines.push(currentLine.text);
+                currentLine = { y: block.y, text: block.text };
+            }
         });
         mergedLines.push(currentLine.text);
         const fullLines = mergedLines;
@@ -178,6 +182,7 @@ async function run(file) {
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-type').innerText = machine.name;
 
+        // アンカー探索
         let anchorIdx = -1, gCounts = [];
         for(let i=0; i<fullLines.length; i++){
             const lineTrim = fullLines[i].replace(/\s/g, '');
@@ -188,17 +193,24 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
+        // --- 確率ペア抽出ロジック（xxx.x優先抽出） ---
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
-            if(fullLines[ptr].includes('/')){
-                const prob = parseFloat(fullLines[ptr].split('/').pop().replace(/,/g, ''));
-                let count = null;
-                for(let j=1; j<=4; j++){
-                    let cStr = (fullLines[ptr-j] || "").replace(/[^0-9]/g, '');
-                    if(cStr){ count = parseInt(cStr); break; }
+            const line = fullLines[ptr];
+            // 小数点(.)とスラッシュ(/)の両方がある行をターゲット
+            if(line.includes('/') && line.includes('.')){
+                const decMatch = line.match(/(\d+\.\d+)/);
+                if(decMatch){
+                    const prob = parseFloat(decMatch[1]);
+                    let count = null;
+                    // 回数は近接行(1〜4行上)をスキャン
+                    for(let j=1; j<=4; j++){
+                        let cStr = (fullLines[ptr-j] || "").replace(/[^0-9]/g, '');
+                        if(cStr){ count = parseInt(cStr); break; }
+                    }
+                    extractedPairs.push({ count, rawP: prob });
                 }
-                extractedPairs.push({ count, rawP: prob });
             }
             ptr++;
         }
@@ -206,7 +218,6 @@ async function run(file) {
         addLog(`\n（４）判別対象データ（実戦値 vs 各設定理論値）`, "text-blue-400 font-bold");
         const finalStorage = [];
         let bbCount = 0;
-
         const table4 = document.createElement('table');
         table4.className = 'log-table';
         table4.innerHTML = `<thead><tr><th style="width:25%">項目</th><th style="width:12%">回数</th><th style="width:15%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
@@ -229,10 +240,8 @@ async function run(file) {
                 }
             }
             finalStorage.push({ ...def, k, n });
-
             const row = document.createElement('tr');
-            const resProb = k > 0 ? (n/k).toFixed(1) : '-';
-            row.innerHTML = `<td style="text-align:left;">${def.name}</td><td>${k}</td><td style="color:#60a5fa; font-weight:bold;">1/${resProb}</td><td>1/${def.probs[1].toFixed(1)}</td><td>1/${def.probs[2].toFixed(1)}</td><td>1/${def.probs[5].toFixed(1)}</td><td>1/${def.probs[6].toFixed(1)}</td>`;
+            row.innerHTML = `<td style="text-align:left;">${def.name}</td><td>${k}</td><td style="color:#60a5fa; font-weight:bold;">1/${(n/k).toFixed(1)}</td><td>1/${def.probs[1].toFixed(1)}</td><td>1/${def.probs[2].toFixed(1)}</td><td>1/${def.probs[5].toFixed(1)}</td><td>1/${def.probs[6].toFixed(1)}</td>`;
             tbody4.appendChild(row);
         });
         logDisplay.appendChild(table4);
@@ -244,13 +253,11 @@ async function run(file) {
             const vals = Object.values(itemLLs);
             return { id: res.id, itemLLs, maxL: Math.max(...vals), minL: Math.min(...vals), intensity: Math.max(...vals) - Math.min(...vals) };
         });
-
         const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
         const table5 = document.createElement('table');
         table5.className = 'log-table';
         table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
         const tbody5 = table5.querySelector('tbody');
-
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
             const calc = intensityData.find(x => x.id === res.id);
@@ -280,10 +287,8 @@ async function run(file) {
             document.getElementById(`b${s}`).style.width = prob + "%";
             addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s} font-bold`);
         });
-
     } catch (e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
-
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
 window.onload = () => { document.getElementById('api-key').value = localStorage.getItem('v_key') || ''; };
 document.getElementById('f-in').onchange = e => { if(e.target.files[0]) run(e.target.files[0]); };
