@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.2</title>
+    <title>ANALYZER Rev 3.2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -21,15 +21,14 @@
         .copy-btn { position: absolute; top: 8px; right: 8px; background: #2563eb; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
         .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 35px; line-height: 1.3; }
         
-        /* テーブルスタイル */
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
-        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 6px 1px; text-align: center; }
+        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 6px 1px; text-align: center; word-break: break-all; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
         
-        /* 北斗オーラ背景色 (濃いめに設定) */
-        .rank-1 { background-color: rgba(220, 38, 38, 0.4) !important; } /* 赤オーラ */
-        .rank-2 { background-color: rgba(22, 163, 74, 0.4) !important; }  /* 緑オーラ */
-        .rank-3 { background-color: rgba(202, 138, 4, 0.4) !important; }  /* 黄オーラ */
+        /* オーラカラー（セル適用版） */
+        .aura-red { background-color: rgba(220, 38, 38, 0.5) !important; color: white !important; }
+        .aura-green { background-color: rgba(22, 163, 74, 0.5) !important; color: white !important; }
+        .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
 
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
@@ -42,7 +41,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.2 - Aura Insight Engine</div>
+        <div class="rev-tag">Revision 3.2.4 - Focused Aura Engine</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -125,7 +124,6 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-/* LOGIC ENGINE */
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { 
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
@@ -201,7 +199,6 @@ async function run(file) {
             if (def.type === "vg") n = gCounts[2] || Math.round(data.count * data.rawP);
             if (def.type === "big") n = bbCount * machine.bG;
             if (def.id === "bb") bbCount = data.count || 0;
-
             let k = data.count;
             if (data.rawP > 0) {
                 const mu = n / data.rawP;
@@ -211,7 +208,6 @@ async function run(file) {
             addLog(`  ${def.name}: ${k}回 (1/${(n/k).toFixed(1)})`);
         });
 
-        // (5) 尤度計算 - オーラカラー＆5段階★アップデート
         addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
         const intensityData = finalStorage
             .filter(res => res.active && res.k >= 0 && res.n > 0)
@@ -227,10 +223,9 @@ async function run(file) {
 
         const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
 
-        // テーブル生成
         const table = document.createElement('table');
         table.className = 'log-table';
-        table.innerHTML = `<thead><tr><th style="width:28%">項目</th><th style="width:20%">ギャップ</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
+        table.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
         const tbody = table.querySelector('tbody');
 
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
@@ -240,31 +235,27 @@ async function run(file) {
 
             const row = document.createElement('tr');
             
-            // ランク背景色の適用 (赤・緑・黄オーラ)
+            // オーラクラスの決定 (セルに適用)
+            let auraClass = "";
             const rank = top3Ids.indexOf(res.id);
-            if(rank === 0) row.classList.add('rank-1');
-            else if(rank === 1) row.classList.add('rank-2');
-            else if(rank === 2) row.classList.add('rank-3');
+            if(rank === 0) auraClass = "aura-red";
+            else if(rank === 1) auraClass = "aura-green";
+            else if(rank === 2) auraClass = "aura-yellow";
 
-            // ギャップ可視化 (■) - 左詰め
             const gapBar = calc.intensity > 4.0 ? "■■■" : calc.intensity > 2.0 ? "■■" : calc.intensity > 0.5 ? "■" : "";
-            
-            let cells = `<td style="text-align:left; font-weight:bold; padding-left:4px;">${res.name}</td><td style="text-align:left; padding-left:4px;">${gapBar}</td>`;
+            let cells = `<td class="${auraClass}" style="text-align:left; font-weight:bold; padding-left:4px;">${res.name}</td>
+                         <td class="${auraClass}" style="text-align:left; padding-left:4px;">${gapBar}</td>`;
             
             [1,2,5,6].forEach(s => {
                 totalLLs[s] += calc.itemLLs[s];
                 const gMax = calc.maxL - calc.itemLLs[s];
                 const gMin = calc.itemLLs[s] - calc.minL;
-                
-                // 5段階★評価 (尤度に基づく)
-                const sStr = gMax < 0.2 ? "★★★★★" : gMax < 0.7 ? "★★★★☆" : gMax < 1.5 ? "★★★☆☆" : gMax < 3.0 ? "★★☆☆☆" : "★☆☆☆☆";
-                
-                // 星の色分け判定
-                let starStyle = "color:#94a3b8;"; // デフォルト白★
-                if (gMax < 0.001) starStyle = "color:#ef4444; font-weight:bold;"; // 1位赤★
-                else if (gMin < 0.001) starStyle = "color:#eab308;"; // 最下位黄★
-                
-                cells += `<td style="${starStyle}">${sStr}</td>`;
+                const count = gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1;
+                const starStr = "★".repeat(count);
+                let starColor = "#94a3b8";
+                if (gMax < 0.001) starColor = "#ef4444; font-weight:bold;";
+                else if (gMin < 0.001) starColor = "#eab308;";
+                cells += `<td style="color:${starColor}">${starStr}</td>`;
             });
             row.innerHTML = cells;
             tbody.appendChild(row);
