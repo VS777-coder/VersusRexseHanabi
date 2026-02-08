@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.18</title>
+    <title>ANALYZER Rev 3.2.19</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.18 - Fix Shifting Error</div>
+        <div class="rev-tag">Revision 3.2.19 - User Dictated Logic</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -53,6 +53,7 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
+/* 定義データ */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -124,7 +125,6 @@ const addLog = (m, c="text-slate-400") => {
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-// 【修正】キーボード防止済みコピー
 document.getElementById('copy-log').onclick = async () => {
     const text = logDisplay.innerText;
     if (navigator.clipboard && window.isSecureContext) {
@@ -185,25 +185,30 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
-        // 【核心修正：飛ばし防止】
+        // --- 指示された抽出ロジックの反映 ---
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
             const line = fullLines[ptr];
-            // 指示：スラッシュがあればその行はリストに追加対象とする
             if(line.includes('/')){
                 let prob = 0;
-                // xxx.x 形式があればそれを分母にする
                 const decMatch = line.match(/(\d+\.\d+)/);
-                if(decMatch){
-                    prob = parseFloat(decMatch[1]);
-                }
+                if(decMatch) prob = parseFloat(decMatch[1]);
                 
                 let count = null;
-                // 回数は近接行(1〜4行上)から取得
-                for(let j=1; j<=4; j++){
-                    let cStr = (fullLines[ptr-j] || "").replace(/[^0-9]/g, '');
-                    if(cStr){ count = parseInt(cStr); break; }
+                // 指示: 2つ上の整数を取る。とれなかったらもう1つ上を取る
+                const targets = [2, 3]; 
+                for(let j of targets){
+                    const targetLine = fullLines[ptr-j] || "";
+                    const intMatch = targetLine.match(/(\d+)/); // 整数を取得
+                    if(intMatch) {
+                        count = parseInt(intMatch[1]);
+                        // 指示: 回があるかないかチェックして、無かったら念の為にログに⚠️回なし
+                        if(!targetLine.includes("回")) {
+                            addLog(`  ⚠️回なし [idx:${extractedPairs.length}]`, "text-orange-400 text-[8px]");
+                        }
+                        break;
+                    }
                 }
                 extractedPairs.push({ count, rawP: prob });
             }
@@ -230,8 +235,9 @@ async function run(file) {
             if (data.rawP > 0) {
                 const mu = n / data.rawP;
                 if (k === null || k === 0 || Math.abs(k - mu) > Math.sqrt(mu)*4) {
+                    const oldK = k ?? '欠損';
                     k = Math.round(mu);
-                    addLog(`  補正 [${def.name}]: ${data.count??'欠損'}→${k}回`, "text-orange-500 font-[8px]");
+                    addLog(`  補正 [${def.name}]: ${oldK}→${k}回`, "text-orange-500 font-[8px]");
                 }
             }
             finalStorage.push({ ...def, k, n });
