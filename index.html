@@ -122,7 +122,6 @@ const VERSUS_CONFIG = [
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 
-// COPYボタン (フォールバック付)
 document.getElementById('copy-log').onclick = () => {
     const text = logDisplay.innerText;
     if (navigator.clipboard && window.isSecureContext) {
@@ -225,15 +224,13 @@ async function run(file) {
             }
             finalStorage.push({ ...def, k, n });
             
-            // 小数点第一位で統一
             const displayProb = k > 0 ? (n / k).toFixed(1) : '-';
             addLog(`  ${def.name.padEnd(12, ' ')} ${String(k).padStart(4, ' ')}回 : 1/${displayProb}`);
         });
 
-        // (5) 尤度計算 - 項目順遵守 + 強度色付け
+        // (5) 尤度計算 - 改行レイアウト & 厳密な1位/最下位色付け
         addLog(`\n（５）尤度計算　各項目・各設定別に強度ギャップ`, "text-blue-400 font-bold");
         
-        // 強度計算用
         const intensityData = finalStorage
             .filter(res => res.active && res.k >= 0 && res.n > 0)
             .map(res => {
@@ -243,7 +240,7 @@ async function run(file) {
                     itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
                 });
                 const vals = Object.values(itemLLs);
-                return { id: res.id, intensity: Math.max(...vals) - Math.min(...vals), itemLLs, maxL: Math.max(...vals) };
+                return { id: res.id, intensity: Math.max(...vals) - Math.min(...vals), itemLLs, maxL: Math.max(...vals), minL: Math.min(...vals) };
             });
 
         const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
@@ -253,20 +250,35 @@ async function run(file) {
             const calc = intensityData.find(x => x.id === res.id);
             if (!calc) return;
 
-            let nameClass = "";
+            // 項目タイトル行の色設定
+            let titleClass = "text-slate-300";
             const rank = top3Ids.indexOf(res.id);
-            if(rank === 0) nameClass = "text-red-500 font-bold";
-            else if(rank === 1) nameClass = "text-orange-500 font-bold";
-            else if(rank === 2) nameClass = "text-yellow-500 font-bold";
+            if(rank === 0) titleClass = "text-red-500 font-bold";
+            else if(rank === 1) titleClass = "text-orange-500 font-bold";
+            else if(rank === 2) titleClass = "text-yellow-500 font-bold";
 
-            const stars = [1,2,5,6].map(s => {
-                totalLLs[s] += calc.itemLLs[s]; // ロジック用累積
-                const g = calc.maxL - calc.itemLLs[s];
-                const sStr = g < 0.2 ? "★★★★★" : g < 0.7 ? "★★★★☆" : g < 1.5 ? "★★★☆☆" : g < 3.0 ? "★★☆☆☆" : "★☆☆☆☆";
-                return g < 0.2 ? `設${s}:<b class="text-red-500">${sStr}</b>` : `設${s}:${sStr}`;
-            }).join(" ");
+            // 項目全体の強度★ (GAPに基づく5段階)
+            const totalStars = calc.intensity > 4.0 ? "★★★★★" : calc.intensity > 2.0 ? "★★★★☆" : calc.intensity > 1.0 ? "★★★☆☆" : calc.intensity > 0.5 ? "★★☆☆☆" : "★☆☆☆☆";
 
-            addLog(`  <span class="${nameClass}">${res.name.padEnd(12, ' ')}</span> ${stars}`);
+            // タイトル行出力
+            addLog(` ${res.name}：<span class="${titleClass}">${totalStars}</span>`, titleClass);
+
+            // 設定別詳細行
+            const detailLine = [1,2,5,6].map(s => {
+                totalLLs[s] += calc.itemLLs[s];
+                const gMax = calc.maxL - calc.itemLLs[s]; // 最大値との差
+                const gMin = calc.itemLLs[s] - calc.minL; // 最小値との差
+
+                const sStr = gMax < 0.2 ? "★★★★★" : gMax < 0.7 ? "★★★★☆" : gMax < 1.5 ? "★★★☆☆" : gMax < 3.0 ? "★★☆☆☆" : "★☆☆☆☆";
+                
+                // 真の1位(赤)と最下位(黄)の強調 (閾値 0.001)
+                if (gMax < 0.001) return `設${s}:<b class="text-red-500">${sStr}</b>`;
+                if (gMin < 0.001) return `設${s}:<b class="text-yellow-500">${sStr}</b>`;
+                return `設${s}:${sStr}`;
+            }).join("  ");
+
+            // 詳細行出力
+            addLog(`    ${detailLine}`, "text-[8px] mb-2");
         });
 
         addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
