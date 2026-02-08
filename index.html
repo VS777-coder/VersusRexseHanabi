@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.17</title>
+    <title>ANALYZER Rev 3.2.18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.17 - Stability Fixed</div>
+        <div class="rev-tag">Revision 3.2.18 - Fix Shifting Error</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -124,24 +124,15 @@ const addLog = (m, c="text-slate-400") => {
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-// 【修正】キーボード立ち上がり防止済みコピーボタン
+// 【修正】キーボード防止済みコピー
 document.getElementById('copy-log').onclick = async () => {
     const text = logDisplay.innerText;
     if (navigator.clipboard && window.isSecureContext) {
-        try {
-            await navigator.clipboard.writeText(text);
-            alert("OK");
-            return;
-        } catch (err) {}
+        try { await navigator.clipboard.writeText(text); alert("OK"); return; } catch (err) {}
     }
     const area = document.createElement('textarea');
-    area.value = text;
-    area.readOnly = true;
-    area.style.position = 'fixed';
-    area.style.left = '-9999px';
-    document.body.appendChild(area);
-    area.select();
-    area.setSelectionRange(0, 999999);
+    area.value = text; area.readOnly = true; area.style.position = 'fixed'; area.style.left = '-9999px';
+    document.body.appendChild(area); area.select(); area.setSelectionRange(0, 999999);
     try { document.execCommand('copy'); alert("OK"); } catch (err) {}
     document.body.removeChild(area);
 };
@@ -194,21 +185,27 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
+        // 【核心修正：飛ばし防止】
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
             const line = fullLines[ptr];
-            if(line.includes('/') && line.includes('.')){
+            // 指示：スラッシュがあればその行はリストに追加対象とする
+            if(line.includes('/')){
+                let prob = 0;
+                // xxx.x 形式があればそれを分母にする
                 const decMatch = line.match(/(\d+\.\d+)/);
                 if(decMatch){
-                    const prob = parseFloat(decMatch[1]);
-                    let count = null;
-                    for(let j=1; j<=4; j++){
-                        let cStr = (fullLines[ptr-j] || "").replace(/[^0-9]/g, '');
-                        if(cStr){ count = parseInt(cStr); break; }
-                    }
-                    extractedPairs.push({ count, rawP: prob });
+                    prob = parseFloat(decMatch[1]);
                 }
+                
+                let count = null;
+                // 回数は近接行(1〜4行上)から取得
+                for(let j=1; j<=4; j++){
+                    let cStr = (fullLines[ptr-j] || "").replace(/[^0-9]/g, '');
+                    if(cStr){ count = parseInt(cStr); break; }
+                }
+                extractedPairs.push({ count, rawP: prob });
             }
             ptr++;
         }
@@ -254,7 +251,7 @@ async function run(file) {
         const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
         const table5 = document.createElement('table');
         table5.className = 'log-table';
-        table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
+        table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
         const tbody5 = table5.querySelector('tbody');
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
@@ -272,8 +269,7 @@ async function run(file) {
                 const star = gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1;
                 cells += `<td style="color:${gMax < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(star)}</td>`;
             });
-            row.innerHTML = cells;
-            tbody5.appendChild(row);
+            row.innerHTML = cells; tbody5.appendChild(row);
         });
         logDisplay.appendChild(table5);
 
