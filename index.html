@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.0</title>
+    <title>ANALYZER Rev 3.2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -20,10 +20,17 @@
         .log-container { flex-grow: 1; min-height: 0; margin: 12px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         .copy-btn { position: absolute; top: 8px; right: 8px; background: #2563eb; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
         .log-body { padding: 8px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 35px; line-height: 1.4; }
-        /* テーブル専用スタイル */
-        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8px; table-layout: fixed; }
-        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 2px; text-align: center; overflow: hidden; }
-        .log-table th { background-color: #0f172a; color: #60a5fa; }
+        
+        /* テーブルスタイル */
+        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8px; table-layout: fixed; color: #e2e8f0; }
+        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 6px 2px; text-align: center; }
+        .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
+        
+        /* ランク背景色（非常に薄く設定） */
+        .rank-1 { background-color: rgba(239, 68, 68, 0.15) !important; } /* 薄い赤 */
+        .rank-2 { background-color: rgba(249, 115, 22, 0.15) !important; } /* 薄い橙 */
+        .rank-3 { background-color: rgba(234, 179, 8, 0.15) !important; }  /* 薄い黄 */
+
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
@@ -35,7 +42,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.0 - Visual Insight Engine</div>
+        <div class="rev-tag">Revision 3.2.1 - Visual Insight Engine</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -51,7 +58,7 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
-/* CONFIGURATIONS */
+/* CONFIGURATIONS (DEFINITIONS) */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -118,7 +125,7 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-/* LOGIC ENGINE */
+/* LOGIC ENGINE Rev 3.2.1 */
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { 
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
@@ -204,7 +211,7 @@ async function run(file) {
             addLog(`  ${def.name}: ${k}回 (1/${(n/k).toFixed(1)})`);
         });
 
-        // (5) 尤度計算 - 表形式アップデート
+        // (5) 尤度計算 - ギャップ・行色付けアップデート
         addLog(`\n（５）尤度計算・強度ギャップ`, "text-blue-400 font-bold");
         const intensityData = finalStorage
             .filter(res => res.active && res.k >= 0 && res.n > 0)
@@ -223,7 +230,7 @@ async function run(file) {
         // テーブル生成
         const table = document.createElement('table');
         table.className = 'log-table';
-        table.innerHTML = `<thead><tr><th style="width:25%">項目</th><th style="width:15%">強度</th><th>設1</th><th>設2</th><th>設5</th><th>設6</th></tr></thead><tbody></tbody>`;
+        table.innerHTML = `<thead><tr><th style="width:32%">項目</th><th style="width:20%">ギャップ</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
         const tbody = table.querySelector('tbody');
 
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
@@ -231,26 +238,30 @@ async function run(file) {
             const calc = intensityData.find(x => x.id === res.id);
             if (!calc) return;
 
-            let titleColor = "#94a3b8";
-            const rank = top3Ids.indexOf(res.id);
-            if(rank === 0) titleColor = "#ef4444"; else if(rank === 1) titleColor = "#f97316"; else if(rank === 2) titleColor = "#eab308";
-
             const row = document.createElement('tr');
-            const totalStars = calc.intensity > 4.0 ? "★★" : calc.intensity > 1.5 ? "★" : "";
             
-            let cells = `<td style="color:${titleColor}; text-align:left;">${res.name}</td><td>${totalStars}</td>`;
+            // ランク背景色の適用
+            const rank = top3Ids.indexOf(res.id);
+            if(rank === 0) row.classList.add('rank-1');
+            else if(rank === 1) row.classList.add('rank-2');
+            else if(rank === 2) row.classList.add('rank-3');
+
+            // ギャップ可視化 (■)
+            const gapBar = calc.intensity > 4.0 ? "■■■" : calc.intensity > 2.0 ? "■■" : calc.intensity > 0.5 ? "■" : "-";
+            
+            let cells = `<td style="text-align:left; font-weight:bold;">${res.name}</td><td>${gapBar}</td>`;
             
             [1,2,5,6].forEach(s => {
                 totalLLs[s] += calc.itemLLs[s];
                 const gMax = calc.maxL - calc.itemLLs[s];
                 const gMin = calc.itemLLs[s] - calc.minL;
-                const sStr = gMax < 0.2 ? "●" : gMax < 1.0 ? "○" : gMax < 2.5 ? "△" : "×";
                 
-                let style = "";
-                if (gMax < 0.001) style = "color:#ef4444; font-weight:bold;";
-                else if (gMin < 0.001) style = "color:#eab308;";
+                // 星の色分け判定
+                let starStyle = "color:#94a3b8;"; // デフォルト白★
+                if (gMax < 0.001) starStyle = "color:#ef4444; font-weight:bold;"; // 1位赤★
+                else if (gMin < 0.001) starStyle = "color:#eab308;"; // 最下位黄★
                 
-                cells += `<td style="${style}">${sStr}</td>`;
+                cells += `<td style="${starStyle}">★</td>`;
             });
             row.innerHTML = cells;
             tbody.appendChild(row);
@@ -263,7 +274,7 @@ async function run(file) {
             let prob = (sum === 0) ? 0 : (Math.exp(totalLLs[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
             document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s}`);
+            addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s} font-bold`);
         });
     } catch (e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
