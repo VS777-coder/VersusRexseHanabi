@@ -139,7 +139,7 @@ async function run(file) {
         if (!annotations) throw new Error("OCR Failed");
 
         // 物理しきい値10pxによるマージ（検証のため補正なし）
-        const THRESHOLD_Y = 20;
+        const THRESHOLD_Y = 12;
         let lines = [];
         let currentLine = { y: -100, text: "" };
         const sortedBlocks = annotations.slice(1).map(a => ({
