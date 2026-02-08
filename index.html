@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.8</title>
+    <title>ANALYZER Rev 3.2.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.8 - Debug Pure OCR</div>
+        <div class="rev-tag">Revision 3.2.9 - Logic: Decimal & Spiral Scan</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -53,6 +53,7 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
+/* 復元された定義表 */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -138,7 +139,7 @@ async function run(file) {
         const annotations = json.responses[0].textAnnotations;
         if (!annotations) throw new Error("OCR Failed");
 
-        // 物理しきい値10pxによるマージ（検証のため補正なし）
+        // しきい値「8」に設定
         const THRESHOLD_Y = 8;
         let lines = [];
         let currentLine = { y: -100, text: "" };
@@ -157,7 +158,7 @@ async function run(file) {
         });
         lines.push(currentLine.text);
 
-        addLog(`（２）マージ結果出力 (y-threshold: 10)`, "text-blue-400 font-bold");
+        addLog(`（２）マージ結果出力 (y-threshold: 8)`, "text-blue-400 font-bold");
         lines.forEach(l => addLog(`| ${l}`, "text-[8px] text-zinc-600"));
 
         const fullText = lines.join(" ");
@@ -166,6 +167,7 @@ async function run(file) {
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-type').innerText = machine.name;
 
+        // 総ゲーム数などの抽出（Gをアンカーに）
         let gTotal = 0, gVC = 0, gVG = 0, bigCount = 0;
         lines.forEach(l => {
             const num = parseInt(l.replace(/[^0-9]/g, ''));
@@ -176,11 +178,29 @@ async function run(file) {
         });
 
         const finalStorage = [];
-        machine.def.forEach(def => {
+        machine.def.forEach((def) => {
             let k = null;
-            const targetLine = lines.find(l => l.includes(def.name));
-            if (targetLine) {
-                k = parseInt(targetLine.match(/(\d+)回/)?.[1]);
+            let probFromOCR = null;
+            const targetIdx = lines.findIndex(l => l.includes(def.name));
+            
+            if (targetIdx !== -1) {
+                // --- 1. 回数の抽出（1行上 または 自行） ---
+                const matchAbove = lines[targetIdx - 1]?.match(/(\d+)\s*回/);
+                const matchSelf = lines[targetIdx]?.match(/(\d+)\s*回/);
+                if (matchAbove) k = parseInt(matchAbove[1]);
+                else if (matchSelf) k = parseInt(matchSelf[1]);
+
+                // --- 2. 確率の抽出（/ と . があれば小数点数値を分母とする） ---
+                for (let i = -1; i <= 1; i++) {
+                    const line = lines[targetIdx + i] || "";
+                    if (line.includes("/") && line.includes(".")) {
+                        const decMatch = line.match(/(\d+\.\d+)/);
+                        if (decMatch) {
+                            probFromOCR = parseFloat(decMatch[1]);
+                            break;
+                        }
+                    }
+                }
             }
 
             let n = gTotal;
@@ -188,7 +208,7 @@ async function run(file) {
             if (def.type === "vg") n = gVG;
             if (def.type === "big") n = bigCount * machine.bG;
 
-            // デバッグのため強制補正ロジックは完全削除
+            // デバッグのため強制補正は無効のまま、純粋OCR結果を表示
             finalStorage.push({ ...def, k: k||0, n });
         });
 
@@ -198,7 +218,6 @@ async function run(file) {
 }
 
 function render(finalStorage) {
-    // 表示用テーブル生成
     addLog(`\n（４）判別対象データ（純粋OCR結果）`, "text-blue-400 font-bold");
     const table4 = document.createElement('table');
     table4.className = 'log-table';
