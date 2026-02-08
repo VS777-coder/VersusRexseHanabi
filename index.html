@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.14</title>
+    <title>ANALYZER Rev 3.2.15</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -28,16 +28,12 @@
         .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
-        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
-        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
-        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
-        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.14 - Mapping Logic</div>
+        <div class="rev-tag">Revision 3.2.15 - Physical Debug Only</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -53,6 +49,7 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
+/* 定義データはRev 3.2.5を完全に維持 */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -116,7 +113,7 @@ const VERSUS_CONFIG = [
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
     { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
+    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 128.0} }
 ];
 
 const logDisplay = document.getElementById('log-display');
@@ -124,7 +121,7 @@ const addLog = (m, c="text-slate-400") => {
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-// コピーボタンの挙動修正
+// 【修正】コピーボタン：OKアラートのみ
 document.getElementById('copy-log').onclick = () => {
     const text = logDisplay.innerText;
     const area = document.createElement('textarea');
@@ -152,7 +149,7 @@ async function run(file) {
         });
         const json = await resp.json();
         
-        // --- しきい値8による物理マージ処理 ---
+        // 【重要】しきい値8による物理マージ処理の追加
         const annotations = json.responses[0].textAnnotations;
         const THRESHOLD_Y = 8;
         let mergedLines = [];
@@ -173,8 +170,8 @@ async function run(file) {
         });
         mergedLines.push(currentLine.text);
         
+        // 生データとしてマージ結果を採用
         const fullLines = mergedLines;
-        // -------------------------------------
 
         addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold");
         fullLines.forEach(l => addLog(`| ${l}`, "text-[8px] text-zinc-600"));
@@ -185,6 +182,7 @@ async function run(file) {
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-type').innerText = machine.name;
 
+        // プレイ数等のアンカー探索
         let anchorIdx = -1, gCounts = [];
         for(let i=0; i<fullLines.length; i++){
             const lineTrim = fullLines[i].replace(/\s/g, '');
@@ -195,6 +193,7 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
+        // 確率ペアの抽出
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
@@ -239,12 +238,7 @@ async function run(file) {
 
             const row = document.createElement('tr');
             const resProb = k > 0 ? (n/k).toFixed(1) : '-';
-            const s1 = def.probs[1].toFixed(1);
-            const s2 = def.probs[2].toFixed(1);
-            const s5 = def.probs[5].toFixed(1);
-            const s6 = def.probs[6].toFixed(1);
-
-            row.innerHTML = `<td style="text-align:left;">${def.name}</td><td>${k}</td><td style="color:#60a5fa; font-weight:bold;">1/${resProb}</td><td>1/${s1}</td><td>1/${s2}</td><td>1/${s5}</td><td>1/${s6}</td>`;
+            row.innerHTML = `<td style="text-align:left;">${def.name}</td><td>${k}</td><td style="color:#60a5fa; font-weight:bold;">1/${resProb}</td><td>1/${def.probs[1].toFixed(1)}</td><td>1/${def.probs[2].toFixed(1)}</td><td>1/${def.probs[5].toFixed(1)}</td><td>1/${def.probs[6].toFixed(1)}</td>`;
             tbody4.appendChild(row);
         });
         logDisplay.appendChild(table4);
@@ -263,7 +257,6 @@ async function run(file) {
             });
 
         const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
-
         const table5 = document.createElement('table');
         table5.className = 'log-table';
         table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
@@ -273,7 +266,6 @@ async function run(file) {
         finalStorage.forEach(res => {
             const calc = intensityData.find(x => x.id === res.id);
             if (!calc) return;
-
             const row = document.createElement('tr');
             let auraClass = "";
             const rank = top3Ids.indexOf(res.id);
@@ -284,15 +276,11 @@ async function run(file) {
             const gapBar = calc.intensity > 4.0 ? "■■■" : calc.intensity > 2.0 ? "■■" : calc.intensity > 0.5 ? "■" : "";
             let cells = `<td class="${auraClass}" style="text-align:left; font-weight:bold; padding-left:4px;">${res.name}</td>
                          <td class="${auraClass}" style="text-align:left; padding-left:4px;">${gapBar}</td>`;
-            
             [1,2,5,6].forEach(s => {
                 totalLLs[s] += calc.itemLLs[s];
                 const gMax = calc.maxL - calc.itemLLs[s];
-                const count = gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1;
-                const starStr = "★".repeat(count);
-                let starColor = "#94a3b8";
-                if (gMax < 0.001) starColor = "#ef4444; font-weight:bold;";
-                cells += `<td style="color:${starColor}">${starStr}</td>`;
+                const starStr = "★".repeat(gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1);
+                cells += `<td style="color:${gMax < 0.001 ? '#ef4444' : '#94a3b8'}">${starStr}</td>`;
             });
             row.innerHTML = cells;
             tbody5.appendChild(row);
@@ -305,7 +293,7 @@ async function run(file) {
             let prob = (sum === 0) ? 0 : (Math.exp(totalLLs[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
             document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s} font-bold`);
+            addLog(`  設定${s}: ${prob.toFixed(2)}%`);
         });
     } catch (e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
