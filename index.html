@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.1</title>
+    <title>HANABI ANALYZER Rev 3.5.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -34,7 +34,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="text-[10px] text-slate-500 font-mono">Rev 3.5.1 - Stabilization</div>
+        <div class="text-[10px] text-slate-500 font-mono">Rev 3.5.2 - Deployment Stabilized</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -67,7 +67,7 @@
 
 <script>
 /* ============================================================
-   CONFIGURATIONS (DEFINITIONS) - FULL RESTORED
+   CONFIGURATIONS (DEFINITIONS) - FULL 19 ITEMS
    ============================================================ */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
@@ -126,7 +126,7 @@ const VERSUS_CONFIG = [
     { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
     { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-    { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
+    { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.5, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
     { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
@@ -136,9 +136,8 @@ const VERSUS_CONFIG = [
 /* ============================================================
    SYSTEM LOGIC
    ============================================================ */
-// ★ここをご自身のリポジトリ名に変更してください
-const GITHUB_REPO = "YOUR_USERNAME/YOUR_REPO"; 
-let historyList = []; 
+const GITHUB_REPO = "YOUR_USERNAME/YOUR_REPO"; // ★ここを変更
+let historyPaths = []; 
 let hIdx = -1;
 
 const logDisplay = document.getElementById('log-display');
@@ -147,17 +146,17 @@ const addLog = (m, c="text-slate-400") => {
     logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-// ハッシュ生成関数（SHA-256）
-async function computeHash(k, n) {
-    const data = new TextEncoder().encode(k + (n || "GUEST"));
-    const buffer = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 12);
+// ハッシュ生成 (Web Crypto API)
+async function generateHash(k, n) {
+    const d = new TextEncoder().encode(k + (n || "GUEST"));
+    const b = await crypto.subtle.digest('SHA-256', d);
+    return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12);
 }
 
 // GitHub API 通信
-async function ghReq(method, path, body = null) {
+async function githubFetch(method, path, body = null) {
     const token = document.getElementById('gh-token').value;
-    if(!token) return null;
+    if(!token || !GITHUB_REPO.includes("/")) return null;
     const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
     const headers = { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json" };
     try {
@@ -179,7 +178,7 @@ async function run(file) {
         });
         const json = await resp.json();
         const annotations = json.responses[0].textAnnotations;
-        if(!annotations) throw new Error("OCR Failed");
+        if(!annotations) throw new Error("OCR Error");
 
         const THRESHOLD_Y = 8;
         let mergedLines = [];
@@ -241,7 +240,7 @@ async function run(file) {
                         else if(prob > 0){ count = Math.round(gCounts[0]/prob); tag=' ※計算'; }
                     }
                 }
-                if(count === null) throw new Error("Extraction Error");
+                if(count === null) throw new Error("Extract Failed");
                 addLog(`[idx:${extracted.length}] 1/${prob.toFixed(1)} (${count}回)${tag}`, "text-zinc-500 text-[8px]");
                 extracted.push({ count, prob });
             }
@@ -272,32 +271,33 @@ async function run(file) {
         const snap = { m: machine.name, g: gCounts[0], d: dStr, t: new Date().toLocaleTimeString('ja-JP',{hour12:false}), p: finalP, l: logDisplay.innerHTML };
         
         applySnapshot(snap);
-        await saveToCloud(snap);
-        await refreshHistoryList(dStr);
+        await saveSnapshot(snap);
+        await syncHistory(dStr);
 
     } catch (e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-async function saveToCloud(data) {
-    const hash = await computeHash(document.getElementById('api-key').value, document.getElementById('user-name').value);
+async function saveSnapshot(data) {
+    const hash = await generateHash(document.getElementById('api-key').value, document.getElementById('user-name').value);
     const path = `data/${hash}/${data.d.replace(/\//g,'-')}/${data.t.replace(/:/g,'')}.json`;
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    const res = await ghReq("PUT", path, { message: `Analyze ${data.d}`, content });
-    if(res) addLog(`\n✅ CLOUD SYNCED`, "text-green-500 font-bold");
+    const jsonStr = JSON.stringify(data);
+    const content = btoa(unescape(encodeURIComponent(jsonStr)));
+    const res = await githubFetch("PUT", path, { message: `Analyze ${data.d}`, content });
+    if(res) addLog(`\n✅ SYNCED TO CLOUD`, "text-green-500 font-bold");
 }
 
-async function refreshHistoryList(date) {
-    const hash = await computeHash(document.getElementById('api-key').value, document.getElementById('user-name').value);
-    const list = await ghReq("GET", `data/${hash}/${date.replace(/\//g,'-')}`);
+async function syncHistory(date) {
+    const hash = await generateHash(document.getElementById('api-key').value, document.getElementById('user-name').value);
+    const list = await githubFetch("GET", `data/${hash}/${date.replace(/\//g,'-')}`);
     if(list && Array.isArray(list)) {
-        historyList = list.filter(f => f.name.endsWith('.json')).map(f => f.path).sort();
-        hIdx = historyList.length - 1;
+        historyPaths = list.filter(f => f.name.endsWith('.json')).map(f => f.path).sort();
+        hIdx = historyPaths.length - 1;
         updateNavUI();
     }
 }
 
-async function loadSnapshotFromCloud(path) {
-    const res = await ghReq("GET", path);
+async function loadFromCloud(path) {
+    const res = await githubFetch("GET", path);
     if(res && res.content) {
         const snap = JSON.parse(decodeURIComponent(escape(atob(res.content))));
         applySnapshot(snap);
@@ -308,19 +308,19 @@ function applySnapshot(s) {
     document.getElementById('header-left').innerText = `${s.m}：${s.g}G`;
     document.getElementById('header-right').innerText = s.d;
     [1,2,5,6].forEach(n => {
-        document.getElementById(`p${n}`).innerText = s.p[n].toFixed(1) + "%";
-        document.getElementById(`b${n}`).style.width = s.p[n] + "%";
+        document.getElementById(`p${n}`).innerText = (s.p[n] || 0).toFixed(1) + "%";
+        document.getElementById(`b${n}`).style.width = (s.p[n] || 0) + "%";
     });
     logDisplay.innerHTML = s.l;
 }
 
 function updateNavUI() {
     document.getElementById('prev-btn').disabled = (hIdx <= 0);
-    document.getElementById('next-btn').disabled = (hIdx >= historyList.length - 1);
+    document.getElementById('next-btn').disabled = (hIdx >= historyPaths.length - 1);
 }
 
-document.getElementById('prev-btn').onclick = async () => { if(hIdx > 0) { hIdx--; await loadSnapshotFromCloud(historyList[hIdx]); updateNavUI(); } };
-document.getElementById('next-btn').onclick = async () => { if(hIdx < historyList.length - 1) { hIdx++; await loadSnapshotFromCloud(historyList[hIdx]); updateNavUI(); } };
+document.getElementById('prev-btn').onclick = async () => { if(hIdx > 0) { hIdx--; await loadFromCloud(historyPaths[hIdx]); updateNavUI(); } };
+document.getElementById('next-btn').onclick = async () => { if(hIdx < historyPaths.length - 1) { hIdx++; await loadFromCloud(historyPaths[hIdx]); updateNavUI(); } };
 
 document.getElementById('sv-config').onclick = () => {
     localStorage.setItem('v_key', document.getElementById('api-key').value);
