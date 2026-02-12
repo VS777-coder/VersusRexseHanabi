@@ -3,29 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.18-STRICT</title>
+    <title>HANABI ANALYZER Rev 3.5.19-STRICT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .app-header { text-align: center; margin-bottom: 12px; }
+        .app-header { text-align: center; margin-bottom: 8px; }
         .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
         .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #4b5563; margin-top: -5px; }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
-        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 16px; position: relative; }
+        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 14px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; margin: 12px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #2563eb; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
-        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 35px; line-height: 1.3; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 10px; font-weight: bold; font-size: 14px; }
-        .nav-btn:disabled { opacity: 0.1; }
+        .log-container { flex-grow: 1; min-height: 0; margin: 10px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
+        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
         .aura-red { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444 !important; }
-        .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; border-radius: 8px; outline: none; }
-        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 16px; font-weight: bold; border-radius: 8px; outline: none; }
-        .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
+        .api-input-mini { background: #0f172a; color: #94a3b8; border: 1px solid #1e293b; padding: 4px 6px; font-size: 9px; border-radius: 4px; outline: none; }
+        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; outline: none; }
+        .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
         .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
@@ -35,16 +33,16 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.18 - Strict Base + Sync Logic</div>
+        <div class="rev-tag">Revision 3.5.19 - Strictly Restored Log & Mini Inputs</div>
     </div>
-    <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
+    <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
         <div id="machine-type-display" class="absolute top-2 left-4 text-[10px] text-blue-400 font-bold flex items-center gap-2">
             <span id="machine-name">READY</span>
             <div class="flex gap-1 ml-2">
-                <button id="prev-btn" class="nav-btn" disabled>◁</button>
+                <button id="prev-btn" class="nav-btn-mini text-white" disabled>◁</button>
                 <span id="date-display" class="text-white"></span>
-                <button id="next-btn" class="nav-btn" disabled>▷</button>
+                <button id="next-btn" class="nav-btn-mini text-white" disabled>▷</button>
             </div>
         </div>
         <div class="mt-4">
@@ -55,14 +53,13 @@
         </div>
     </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY LOG</button><div id="log-display" class="log-body">READY...</div></div>
-    
     <div class="api-footer flex flex-col gap-1">
-        <div class="flex gap-1">
-            <input type="password" id="api-key" class="api-input flex-grow" placeholder="Vision API Key">
+        <div class="flex gap-1 items-center">
+            <input type="password" id="api-key" class="api-input-mini flex-grow" placeholder="Vision API Key">
             <input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name">
         </div>
-        <div class="flex gap-1">
-            <input type="password" id="gh-token" class="api-input flex-grow" placeholder="GitHub Token">
+        <div class="flex gap-1 items-center">
+            <input type="password" id="gh-token" class="api-input-mini flex-grow" placeholder="GitHub Token">
             <button id="sv-all" class="save-btn">SAVE</button>
         </div>
     </div>
@@ -71,7 +68,7 @@
 const GH_USER = "vs777-coder";
 const GH_REPO = "VersusRexseHanabi";
 
-// --- 厳格定義(3.2.23準拠) ---
+// --- 厳格定義(3.2.23-STRICT準拠) ---
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -150,7 +147,7 @@ function errorFullBar(msg) {
     });
 }
 
-// --- GitHub連携 (保存・同期) ---
+// --- GitHub連携 ---
 async function ghCall(method, path, body = null) {
     const t = document.getElementById('gh-token').value;
     if(!t) return null;
@@ -170,8 +167,8 @@ async function saveToCloud(snap) {
         const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
         const path = `data/${h}/${snap.d.replace(/\//g,'-')}/${snap.t.replace(/:/g,'')}.json`;
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
-        const res = await ghCall("PUT", path, { message: "AutoSync", content });
-        if(res) addLog("\n✅ Cloud Synced", "text-green-600 font-bold text-[8px]");
+        await ghCall("PUT", path, { message: "AutoSync", content });
+        addLog("\n✅ Cloud Synced", "text-green-600 font-bold text-[8px]");
     } catch(e) {}
 }
 
@@ -208,7 +205,7 @@ document.getElementById('next-btn').onclick = async() => {
     if(hIdx < hPaths.length - 1) { hIdx++; const res = await ghCall("GET", hPaths[hIdx]); if(res && res.content) applySnapshot(JSON.parse(decodeURIComponent(escape(atob(res.content))))); updateUI(); }
 };
 
-// --- 解析メイン ---
+// --- 解析メイン (3.2.23 STRICT準拠) ---
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("API Key!");
@@ -232,17 +229,19 @@ async function run(file) {
             else { if (currentLine.text) mergedLines.push(currentLine.text); currentLine = { y: block.y, text: block.text }; }
         });
         mergedLines.push(currentLine.text);
-        const fullLines = mergedLines;
+        
+        addLog(`\n（１）生データ抽出`, "text-blue-400 font-bold");
+        mergedLines.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
 
-        const fullText = fullLines.join(" ");
+        const fullText = mergedLines.join(" ");
         let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ" };
         if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-name').innerText = machine.name;
 
         let anchorIdx = -1, gCounts = [];
-        for(let i=0; i<fullLines.length; i++){
-            const lineTrim = fullLines[i].replace(/\s/g, '');
+        for(let i=0; i<mergedLines.length; i++){
+            const lineTrim = mergedLines[i].replace(/\s/g, '');
             if(lineTrim.includes('G')){
                 const val = parseInt(lineTrim.replace(/[^0-9]/g, ''));
                 if(!isNaN(val) && val > 100){ anchorIdx = i; gCounts.push(val); break; }
@@ -250,11 +249,11 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
-        addLog(`\n（５）尤度計算・ギャップ判定`, "text-blue-400 font-bold");
+        addLog(`\n（５）尤度計算・強度判定`, "text-blue-400 font-bold");
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
-        while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
-            const line = fullLines[ptr];
+        while(extractedPairs.length < machine.def.length && ptr < mergedLines.length){
+            const line = mergedLines[ptr];
             if(line.includes('/')){
                 let prob = 0, count = null;
                 const decMatch = line.match(/(\d+\.\d+)/);
@@ -262,7 +261,7 @@ async function run(file) {
                 if(line.includes('-') && !line.includes('.')) count = 0;
                 else {
                     for(let j of [2, 1, 3]){
-                        const targetLine = fullLines[ptr-j] || "";
+                        const targetLine = mergedLines[ptr-j] || "";
                         if(!targetLine.includes('.')) {
                             const intMatch = targetLine.match(/(\d+)/);
                             if(intMatch) { count = parseInt(intMatch[1]); break; }
@@ -314,7 +313,7 @@ async function run(file) {
         
         const dStr = (fullText.match(/(\d{4}\/\d{2}\/\d{2})/) || ["", "0000/00/00"])[1];
         const snap = { m: machine.name, g: gCounts[0], d: dStr, t: new Date().toLocaleTimeString('ja-JP',{hour12:false}), p: resP, l: logDisplay.innerHTML };
-        addLog(`\n（６）設定判別処理 完了`, "text-green-500 font-bold");
+        addLog(`\n（６）設定判別完了`, "text-green-500 font-bold");
         saveToCloud(snap).then(() => syncHistory(dStr));
 
     } catch (e) { errorFullBar(e.message); }
@@ -324,7 +323,7 @@ document.getElementById('sv-all').onclick = () => {
     localStorage.setItem('v_k', document.getElementById('api-key').value);
     localStorage.setItem('u_n', document.getElementById('user-name').value);
     localStorage.setItem('g_t', document.getElementById('gh-token').value);
-    alert("SAVED");
+    alert("CONFIG SAVED");
 };
 window.onload = () => {
     document.getElementById('api-key').value = localStorage.getItem('v_k') || '';
