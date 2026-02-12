@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.11</title>
+    <title>HANABI ANALYZER Rev 3.5.14</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -30,7 +30,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="text-[9px] text-slate-500 font-mono">Rev 3.5.11 - vs777-coder FINAL</div>
+        <div class="text-[9px] text-slate-500 font-mono">Rev 3.5.14 - Precision Fix</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -65,17 +65,14 @@
 const GH_USER = "vs777-coder";
 const GH_REPO = "VersusRexseHanabi";
 
-const L_HANABI_CONFIG = [{id:"total",name:"合算",active:false,type:"normal",probs:{1:169.8,2:161.0,5:149.3,6:138.8}},{id:"bb",name:"BB",active:true,type:"normal",probs:{1:297.9,2:292.6,5:284.9,6:273.1}},{id:"rb",name:"RB",active:true,type:"normal",probs:{1:394.8,2:358.1,5:313.6,6:282.5}},{id:"ba",name:"風鈴A",active:true,type:"normal",probs:{1:12.9,2:12.5,5:12.1,6:11.5}},{id:"bb_b",name:"風鈴B",active:true,type:"normal",probs:{1:38.4,2:38.7,5:36.2,6:34.5}},{id:"ia",name:"氷A",active:true,type:"normal",probs:{1:46.3,2:47.3,5:46.2,6:47.4}},{id:"ca2",name:"チェA2",active:true,type:"normal",probs:{1:21.0,2:19.4,5:20.5,6:19.6}},{id:"cb",name:"チェB",active:true,type:"normal",probs:{1:307.7,2:306.2,5:300.6,6:297.9}},{id:"vc",name:"VCハズレ",active:true,type:"vc",probs:{1:4.7,2:4.5,5:4.3,6:4.2}},{id:"vg",name:"VGハズレ",active:true,type:"vg",probs:{1:6.4,2:6,5:5.4,6:5.4}},{id:"b_bb",name:"BIG風B",active:true,type:"big",probs:{1:10.0,2:7.0,5:10.0,6:7.0}}];
+// --- 各機種設定を修正 ---
+const L_HANABI_CONFIG = [{id:"total",name:"合算",active:false,type:"normal",probs:{1:169.8,2:161,5:149.3,6:138.8}},{id:"bb",name:"BB",active:true,type:"normal",probs:{1:297.9,2:292.6,5:284.9,6:273.1}},{id:"rb",name:"RB",active:true,type:"normal",probs:{1:394.8,2:358.1,5:313.6,6:282.5}},{id:"ba",name:"風鈴A",active:true,type:"normal",probs:{1:12.9,2:12.5,5:12.1,6:11.5}},{id:"bb_b",name:"風鈴B",active:true,type:"normal",probs:{1:38.4,2:38.7,5:36.2,6:34.5}},{id:"ia",name:"氷A",active:true,type:"normal",probs:{1:46.3,2:47.3,5:46.2,6:47.4}},{id:"ca2",name:"チェA2",active:true,type:"normal",probs:{1:21,2:19.4,5:20.5,6:19.6}},{id:"cb",name:"チェB",active:true,type:"normal",probs:{1:307.7,2:306.2,5:300.6,6:297.9}},{id:"vc",name:"VCハズレ",active:true,type:"vc",probs:{1:4.7,2:4.5,5:4.3,6:4.2}},{id:"vg",name:"VGハズレ",active:true,type:"vg",probs:{1:6.4,2:6,5:5.4,6:5.4}},{id:"b_bb",name:"BIG風B",active:true,type:"big",probs:{1:10,2:7,5:10,6:7}}];
 const HANABI_CONFIG = [{id:"total",name:"合算",active:false,type:"normal",probs:{1:156,2:148.3,5:139.4,6:131.6}},{id:"bb",name:"BB",active:true,type:"normal",probs:{1:277.7,2:268.6,5:256,6:248.2}},{id:"rb",name:"RB",active:true,type:"normal",probs:{1:356.2,2:331,5:306.2,6:280.1}},{id:"ba",name:"風鈴A",active:true,type:"normal",probs:{1:15.3,2:14.9,5:14.5,6:14.1}},{id:"bb_b",name:"風鈴B",active:true,type:"normal",probs:{1:15.3,2:15.6,5:15.3,6:15.1}},{id:"ia",name:"氷A",active:true,type:"normal",probs:{1:52.9,2:53.5,5:49.6,6:50.8}},{id:"ca2",name:"チェA2",active:true,type:"normal",probs:{1:21,2:19.3,5:20.6,6:19.9}},{id:"cb",name:"チェB",active:true,type:"normal",probs:{1:282.5,2:281.3,5:276.5,6:274.2}},{id:"vc",name:"VCハズレ",active:true,type:"vc",probs:{1:6,2:5.8,5:5.3,6:5.1}},{id:"vg",name:"VGハズレ",active:true,type:"vg",probs:{1:13.4,2:12.4,5:10.1,6:9.5}},{id:"nf",name:"斜風",active:true,type:"big",probs:{1:11,2:9,5:11,6:9}}];
 const VERSUS_CONFIG = [{id:"bb",name:"BB合算",active:true,type:"normal",probs:{1:292.6,2:284.9,5:275.4,6:264.3}},{id:"rb",name:"RB",active:true,type:"normal",probs:{1:374.5,2:341.3,5:319.7,6:292.6}},{id:"ba",name:"ベルA",active:true,type:"normal",probs:{1:10.9,2:10.7,5:10.5,6:10.2}},{id:"bb_b",name:"ベルB",active:true,type:"normal",probs:{1:20.9,2:21.2,5:20.3,6:20.6}},{id:"sa",name:"スイカA",active:true,type:"normal",probs:{1:74.5,2:70.6,5:72.5,6:68.8}},{id:"cb",name:"チェB",active:true,type:"normal",probs:{1:56.2,2:57.7,5:53.1,6:54.4}},{id:"vc",name:"VCハズレ",active:true,type:"vc",probs:{1:5,2:4.5,5:4.6,6:4.5}},{id:"vg",name:"VGハズレ",active:true,type:"vg",probs:{1:10.1,2:9.4,5:8.7,6:8.1}},{id:"cbs",name:"チェベル揃い",active:true,type:"big",probs:{1:11.1,2:8.9,5:11.1,6:8.9}},{id:"cbh",name:"チェベルはずれ",active:true,type:"big",probs:{1:256,2:128,5:256,6:128}}];
 
 let hPaths = []; let hIdx = -1;
 const logDiv = document.getElementById('log-display');
-
-const logger = (m, c="text-slate-400") => { 
-    if(!logDiv) return;
-    const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDiv.appendChild(e); logDiv.scrollTop=logDiv.scrollHeight; 
-};
+const logger = (m, c="text-slate-400") => { if(logDiv){const e=document.createElement('div');e.className=c;e.innerHTML=m;logDiv.appendChild(e);logDiv.scrollTop=logDiv.scrollHeight;} };
 
 async function getH(k, n) {
     const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + (n || "G")));
@@ -95,14 +92,14 @@ async function ghCall(method, path, body = null) {
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("API Key!");
+    if(!k) return alert("Vision API Keyが必要です");
     logDiv.innerHTML = "Processing...";
     try {
         const b64 = await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.readAsDataURL(file);});
         const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
         const data = await res.json();
         const texts = data.responses[0].textAnnotations;
-        if(!texts) throw new Error("OCR Failed");
+        if(!texts) throw new Error("OCR解析失敗");
         const lines = []; let cur = {y:-100,t:""};
         texts.slice(1).map(a=>({t:a.description,y:a.boundingPoly.vertices[0].y})).sort((a,b)=>a.y-b.y).forEach(b=>{
             if(Math.abs(b.y-cur.y)<8) cur.t+=" "+b.t; else { if(cur.t)lines.push(cur.t); cur={y:b.y,t:b.t}; }
@@ -118,8 +115,8 @@ async function run(file) {
                 if(!isNaN(v)&&v>0){if(m.name!=="スマスロハナビ"){aI=i;gC=[v];gL=true;}else{if(aI===-1)aI=i;if(gC.length===0||i===aI+gC.length){gC.push(v);if(gC.length===3)gL=true;}else gL=true;}}
             }
         }
-        if(aI===-1)throw new Error("G Not Found");
-        const dm = full.match(/(\d{4}\/\d{2}\/\d{2})/); const dStr = dm?dm[1]:"0000/00/00";
+        if(aI===-1)throw new Error("Gが見つかりません");
+        const dStr = (full.match(/(\d{4}\/\d{2}\/\d{2})/) || ["", "0000/00/00"])[1];
         const ext=[]; let p=aI+1;
         while(ext.length<m.def.length && p<lines.length){
             if(lines[p].includes('/')){
@@ -137,13 +134,29 @@ async function run(file) {
             }
             p++;
         }
+
+        // --- 確率計算ロジックを修正 (アンダーフロー対策) ---
         let lls={1:0,2:0,5:0,6:0}; 
         m.def.forEach((df,i)=>{
-            const da=ext[i]; if(!da)return; let n=gC[0];
-            if(df.active){[1,2,5,6].forEach(s=>{const tp=1/df.probs[s]; lls[s]+=(da.c*Math.log(tp)+(n-da.c)*Math.log(1-tp));});}
+            const da=ext[i]; if(!da || da.c===null) return; 
+            const n=gC[0];
+            if(df.active){
+                [1,2,5,6].forEach(s=>{
+                    const prob = 1/df.probs[s];
+                    // 二項分布の対数尤度
+                    lls[s] += (da.c * Math.log(prob) + (n - da.c) * Math.log(1 - prob));
+                });
+            }
         });
-        const mx=Math.max(...Object.values(lls)), sm=Object.values(lls).reduce((a,l)=>a+Math.exp(l-mx),0);
-        const resP={}; [1,2,5,6].forEach(s=>resP[s]=(Math.exp(lls[s]-mx)/sm)*100);
+        const mx=Math.max(...Object.values(lls));
+        let sm=0; const expValues={};
+        [1,2,5,6].forEach(s=>{
+            const ev = Math.exp(lls[s]-mx);
+            expValues[s] = ev;
+            sm += ev;
+        });
+        const resP={}; [1,2,5,6].forEach(s=>resP[s]=(expValues[s]/sm)*100);
+
         const snap={m:m.name,g:gC[0],d:dStr,t:new Date().toLocaleTimeString('ja-JP',{hour12:false}),p:resP,l:logDiv.innerHTML};
         apply(snap);
         save(snap).then(()=>sync(dStr)).catch(e=>console.log("Sync skipped"));
@@ -151,16 +164,21 @@ async function run(file) {
 }
 
 async function save(s) {
-    const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
-    const path = `data/${h}/${s.d.replace(/\//g,'-')}/${s.t.replace(/:/g,'')}.json`;
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(s))));
-    await ghCall("PUT", path, { message: "Sync", content });
+    try {
+        const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
+        const path = `data/${h}/${s.d.replace(/\//g,'-')}/${s.t.replace(/:/g,'')}.json`;
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+        await ghCall("PUT", path, { message: "Sync", content });
+        logger("\n✅ Cloud Synced", "text-green-500 font-bold");
+    } catch(e) {}
 }
 
 async function sync(d) {
-    const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
-    const res = await ghCall("GET", `data/${h}/${d.replace(/\//g,'-')}`);
-    if(res && Array.isArray(res)) { hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; updateUI(); }
+    try {
+        const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
+        const res = await ghCall("GET", `data/${h}/${d.replace(/\//g,'-')}`);
+        if(res && Array.isArray(res)) { hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; updateUI(); }
+    } catch(e) {}
 }
 
 async function load(p) {
@@ -188,13 +206,15 @@ document.getElementById('sv-config').onclick = () => {
     localStorage.setItem('v_k', document.getElementById('api-key').value);
     localStorage.setItem('u_n', document.getElementById('user-name').value);
     localStorage.setItem('g_t', document.getElementById('gh-token').value);
-    alert("OK");
+    alert("設定保存完了");
 };
+
 window.onload = () => {
     document.getElementById('api-key').value = localStorage.getItem('v_k') || '';
     document.getElementById('user-name').value = localStorage.getItem('u_n') || '';
     document.getElementById('gh-token').value = localStorage.getItem('g_t') || '';
 };
+
 document.getElementById('f-in').onchange = e => { if(e.target.files[0]) run(e.target.files[0]); };
 </script>
 </body>
