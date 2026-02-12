@@ -180,17 +180,10 @@ async function run(file) {
 
         const fullText = fullLines.join(" ");
 
-        // --- 日付取得ロジックの追加 ---
-        const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
-        const displayDate = dateMatch ? dateMatch[1] : "日付不明";
-
         let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ", type: "NORMAL" };
         if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス", type: "NORMAL" };
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ", type: "SMASLO" };
         
-        // UI表示を「機種名：YYYY/MM/DD」に更新
-        document.getElementById('machine-type').innerText = `${machine.name}：${displayDate}`;
-
         // --- G走査ロジック ---
         let anchorIdx = -1, gCounts = [], gLocked = false;
         for(let i=0; i<fullLines.length; i++){
@@ -214,6 +207,14 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1 || gCounts.length === 0) throw new Error("G NOT FOUND / ❌");
+
+        // --- 表示形式の修正：機種名：総ゲーム数：日付 ---
+        const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
+        const displayDate = dateMatch ? dateMatch[1] : "日付不明";
+        const displayG = gCounts[0] ? `${gCounts[0]}G` : "0G";
+        
+        // UI表示を「機種名：総ゲーム数：日付」に更新
+        document.getElementById('machine-type').innerText = `${machine.name}：${displayG}：${displayDate}`;
 
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
         const extractedPairs = [];
