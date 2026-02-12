@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.21</title>
+    <title>ANALYZER Rev 3.2.23-STRICT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -23,9 +23,7 @@
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; overflow: hidden; white-space: nowrap; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
-        .aura-red { background-color: rgba(220, 38, 38, 0.5) !important; color: white !important; }
-        .aura-green { background-color: rgba(22, 163, 74, 0.5) !important; color: white !important; }
-        .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
+        .aura-red { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444 !important; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
@@ -37,7 +35,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.21 - Logic Consolidation</div>
+        <div class="rev-tag">Revision 3.2.23 - No Omission / Strict Int</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -74,7 +72,6 @@ const L_HANABI_CONFIG = [
     { id: "b_ba", name: "BIG中風鈴Ａ", active: false, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
-
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -96,7 +93,6 @@ const HANABI_CONFIG = [
     { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
-
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -124,23 +120,25 @@ const addLog = (m, c="text-slate-400") => {
     const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
 };
 
-document.getElementById('copy-log').onclick = async () => {
-    const text = logDisplay.innerText;
-    if (navigator.clipboard && window.isSecureContext) {
-        try { await navigator.clipboard.writeText(text); alert("OK"); return; } catch (err) {}
-    }
-    const area = document.createElement('textarea');
-    area.value = text; area.readOnly = true; area.style.position = 'fixed'; area.style.left = '-9999px';
-    document.body.appendChild(area); area.select(); area.setSelectionRange(0, 999999);
-    try { document.execCommand('copy'); alert("OK"); } catch (err) {}
-    document.body.removeChild(area);
-};
+function errorFullBar(msg) {
+    addLog(`\n❌ FATAL ERROR: ${msg}`, "text-red-500 font-bold");
+    [1,2,5,6].forEach(s => {
+        document.getElementById(`p${s}`).innerText = "100.0%";
+        const b = document.getElementById(`b${s}`);
+        b.style.width = "100%";
+        b.classList.add('aura-red');
+    });
+}
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("API Key Required");
     logDisplay.innerHTML = "";
-    [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText = "---"; document.getElementById(`b${s}`).style.width = "0%"; });
+    [1,2,5,6].forEach(s => { 
+        document.getElementById(`p${s}`).innerText = "---"; 
+        const b = document.getElementById(`b${s}`);
+        b.style.width = "0%"; b.classList.remove('aura-red');
+    });
     
     addLog(`（１）画像情報`, "text-blue-400 font-bold");
     addLog(`  FILE: ${file.name}`);
@@ -167,7 +165,7 @@ async function run(file) {
         fullLines.forEach(l => addLog(`| ${l}`, "text-[8px] text-zinc-600"));
 
         const fullText = fullLines.join(" ");
-        let machine = { def: HANABI_CONFIG, bG: 29, name: "新ハナビ" };
+        let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ" };
         if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
         document.getElementById('machine-type').innerText = machine.name;
@@ -182,29 +180,32 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("Anchor Error");
 
-        // --- セクション（３）抽出データ・バリデーション ---
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
         const extractedPairs = [];
         let ptr = anchorIdx + 1;
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
             const line = fullLines[ptr];
             if(line.includes('/')){
-                let prob = 0, noKai = false;
+                let prob = 0, count = null;
                 const decMatch = line.match(/(\d+\.\d+)/);
                 if(decMatch) prob = parseFloat(decMatch[1]);
-                let count = null;
-                for(let j of [2, 3]){
-                    const targetLine = fullLines[ptr-j] || "";
-                    const intMatch = targetLine.match(/(\d+)/);
-                    if(intMatch) {
-                        count = parseInt(intMatch[1]);
-                        if(!targetLine.includes("回")) noKai = true;
-                        break;
+
+                if(line.includes('-') && !line.includes('.')) {
+                    count = 0; 
+                } else {
+                    for(let j of [2, 1, 3]){
+                        const targetLine = fullLines[ptr-j] || "";
+                        // ドットを含まない場合のみ整数を抽出（厳格判定）
+                        if(!targetLine.includes('.')) {
+                            const intMatch = targetLine.match(/(\d+)/);
+                            if(intMatch) { count = parseInt(intMatch[1]); break; }
+                        }
                     }
                 }
-                const logMsg = `[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count??'欠損'}回)${noKai ? ' ⚠️回なし' : ''}`;
-                addLog(logMsg, "text-zinc-500 text-[8px]");
-                extractedPairs.push({ count, rawP: prob, noKai });
+                
+                if (count === null) throw new Error(`回数抽出失敗 at idx:${extractedPairs.length} (Line:${line})`);
+                addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)`, "text-zinc-500 text-[8px]");
+                extractedPairs.push({ count, rawP: prob });
             }
             ptr++;
         }
@@ -219,72 +220,34 @@ async function run(file) {
             if (def.type === "vg") n = gCounts[2] || Math.round(data.count * data.rawP);
             if (def.type === "big") n = bbCount * machine.bG;
             if (def.id === "bb") bbCount = data.count || 0;
+            
             let k = data.count;
             if (data.rawP > 0) {
                 const mu = Math.round(n / data.rawP);
-                if (k === null || (k === 0 && mu > 0) || (k > 0 && Math.abs(k - mu) > Math.sqrt(mu)*4)) {
-                    if (k !== mu) {
-                        addLog(`  補正 [${def.name}]: ${k??'欠損'}→${mu}回`, "text-orange-500 font-[8px]");
-                        k = mu;
-                    }
-                }
+                if (Math.abs(k - mu) > Math.sqrt(mu)*6) throw new Error(`${def.name}の数値乖離異常`);
             }
             finalStorage.push({ ...def, k, n });
         });
 
-        addLog(`\n（４）判別対象データ（実戦値 vs 各設定理論値）`, "text-blue-400 font-bold");
-        const table4 = document.createElement('table');
-        table4.className = 'log-table';
-        table4.innerHTML = `<thead><tr><th style="width:25%">項目</th><th style="width:12%">回数</th><th style="width:15%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-        const tbody4 = table4.querySelector('tbody');
-        finalStorage.forEach(res => {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td style="text-align:left;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${(res.n/res.k).toFixed(1)}</td><td>1/${res.probs[1].toFixed(1)}</td><td>1/${res.probs[2].toFixed(1)}</td><td>1/${res.probs[5].toFixed(1)}</td><td>1/${res.probs[6].toFixed(1)}</td>`;
-            tbody4.appendChild(row);
-        });
-        logDisplay.appendChild(table4);
-
-        addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
-        const intensityData = finalStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
-            let itemLLs = {};
-            [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
-            const vals = Object.values(itemLLs);
-            return { id: res.id, itemLLs, maxL: Math.max(...vals), intensity: Math.max(...vals) - Math.min(...vals) };
-        });
-        const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
-        const table5 = document.createElement('table');
-        table5.className = 'log-table';
-        table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-        const tbody5 = table5.querySelector('tbody');
+        addLog(`\n（４）判別実行中...`, "text-blue-400 font-bold");
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            const calc = intensityData.find(x => x.id === res.id);
-            if (!calc) return;
-            const row = document.createElement('tr');
-            let aura = "";
-            const rank = top3Ids.indexOf(res.id);
-            if(rank === 0) aura = "aura-red"; else if(rank === 1) aura = "aura-green"; else if(rank === 2) aura = "aura-yellow";
-            const gapBar = calc.intensity > 4.0 ? "■■■" : calc.intensity > 2.0 ? "■■" : calc.intensity > 0.5 ? "■" : "";
-            let cells = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:4px;">${res.name}</td><td class="${aura}" style="text-align:left; padding-left:4px;">${gapBar}</td>`;
+            if(!res.active || res.k < 0) return;
             [1,2,5,6].forEach(s => {
-                totalLLs[s] += calc.itemLLs[s];
-                const gMax = calc.maxL - calc.itemLLs[s];
-                const star = gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1;
-                cells += `<td style="color:${gMax < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(star)}</td>`;
+                const tp = 1/res.probs[s];
+                totalLLs[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
             });
-            row.innerHTML = cells; tbody5.appendChild(row);
         });
-        logDisplay.appendChild(table5);
 
-        addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
         const max = Math.max(...Object.values(totalLLs)), sum = Object.values(totalLLs).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (sum === 0) ? 0 : (Math.exp(totalLLs[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
             document.getElementById(`b${s}`).style.width = prob + "%";
-            addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s} font-bold`);
         });
-    } catch (e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
+        addLog(`完了`, "text-green-500");
+
+    } catch (e) { errorFullBar(e.message); }
 }
 
 document.getElementById('sv-key').onclick = () => { localStorage.setItem('v_key', document.getElementById('api-key').value); alert("SAVED"); };
