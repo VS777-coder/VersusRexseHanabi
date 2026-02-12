@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.23-STRICT</title>
+    <title>ANALYZER Rev 3.2.24-RESTORED</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -35,7 +35,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.23 - No Omission / Strict Int</div>
+        <div class="rev-tag">Revision 3.2.24 - Logic Restored</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -96,17 +96,17 @@ const HANABI_CONFIG = [
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
+    { id: "xbb", name: "XBB", active: true, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
     { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
+    { id: "i_tot", name: "スイカ合算", active: true, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
+    { id: "sb", name: "スイカＢ", active: true, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
+    { id: "che_tot", name: "チェリー合算", active: true, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
+    { id: "ca", name: "チェリーＡ", active: true, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
@@ -172,7 +172,7 @@ async function run(file) {
 
         let anchorIdx = -1, gCounts = [];
         for(let i=0; i<fullLines.length; i++){
-            const lineTrim = fullLines[i].replace(/\s/g, '');
+            const lineTrim = fullLines[i].replace(/[\s,]/g, ''); // カンマ除去
             if(lineTrim.includes('G')){
                 const val = parseInt(lineTrim.replace(/[^0-9]/g, ''));
                 if(!isNaN(val) && val > 100){ anchorIdx = i; gCounts.push(val); break; }
@@ -187,15 +187,15 @@ async function run(file) {
             const line = fullLines[ptr];
             if(line.includes('/')){
                 let prob = 0, count = null;
-                const decMatch = line.match(/(\d+\.\d+)/);
+                const cleanLine = line.replace(/,/g, ''); // カンマ除去
+                const decMatch = cleanLine.match(/(\d+\.\d+)/);
                 if(decMatch) prob = parseFloat(decMatch[1]);
 
-                if(line.includes('-') && !line.includes('.')) {
+                if(cleanLine.includes('-') && !cleanLine.includes('.')) {
                     count = 0; 
                 } else {
                     for(let j of [2, 1, 3]){
-                        const targetLine = fullLines[ptr-j] || "";
-                        // ドットを含まない場合のみ整数を抽出（厳格判定）
+                        const targetLine = (fullLines[ptr-j] || "").replace(/,/g, ''); // カンマ除去
                         if(!targetLine.includes('.')) {
                             const intMatch = targetLine.match(/(\d+)/);
                             if(intMatch) { count = parseInt(intMatch[1]); break; }
@@ -203,7 +203,7 @@ async function run(file) {
                     }
                 }
                 
-                if (count === null) throw new Error(`回数抽出失敗 at idx:${extractedPairs.length} (Line:${line})`);
+                if (count === null) throw new Error(`回数抽出失敗 at idx:${extractedPairs.length}`);
                 addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)`, "text-zinc-500 text-[8px]");
                 extractedPairs.push({ count, rawP: prob });
             }
@@ -224,7 +224,11 @@ async function run(file) {
             let k = data.count;
             if (data.rawP > 0) {
                 const mu = Math.round(n / data.rawP);
-                if (Math.abs(k - mu) > Math.sqrt(mu)*6) throw new Error(`${def.name}の数値乖離異常`);
+                // 救済ロジック：乖離があればログを出して逆算値 mu で上書き
+                if (Math.abs(k - mu) > Math.sqrt(mu) * 4) { 
+                    addLog(`  補正 [${def.name}]: ${k}→${mu}回`, "text-orange-500 font-[8px]");
+                    k = mu; 
+                }
             }
             finalStorage.push({ ...def, k, n });
         });
