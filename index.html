@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.19-STRICT</title>
+    <title>HANABI ANALYZER Rev 3.5.21-FINAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -11,19 +11,19 @@
         body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
         .app-header { text-align: center; margin-bottom: 8px; }
         .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
-        .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #4b5563; margin-top: -5px; }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
         .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
         .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 14px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; margin: 10px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
+        .log-container { flex-grow: 1; min-height: 0; margin: 10px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
         .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
         .aura-red { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444 !important; }
-        .api-input-mini { background: #0f172a; color: #94a3b8; border: 1px solid #1e293b; padding: 4px 6px; font-size: 9px; border-radius: 4px; outline: none; }
-        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 13px; font-weight: bold; border-radius: 6px; outline: none; }
+        .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
+        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 14px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
         .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
@@ -33,16 +33,16 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.19 - Strictly Restored Log & Mini Inputs</div>
+        <div class="text-[9px] text-slate-500 font-mono text-center">Rev 3.5.21 - STRICT</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
-        <div id="machine-type-display" class="absolute top-2 left-4 text-[10px] text-blue-400 font-bold flex items-center gap-2">
-            <span id="machine-name">READY</span>
-            <div class="flex gap-1 ml-2">
-                <button id="prev-btn" class="nav-btn-mini text-white" disabled>◁</button>
-                <span id="date-display" class="text-white"></span>
-                <button id="next-btn" class="nav-btn-mini text-white" disabled>▷</button>
+        <div class="absolute top-2 left-0 w-full px-4 flex justify-between items-center text-[10px] font-bold">
+            <div id="machine-info-left" class="text-blue-400">READY</div>
+            <div class="flex items-center gap-2">
+                <button id="prev-btn" class="nav-btn" disabled>◁</button>
+                <span id="date-display" class="text-white font-mono"></span>
+                <button id="next-btn" class="nav-btn" disabled>▷</button>
             </div>
         </div>
         <div class="mt-4">
@@ -52,286 +52,82 @@
             <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s6 font-black text-xs">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
         </div>
     </div>
-    <div class="log-container"><button id="copy-log" class="copy-btn">COPY LOG</button><div id="log-display" class="log-body">READY...</div></div>
+    <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
     <div class="api-footer flex flex-col gap-1">
         <div class="flex gap-1 items-center">
-            <input type="password" id="api-key" class="api-input-mini flex-grow" placeholder="Vision API Key">
+            <input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key">
             <input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name">
         </div>
         <div class="flex gap-1 items-center">
-            <input type="password" id="gh-token" class="api-input-mini flex-grow" placeholder="GitHub Token">
+            <input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token">
             <button id="sv-all" class="save-btn">SAVE</button>
         </div>
     </div>
 
 <script>
-const GH_USER = "vs777-coder";
-const GH_REPO = "VersusRexseHanabi";
+const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
+const L_HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:169.8,2:161,5:149.3,6:138.8}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:297.9,2:292.6,5:284.9,6:273.1}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"red7",name:"赤七BB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:394.8,2:358.1,5:313.6,6:282.5}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:12.9,2:12.5,5:12.1,6:11.5}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:38.4,2:38.7,5:36.2,6:34.5}},{id:"f_tot",name:"風鈴合算",active:false,type:"normal",probs:{1:9.68,2:9.45,5:9.06,6:8.64}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:46.3,2:47.3,5:46.2,6:47.4}},{id:"ib",name:"氷Ｂ",active:false,type:"normal",probs:{1:1560.4,2:1560.4,5:1560.4,6:1560.4}},{id:"i_tot",name:"氷合算",active:false,type:"normal",probs:{1:44.9,2:45.9,5:44.8,6:46.0}},{id:"ca1",name:"チェリーＡ１",active:false,type:"normal",probs:{1:99.4,2:99.4,5:99.4,6:99.3}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21,2:19.4,5:20.5,6:19.6}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:307.7,2:306.2,5:300.6,6:297.9}},{id:"c_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:16.3,2:15.3,5:16.0,6:15.4}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:4.7,2:4.5,5:4.3,6:4.2}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:6.4,2:6,5:5.4,6:5.4}},{id:"b_ba",name:"BIG中風鈴Ａ",active:false,type:"big",probs:{1:1.1,2:1.2,5:1.1,6:1.2}},{id:"b_bb",name:"BIG中風鈴Ｂ",active:true,type:"big",probs:{1:10,2:7,5:10,6:7}}];
+const HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:156,2:148.3,5:139.4,6:131.6}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:277.7,2:268.6,5:256,6:248.2}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"red",name:"赤七BB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:356.2,2:331,5:306.2,6:280.1}},{id:"f_tot",name:"風鈴合算",active:false,type:"normal",probs:{1:7.7,2:7.6,5:7.5,6:7.3}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:15.3,2:14.9,5:14.5,6:14.1}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:15.3,2:15.6,5:15.3,6:15.1}},{id:"i_tot",name:"氷合算",active:false,type:"normal",probs:{1:51.2,2:51.8,5:48.2,6:49.3}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:52.9,2:53.5,5:49.6,6:50.8}},{id:"ib",name:"氷Ｂ",active:false,type:"normal",probs:{1:1638.4,2:1638.4,5:1638.4,6:1638.4}},{id:"c_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:16.4,2:15.3,5:16.1,6:15.6}},{id:"ca1",name:"チェリーＡ１",active:false,type:"normal",probs:{1:99.4,2:99.4,5:99.3,6:99.3}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21,2:19.3,5:20.6,6:19.9}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:282.5,2:281.3,5:276.5,6:274.2}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:6,2:5.8,5:5.3,6:5.1}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:13.4,2:12.4,5:10.1,6:9.5}},{id:"pf",name:"平行風鈴",active:false,type:"big",probs:{1:1.1,2:1.13,5:1.1,6:1.13}},{id:"nf",name:"斜め風鈴",active:true,type:"big",probs:{1:11,2:9,5:11,6:9}}];
+const VERSUS_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:164.3,2:155.3,5:147.9,6:138.8}},{id:"bb",name:"ビックボーナス合算",active:true,type:"normal",probs:{1:292.6,2:284.9,5:275.4,6:264.3}},{id:"xbb",name:"XBB",active:false,type:"normal",probs:{1:585.2,2:569.8,5:550.8,6:528.6}},{id:"7bb",name:"7BB",active:false,type:"normal",probs:{1:585.2,2:569.8,5:550.8,6:528.6}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:374.5,2:341.3,5:319.7,6:292.6}},{id:"f_tot",name:"ベル合算",active:false,type:"normal",probs:{1:7.22,2:7.1,5:6.9,6:6.8}},{id:"ba",name:"ベルＡ",active:true,type:"normal",probs:{1:10.9,2:10.7,5:10.5,6:10.2}},{id:"bb_b",name:"ベルＢ",active:true,type:"normal",probs:{1:20.9,2:21.2,5:20.3,6:20.6}},{id:"i_tot",name:"スイカ合算",active:false,type:"normal",probs:{1:55.5,2:53.4,5:54.4,6:52.3}},{id:"sa",name:"スイカＡ",active:true,type:"normal",probs:{1:74.5,2:70.6,5:72.5,6:68.8}},{id:"sb",name:"スイカＢ",active:false,type:"normal",probs:{1:218.5,2:218.5,5:218.5,6:218.5}},{id:"che_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:38.2,2:38.9,5:36.7,6:37.3}},{id:"ca",name:"チェリーＡ",active:false,type:"normal",probs:{1:119.2,2:119.2,5:119.2,6:118.9}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:56.2,2:57.7,5:53.1,6:54.4}},{id:"vc",name:"バーサスチャンス中ハズレ",active:true,type:"vc",probs:{1:5,2:4.9,5:4.6,6:4.5}},{id:"vg",name:"バーサスゲーム中ハズレ",active:true,type:"vg",probs:{1:10.1,2:9.4,5:8.7,6:8.1}},{id:"rb_bel",name:"ベル揃い",active:false,type:"big",probs:{1:1,2:1,5:1,6:1}},{id:"cbs",name:"チェリー＋ベル揃い",active:true,type:"big",probs:{1:11.1,2:8.9,5:11.1,6:8.9}},{id:"cbh",name:"チェリー＋ベルはずれ",active:true,type:"big",probs:{1:256,2:128,5:256,6:128}}];
 
-// --- 厳格定義(3.2.23-STRICT準拠) ---
-const L_HANABI_CONFIG = [
-    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
-    { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
-    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 595.8, 2: 585.2, 5: 569.8, 6: 546.2} },
-    { id: "red7", name: "赤七BB", active: false, type: "normal", probs: {1: 595.8, 2: 585.2, 5: 569.8, 6: 546.2} },
-    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 394.8, 2: 358.1, 5: 313.6, 6: 282.5} },
-    { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
-    { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
-    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 9.68, 2: 9.45, 5: 9.06, 6: 8.64} },
-    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
-    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1560.4, 2: 1560.4, 5: 1560.4, 6: 1560.4} },
-    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 44.9, 2: 45.9, 5: 44.8, 6: 46.0} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.4, 2: 99.4, 5: 99.4, 6: 99.3} },
-    { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.4, 5: 20.5, 6: 19.6} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 307.7, 2: 306.2, 5: 300.6, 6: 297.9} },
-    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.3, 2: 15.3, 5: 16.0, 6: 15.4} },
-    { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 4.7, 2: 4.5, 5: 4.3, 6: 4.2} },
-    { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 6.4, 2: 6.0, 5: 5.4, 6: 5.4} },
-    { id: "b_ba", name: "BIG中風鈴Ａ", active: false, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
-    { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
-];
-const HANABI_CONFIG = [
-    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
-    { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
-    { id: "don", name: "ドンBB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "red", name: "赤七BB", active: false, type: "normal", probs: {1: 555.4, 2: 537.2, 5: 512.0, 6: 496.4} },
-    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 356.2, 2: 331.0, 5: 306.2, 6: 280.1} },
-    { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 7.7, 2: 7.6, 5: 7.5, 6: 7.3} },
-    { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 15.3, 2: 14.9, 5: 14.5, 6: 14.1} },
-    { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 15.3, 2: 15.6, 5: 15.3, 6: 15.1} },
-    { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 51.2, 2: 51.8, 5: 48.2, 6: 49.3} },
-    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 52.9, 2: 53.5, 5: 49.6, 6: 50.8} },
-    { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1638.4, 2: 1638.4, 5: 1638.4, 6: 1638.4} },
-    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 16.4, 2: 15.3, 5: 16.1, 6: 15.6} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.4, 2: 99.4, 5: 99.3, 6: 99.3} },
-    { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 21.0, 2: 19.3, 5: 20.6, 6: 19.9} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 282.5, 2: 281.3, 5: 276.5, 6: 274.2} },
-    { id: "vc", name: "ハナビチャレンジ中ハズレ", active: true, type: "vc", probs: {1: 6.0, 2: 5.8, 5: 5.3, 6: 5.1} },
-    { id: "vg", name: "ハナビゲーム中ハズレ", active: true, type: "vg", probs: {1: 13.4, 2: 12.4, 5: 10.1, 6: 9.5} },
-    { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
-    { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
-];
-const VERSUS_CONFIG = [
-    { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
-    { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
-    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
-    { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
-    { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
-    { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
-    { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
-    { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
-    { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
-    { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
-    { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
-];
-
-let hPaths = []; let hIdx = -1;
 const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-slate-400") => { 
-    const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; 
-};
+const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
+function errorFull(m) { addLog(`\n❌ ERROR: ${m}`, "text-red-500 font-bold"); [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="100.0%"; document.getElementById(`b${s}`).style.width="100%"; document.getElementById(`b${s}`).classList.add('aura-red');}); }
 
-function errorFullBar(msg) {
-    addLog(`\n❌ FATAL ERROR: ${msg}`, "text-red-500 font-bold");
-    [1,2,5,6].forEach(s => {
-        document.getElementById(`p${s}`).innerText = "100.0%";
-        const b = document.getElementById(`b${s}`); b.style.width = "100%"; b.classList.add('aura-red');
-    });
-}
-
-// --- GitHub連携 ---
-async function ghCall(method, path, body = null) {
-    const t = document.getElementById('gh-token').value;
-    if(!t) return null;
-    const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`;
-    const h = { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" };
-    try {
-        const res = await fetch(url, { method, headers: h, body: body ? JSON.stringify(body) : null });
-        return res.ok ? await res.json() : null;
-    } catch(e) { return null; }
-}
-
-async function saveToCloud(snap) {
-    const k = document.getElementById('api-key').value;
-    const n = document.getElementById('user-name').value;
-    if(!k || !n || !document.getElementById('gh-token').value) return;
-    try {
-        const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-        const path = `data/${h}/${snap.d.replace(/\//g,'-')}/${snap.t.replace(/:/g,'')}.json`;
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
-        await ghCall("PUT", path, { message: "AutoSync", content });
-        addLog("\n✅ Cloud Synced", "text-green-600 font-bold text-[8px]");
-    } catch(e) {}
-}
-
-async function syncHistory(d) {
-    const k = document.getElementById('api-key').value;
-    const n = document.getElementById('user-name').value;
-    if(!k || !n) return;
-    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const res = await ghCall("GET", `data/${h}/${d.replace(/\//g,'-')}`);
-    if(res && Array.isArray(res)) { hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; updateUI(); }
-}
-
-function updateUI() {
-    document.getElementById('prev-btn').disabled = (hIdx <= 0);
-    document.getElementById('next-btn').disabled = (hIdx >= hPaths.length - 1);
-}
-
-function applySnapshot(s) {
-    if(!s || !s.p) return;
-    document.getElementById('machine-name').innerText = s.m + ":" + s.g + "G";
-    document.getElementById('date-display').innerText = s.d;
-    [1,2,5,6].forEach(n=>{
-        const v = s.p[n] || 0;
-        document.getElementById(`p${n}`).innerText = v.toFixed(1) + "%";
-        document.getElementById(`b${n}`).style.width = v + "%";
-    });
-    logDisplay.innerHTML = s.l;
-}
-
-document.getElementById('prev-btn').onclick = async() => {
-    if(hIdx > 0) { hIdx--; const res = await ghCall("GET", hPaths[hIdx]); if(res && res.content) applySnapshot(JSON.parse(decodeURIComponent(escape(atob(res.content))))); updateUI(); }
-};
-document.getElementById('next-btn').onclick = async() => {
-    if(hIdx < hPaths.length - 1) { hIdx++; const res = await ghCall("GET", hPaths[hIdx]); if(res && res.content) applySnapshot(JSON.parse(decodeURIComponent(escape(atob(res.content))))); updateUI(); }
-};
-
-// --- 解析メイン (3.2.23 STRICT準拠) ---
 async function run(file) {
-    const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("API Key!");
-    logDisplay.innerHTML = "";
-    [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText="---"; document.getElementById(`b${s}`).style.width="0%"; });
-    
+    const k = document.getElementById('api-key').value.trim(); if(!k) return alert("API Key!");
+    logDisplay.innerHTML = ""; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---"; const b=document.getElementById(`b${s}`); b.style.width="0%"; b.classList.remove('aura-red');});
     addLog(`▶ 解析開始: ${file.name}`, "text-blue-400 font-bold");
     try {
-        const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
-        const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`, {
-            method: 'POST', body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'DOCUMENT_TEXT_DETECTION' }] }] })
-        });
-        const json = await resp.json();
-        const annotations = json.responses[0].textAnnotations;
-        const THRESHOLD_Y = 8;
-        let mergedLines = [];
-        let currentLine = { y: -100, text: "" };
-        const sortedBlocks = annotations.slice(1).map(a => ({ text: a.description, y: a.boundingPoly.vertices[0].y })).sort((a,b) => a.y - b.y);
-        sortedBlocks.forEach(block => {
-            if (Math.abs(block.y - currentLine.y) < THRESHOLD_Y) currentLine.text += " " + block.text;
-            else { if (currentLine.text) mergedLines.push(currentLine.text); currentLine = { y: block.y, text: block.text }; }
-        });
-        mergedLines.push(currentLine.text);
+        const base64 = await new Promise(res=>{const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file);});
+        const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
+        const json = await resp.json(); const ann = json.responses[0].textAnnotations; if(!ann) throw new Error("OCR Failed");
+        const sorted = ann.slice(1).map(a=>({text:a.description,y:a.boundingPoly.vertices[0].y})).sort((a,b)=>a.y-b.y);
+        let merged = []; let current = {y:-100,t:""}; sorted.forEach(b=>{ if(Math.abs(b.y-current.y)<8) current.t+=" "+b.text; else { if(current.t) merged.push(current.t); current={y:b.y,t:b.text}; } }); merged.push(current.t);
         
-        addLog(`\n（１）生データ抽出`, "text-blue-400 font-bold");
-        mergedLines.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
-
-        const fullText = mergedLines.join(" ");
-        let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ" };
-        if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
-        document.getElementById('machine-name').innerText = machine.name;
-
-        let anchorIdx = -1, gCounts = [];
-        for(let i=0; i<mergedLines.length; i++){
-            const lineTrim = mergedLines[i].replace(/\s/g, '');
-            if(lineTrim.includes('G')){
-                const val = parseInt(lineTrim.replace(/[^0-9]/g, ''));
-                if(!isNaN(val) && val > 100){ anchorIdx = i; gCounts.push(val); break; }
-            }
-        }
-        if(anchorIdx === -1) throw new Error("Anchor Error");
+        addLog(`\n（１）生データ抽出`, "text-blue-400 font-bold"); merged.forEach(l=>addLog(`| ${l}`, "text-[7px] text-zinc-600"));
+        const fullText = merged.join(" ");
+        let machine = fullText.includes("バーサス")?{def:VERSUS_CONFIG,bG:28,name:"バーサス"}:fullText.includes("スマスロ")?{def:L_HANABI_CONFIG,bG:20,name:"スマスロハナビ"}:{def:HANABI_CONFIG,bG:28,name:"新ハナビ"};
+        let anchorIdx=-1, gC=[]; for(let i=0; i<merged.length; i++){ const t=merged[i].replace(/\s/g,''); if(t.includes('G')){ const v=parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v)&&v>100){anchorIdx=i; gC.push(v); break;}} }
+        if(anchorIdx===-1) throw new Error("GNotFound");
+        document.getElementById('machine-info-left').innerText = `${machine.name} : ${gC[0]}G`;
 
         addLog(`\n（５）尤度計算・強度判定`, "text-blue-400 font-bold");
-        const extractedPairs = [];
-        let ptr = anchorIdx + 1;
-        while(extractedPairs.length < machine.def.length && ptr < mergedLines.length){
-            const line = mergedLines[ptr];
-            if(line.includes('/')){
-                let prob = 0, count = null;
-                const decMatch = line.match(/(\d+\.\d+)/);
-                if(decMatch) prob = parseFloat(decMatch[1]);
-                if(line.includes('-') && !line.includes('.')) count = 0;
-                else {
-                    for(let j of [2, 1, 3]){
-                        const targetLine = mergedLines[ptr-j] || "";
-                        if(!targetLine.includes('.')) {
-                            const intMatch = targetLine.match(/(\d+)/);
-                            if(intMatch) { count = parseInt(intMatch[1]); break; }
-                        }
-                    }
-                }
-                if (count === null) throw new Error(`抽出失敗 at idx:${extractedPairs.length}`);
-                extractedPairs.push({ count, rawP: prob });
-            }
-            ptr++;
+        const extracted = []; let ptr = anchorIdx+1, bbC=0;
+        while(extracted.length < machine.def.length && ptr < merged.length){
+            const l = merged[ptr]; if(l.includes('/')){
+                let p=0, c=null; const dm=l.match(/(\d+\.\d+)/); if(dm) p=parseFloat(dm[1]);
+                if(l.includes('-')&&!l.includes('.')) c=0; else { for(let j of [2,1,3,4]){ const tl=merged[ptr-j]||""; if(!tl.includes('.')){const im=tl.match(/(\d+)/); if(im){c=parseInt(im[1]); break;}} } }
+                if(c===null) throw new Error(`ExtractError at ${extracted.length} (${l})`);
+                if(machine.def[extracted.length].id==="bb") bbC=c; extracted.push({c,p});
+            } ptr++;
         }
-
-        const finalStorage = [];
-        let bbCount = 0;
-        machine.def.forEach((def, idx) => {
-            const data = extractedPairs[idx];
-            if (!data) return;
-            let n = gCounts[0];
-            if (def.type === "vc") n = gCounts[1] || Math.round(data.count * data.rawP);
-            if (def.type === "vg") n = gCounts[2] || Math.round(data.count * data.rawP);
-            if (def.type === "big") n = bbCount * machine.bG;
-            if (def.id === "bb") bbCount = data.count || 0;
-            finalStorage.push({ ...def, k: data.count, n });
+        let lls={1:0,2:0,5:0,6:0};
+        machine.def.forEach((df,i)=>{
+            const da=extracted[i]; if(!da || !df.active) return;
+            let n=gC[0]; if(df.type==="vc"||df.type==="vg") n=Math.round(da.c*da.p)||gC[0]; if(df.type==="big") n=bbC*machine.bG;
+            let itemLL={}; [1,2,5,6].forEach(s=>{ const tp=1/df.probs[s]; const L=(da.c*Math.log(tp)+(n-da.c)*Math.log(1-tp)); lls[s]+=L; itemLL[s]=L; });
+            const gap = Math.max(...Object.values(itemLL)) - Math.min(...Object.values(itemLL));
+            const stars = "★".repeat(Math.min(5,Math.max(1,Math.floor(gap*2)))) + "☆".repeat(5).slice(Math.min(5,Math.max(1,Math.floor(gap*2))));
+            addLog(`  ${df.name.padEnd(8)}: ${da.c}回 [${stars}]`);
         });
-
-        let totalLLs = {1:0, 2:0, 5:0, 6:0};
-        finalStorage.forEach(res => {
-            if(!res.active || res.k < 0) return;
-            let itemLLs = {};
-            [1,2,5,6].forEach(s => {
-                const tp = 1/res.probs[s];
-                const L = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
-                totalLLs[s] += L; itemLLs[s] = L;
-            });
-            const vals = Object.values(itemLLs);
-            const gap = Math.max(...vals) - Math.min(...vals);
-            const stars = "★".repeat(Math.min(5, Math.max(1, Math.floor(gap * 2)))) + "☆".repeat(5).slice(Math.min(5, Math.max(1, Math.floor(gap * 2))));
-            addLog(`  ${res.name.padEnd(8)}: ${res.k}回 [${stars}]`);
-        });
-
-        const max = Math.max(...Object.values(totalLLs)), sum = Object.values(totalLLs).reduce((a, l) => a + Math.exp(l - max), 0);
-        let resP = {};
-        [1,2,5,6].forEach(s => {
-            let prob = (sum === 0) ? 0 : (Math.exp(totalLLs[s] - max) / sum) * 100;
-            resP[s] = prob;
-            document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
-            document.getElementById(`b${s}`).style.width = prob + "%";
-        });
-        
-        const dStr = (fullText.match(/(\d{4}\/\d{2}\/\d{2})/) || ["", "0000/00/00"])[1];
-        const snap = { m: machine.name, g: gCounts[0], d: dStr, t: new Date().toLocaleTimeString('ja-JP',{hour12:false}), p: resP, l: logDisplay.innerHTML };
+        const mx=Math.max(...Object.values(lls)), sm=Object.values(lls).reduce((a,l)=>a+Math.exp(l-mx),0);
+        const resP={}; [1,2,5,6].forEach(s=>{const pr=(Math.exp(lls[s]-mx)/sm)*100; resP[s]=pr; document.getElementById(`p${s}`).innerText=pr.toFixed(1)+"%"; document.getElementById(`b${s}`).style.width=pr+"%";});
+        const dStr = (fullText.match(/(\d{4}\/\d{2}\/\d{2})/) || ["","0000/00/00"])[1]; document.getElementById('date-display').innerText = dStr;
         addLog(`\n（６）設定判別完了`, "text-green-500 font-bold");
-        saveToCloud(snap).then(() => syncHistory(dStr));
-
-    } catch (e) { errorFullBar(e.message); }
+        save({m:machine.name,g:gC[0],d:dStr,t:new Date().toLocaleTimeString('ja-JP',{hour12:false}),p:resP,l:logDisplay.innerHTML}).then(()=>sync(dStr));
+    } catch(e) { errorFull(e.message); }
 }
-
-document.getElementById('sv-all').onclick = () => {
-    localStorage.setItem('v_k', document.getElementById('api-key').value);
-    localStorage.setItem('u_n', document.getElementById('user-name').value);
-    localStorage.setItem('g_t', document.getElementById('gh-token').value);
-    alert("CONFIG SAVED");
-};
-window.onload = () => {
-    document.getElementById('api-key').value = localStorage.getItem('v_k') || '';
-    document.getElementById('user-name').value = localStorage.getItem('u_n') || '';
-    document.getElementById('gh-token').value = localStorage.getItem('g_t') || '';
-};
-document.getElementById('f-in').onchange = e => { if(e.target.files[0]) run(e.target.files[0]); };
-document.getElementById('copy-log').onclick = () => { navigator.clipboard.writeText(logDisplay.innerText); alert("COPIED"); };
+async function gh(m,p,b=null){ const t=document.getElementById('gh-token').value; if(!t)return null; const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); return res.ok?await res.json():null; }
+async function save(s){ const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n||!document.getElementById('gh-token').value)return; const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12)); const path=`data/${h}/${s.d.replace(/\//g,'-')}/${s.t.replace(/:/g,'')}.json`; await gh("PUT",path,{message:"Sync",content:btoa(unescape(encodeURIComponent(JSON.stringify(s))))}); addLog("\n✅ Cloud Synced","text-green-600 font-bold text-[8px]"); }
+async function sync(d){ const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return; const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12)); const res=await gh("GET",`data/${h}/${d.replace(/\//g,'-')}`); if(res&&Array.isArray(res)){hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=true;} }
+async function load(p){ const res=await gh("GET",p); if(res&&res.content){ const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); document.getElementById('machine-info-left').innerText=`${s.m}:${s.g}G`; document.getElementById('date-display').innerText=s.d; [1,2,5,6].forEach(n=>{const v=s.p[n]||0; document.getElementById(`p${n}`).innerText=v.toFixed(1)+"%"; document.getElementById(`b${n}`).style.width=v+"%";}); logDisplay.innerHTML=s.l; }}
+document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await load(hPaths[hIdx]); document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=false;}};
+document.getElementById('next-btn').onclick=async()=>{if(hIdx<hPaths.length-1){hIdx++; await load(hPaths[hIdx]); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1); document.getElementById('prev-btn').disabled=false;}};
+document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED");};
+window.onload=()=>{document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';};
+document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
+document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
 </body>
 </html>
