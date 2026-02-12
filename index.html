@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.2.24-RESTORED</title>
+    <title>ANALYZER Rev 3.2.25-FULL_LOG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -24,6 +24,8 @@
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; overflow: hidden; white-space: nowrap; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
         .aura-red { background: #ef4444 !important; box-shadow: 0 0 10px #ef4444 !important; }
+        .aura-green { background-color: rgba(22, 163, 74, 0.5) !important; color: white !important; }
+        .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
         .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
@@ -35,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.2.24 - Logic Restored</div>
+        <div class="rev-tag">Revision 3.2.25 - Restoration & Comma Fix</div>
     </div>
     <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
@@ -51,6 +53,7 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
+// 設定データ定義 (Rev 3.2.22以前の完全版を維持)
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -130,6 +133,18 @@ function errorFullBar(msg) {
     });
 }
 
+document.getElementById('copy-log').onclick = async () => {
+    const text = logDisplay.innerText;
+    if (navigator.clipboard && window.isSecureContext) {
+        try { await navigator.clipboard.writeText(text); alert("OK"); return; } catch (err) {}
+    }
+    const area = document.createElement('textarea');
+    area.value = text; area.readOnly = true; area.style.position = 'fixed'; area.style.left = '-9999px';
+    document.body.appendChild(area); area.select(); area.setSelectionRange(0, 999999);
+    try { document.execCommand('copy'); alert("OK"); } catch (err) {}
+    document.body.removeChild(area);
+};
+
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
     if(!k) return alert("API Key Required");
@@ -172,7 +187,7 @@ async function run(file) {
 
         let anchorIdx = -1, gCounts = [];
         for(let i=0; i<fullLines.length; i++){
-            const lineTrim = fullLines[i].replace(/[\s,]/g, ''); // カンマ除去
+            const lineTrim = fullLines[i].replace(/[\s,]/g, ''); 
             if(lineTrim.includes('G')){
                 const val = parseInt(lineTrim.replace(/[^0-9]/g, ''));
                 if(!isNaN(val) && val > 100){ anchorIdx = i; gCounts.push(val); break; }
@@ -186,8 +201,8 @@ async function run(file) {
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
             const line = fullLines[ptr];
             if(line.includes('/')){
-                let prob = 0, count = null;
-                const cleanLine = line.replace(/,/g, ''); // カンマ除去
+                let prob = 0, count = null, noKai = false;
+                const cleanLine = line.replace(/,/g, ''); 
                 const decMatch = cleanLine.match(/(\d+\.\d+)/);
                 if(decMatch) prob = parseFloat(decMatch[1]);
 
@@ -195,17 +210,21 @@ async function run(file) {
                     count = 0; 
                 } else {
                     for(let j of [2, 1, 3]){
-                        const targetLine = (fullLines[ptr-j] || "").replace(/,/g, ''); // カンマ除去
+                        const targetLine = (fullLines[ptr-j] || "").replace(/,/g, ''); 
                         if(!targetLine.includes('.')) {
                             const intMatch = targetLine.match(/(\d+)/);
-                            if(intMatch) { count = parseInt(intMatch[1]); break; }
+                            if(intMatch) { 
+                                count = parseInt(intMatch[1]); 
+                                if(!(fullLines[ptr-j] || "").includes("回")) noKai = true;
+                                break; 
+                            }
                         }
                     }
                 }
                 
                 if (count === null) throw new Error(`回数抽出失敗 at idx:${extractedPairs.length}`);
-                addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)`, "text-zinc-500 text-[8px]");
-                extractedPairs.push({ count, rawP: prob });
+                addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)${noKai ? ' ⚠️回なし' : ''}`, "text-zinc-500 text-[8px]");
+                extractedPairs.push({ count, rawP: prob, noKai });
             }
             ptr++;
         }
@@ -224,7 +243,6 @@ async function run(file) {
             let k = data.count;
             if (data.rawP > 0) {
                 const mu = Math.round(n / data.rawP);
-                // 救済ロジック：乖離があればログを出して逆算値 mu で上書き
                 if (Math.abs(k - mu) > Math.sqrt(mu) * 4) { 
                     addLog(`  補正 [${def.name}]: ${k}→${mu}回`, "text-orange-500 font-[8px]");
                     k = mu; 
@@ -233,23 +251,62 @@ async function run(file) {
             finalStorage.push({ ...def, k, n });
         });
 
-        addLog(`\n（４）判別実行中...`, "text-blue-400 font-bold");
+        // --- 復活したログセクション (4) ---
+        addLog(`\n（４）判別対象データ（実戦値 vs 各設定理論値）`, "text-blue-400 font-bold");
+        const table4 = document.createElement('table');
+        table4.className = 'log-table';
+        table4.innerHTML = `<thead><tr><th style="width:25%">項目</th><th style="width:12%">回数</th><th style="width:15%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+        const tbody4 = table4.querySelector('tbody');
+        finalStorage.forEach(res => {
+            const row = document.createElement('tr');
+            const resProb = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
+            row.innerHTML = `<td style="text-align:left;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${resProb}</td><td>1/${res.probs[1].toFixed(1)}</td><td>1/${res.probs[2].toFixed(1)}</td><td>1/${res.probs[5].toFixed(1)}</td><td>1/${res.probs[6].toFixed(1)}</td>`;
+            tbody4.appendChild(row);
+        });
+        logDisplay.appendChild(table4);
+
+        // --- 復活したログセクション (5) ---
+        addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
+        const intensityData = finalStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
+            let itemLLs = {};
+            [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; itemLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
+            const vals = Object.values(itemLLs);
+            return { id: res.id, itemLLs, maxL: Math.max(...vals), intensity: Math.max(...vals) - Math.min(...vals) };
+        });
+        const top3Ids = [...intensityData].sort((a,b) => b.intensity - a.intensity).slice(0, 3).map(x => x.id);
+        const table5 = document.createElement('table');
+        table5.className = 'log-table';
+        table5.innerHTML = `<thead><tr><th style="width:30%">項目</th><th style="width:14%">ギャップ</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+        const tbody5 = table5.querySelector('tbody');
         let totalLLs = {1:0, 2:0, 5:0, 6:0};
         finalStorage.forEach(res => {
-            if(!res.active || res.k < 0) return;
+            const calc = intensityData.find(x => x.id === res.id);
+            if (!calc) return;
+            const row = document.createElement('tr');
+            let aura = "";
+            const rank = top3Ids.indexOf(res.id);
+            if(rank === 0) aura = "aura-red"; else if(rank === 1) aura = "aura-green"; else if(rank === 2) aura = "aura-yellow";
+            const gapBar = calc.intensity > 4.0 ? "■■■" : calc.intensity > 2.0 ? "■■" : calc.intensity > 0.5 ? "■" : "";
+            let cells = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:4px;">${res.name}</td><td class="${aura}" style="text-align:left; padding-left:4px;">${gapBar}</td>`;
             [1,2,5,6].forEach(s => {
-                const tp = 1/res.probs[s];
-                totalLLs[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+                totalLLs[s] += calc.itemLLs[s];
+                const gMax = calc.maxL - calc.itemLLs[s];
+                const star = gMax < 0.2 ? 5 : gMax < 0.7 ? 4 : gMax < 1.5 ? 3 : gMax < 3.0 ? 2 : 1;
+                cells += `<td style="color:${gMax < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(star)}</td>`;
             });
+            row.innerHTML = cells; tbody5.appendChild(row);
         });
+        logDisplay.appendChild(table5);
 
+        // --- 設定判別処理 (6) ---
+        addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
         const max = Math.max(...Object.values(totalLLs)), sum = Object.values(totalLLs).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
             let prob = (sum === 0) ? 0 : (Math.exp(totalLLs[s] - max) / sum) * 100;
             document.getElementById(`p${s}`).innerText = prob.toFixed(1) + "%";
             document.getElementById(`b${s}`).style.width = prob + "%";
+            addLog(`  設定${s}: ${prob.toFixed(2)}%`, `c-s${s} font-bold`);
         });
-        addLog(`完了`, "text-green-500");
 
     } catch (e) { errorFullBar(e.message); }
 }
