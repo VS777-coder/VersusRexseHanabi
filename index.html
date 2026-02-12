@@ -230,7 +230,8 @@ async function run(file) {
                 if(cleanLine.includes('-') && !cleanLine.includes('.')) {
                     count = 0; 
                 } else {
-                    for(let j of [2, 1, 3]){
+                    // 指示通り「2つ上」「1つ上」の順に探索
+                    for(let j of [2, 1]){
                         const targetLine = (fullLines[ptr-j] || "").replace(/,/g, ''); 
                         if(!targetLine.includes('.')) {
                             const intMatch = targetLine.match(/(\d+)/);
