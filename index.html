@@ -3,36 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.4</title>
+    <title>HANABI ANALYZER Rev 3.5.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .app-header { text-align: center; margin-bottom: 12px; }
-        .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; height: 75px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
-        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 16px; position: relative; }
+        .app-header { text-align: center; margin-bottom: 8px; }
+        .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.5rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; cursor: pointer; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .main-btn span { font-weight: 900; font-size: 1.6rem; color: #ffffff; letter-spacing: 2px; }
+        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 14px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; margin: 12px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .copy-btn { position: absolute; top: 8px; right: 8px; background: #2563eb; color: #fff; font-size: 9px; padding: 4px 10px; border-radius: 4px; border: 1px solid #3b82f6; cursor: pointer; z-index: 20; font-weight: bold; }
-        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 35px; line-height: 1.3; }
-        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
-        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; }
-        .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 10px; font-weight: bold; }
-        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
-        .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; border-radius: 8px; outline: none; }
+        .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.2; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 10px; font-weight: bold; font-size: 14px; }
+        .nav-btn:disabled { opacity: 0.1; }
+        .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 8px; font-size: 10px; border-radius: 6px; outline: none; }
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
+        .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
+        .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
+        .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="text-[10px] text-slate-500 font-mono">Rev 3.5.4 - Initialization Safe Mode</div>
+        <div class="text-[9px] text-slate-500 font-mono">Revision 3.5.5 - Stability First</div>
     </div>
-    <div class="shrink-0 mb-3"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
+    <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame">
         <div id="machine-type" class="absolute top-2 left-0 w-full px-4 flex justify-between items-center text-white font-black text-xs">
             <span id="header-left">READY</span>
@@ -49,160 +49,161 @@
             <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s6 font-black text-sm">設定6</span><span id="p6" class="c-s6 font-black text-base">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
         </div>
     </div>
-    <div class="log-container"><button id="copy-log" class="copy-btn">COPY LOG</button><div id="log-display" class="log-body">READY...</div></div>
-    <div class="api-footer flex flex-col gap-2">
-        <div class="flex gap-2">
+    <div class="log-container"><div id="log-display" class="log-body">READY...</div></div>
+    <div class="api-footer flex flex-col gap-1">
+        <div class="flex gap-1">
             <input type="password" id="api-key" class="api-input flex-grow" placeholder="Vision API Key">
             <input type="text" id="user-name" class="api-input w-1/3" placeholder="Name">
         </div>
-        <div class="flex gap-2">
-            <input type="password" id="gh-token" class="api-input flex-grow" placeholder="GitHub PAT (ghp_...)">
-            <button id="sv-config" class="bg-blue-800 text-white font-bold px-4 rounded-lg text-[10px]">SAVE</button>
+        <div class="flex gap-1">
+            <input type="password" id="gh-token" class="api-input flex-grow" placeholder="GitHub Token (ghp_...)">
+            <button id="sv-config" class="bg-blue-900 text-white font-bold px-3 py-1 rounded text-[10px]">SAVE</button>
         </div>
     </div>
 
 <script>
-// 設定定義は1文字も変えずに保持（内部的に展開）
-const L_HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:169.8,2:161.0,5:149.3,6:138.8}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:297.9,2:292.6,5:284.9,6:273.1}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"red7",name:"赤七BB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:394.8,2:358.1,5:313.6,6:282.5}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:12.9,2:12.5,5:12.1,6:11.5}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:38.4,2:38.7,5:36.2,6:34.5}},{id:"f_tot",name:"風鈴合算",active:false,type:"normal",probs:{1:9.68,2:9.45,5:9.06,6:8.64}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:46.3,2:47.3,5:46.2,6:47.4}},{id:"ib",name:"氷Ｂ",active:false,type:"normal",probs:{1:1560.4,2:1560.4,5:1560.4,6:1560.4}},{id:"i_tot",name:"氷合算",active:false,type:"normal",probs:{1:44.9,2:45.9,5:44.8,6:46.0}},{id:"ca1",name:"チェリーＡ１",active:false,type:"normal",probs:{1:99.4,2:99.4,5:99.4,6:99.3}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21.0,2:19.4,5:20.5,6:19.6}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:307.7,2:306.2,5:300.6,6:297.9}},{id:"c_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:16.3,2:15.3,5:16.0,6:15.4}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:4.7,2:4.5,5:4.3,6:4.2}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:6.4,2:6.0,5:5.4,6:5.4}},{id:"b_ba",name:"BIG中風鈴Ａ",active:false,type:"big",probs:{1:1.1,2:1.2,5:1.1,6:1.2}},{id:"b_bb",name:"BIG中風鈴Ｂ",active:true,type:"big",probs:{1:10.0,2:7.0,5:10.0,6:7.0}}];
-const HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:156.0,2:148.3,5:139.4,6:131.6}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:277.7,2:268.6,5:256.0,6:248.2}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"red",name:"赤七BB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:356.2,2:331.0,5:306.2,6:280.1}},{id:"f_tot",name:"風鈴合算",active:false,type:"normal",probs:{1:7.7,2:7.6,5:7.5,6:7.3}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:15.3,2:14.9,5:14.5,6:14.1}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:15.3,2:15.6,5:15.3,6:15.1}},{id:"i_tot",name:"氷合算",active:false,type:"normal",probs:{1:51.2,2:51.8,5:48.2,6:49.3}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:52.9,2:53.5,5:49.6,6:50.8}},{id:"ib",name:"氷Ｂ",active:false,type:"normal",probs:{1:1638.4,2:1638.4,5:1638.4,6:1638.4}},{id:"c_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:16.4,2:15.3,5:16.1,6:15.6}},{id:"ca1",name:"チェリーＡ１",active:false,type:"normal",probs:{1:99.4,2:99.4,5:99.3,6:99.3}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21.0,2:19.3,5:20.6,6:19.9}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:282.5,2:281.3,5:276.5,6:274.2}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:6.0,2:5.8,5:5.3,6:5.1}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:13.4,2:12.4,5:10.1,6:9.5}},{id:"pf",name:"平行風鈴",active:false,type:"big",probs:{1:1.1,2:1.13,5:1.1,6:1.13}},{id:"nf",name:"斜め風鈴",active:true,type:"big",probs:{1:11.0,2:9.0,5:11.0,6:9.0}}];
-const VERSUS_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:164.3,2:155.3,5:147.9,6:138.8}},{id:"bb",name:"ビックボーナス合算",active:true,type:"normal",probs:{1:292.6,2:284.9,5:275.4,6:264.3}},{id:"xbb",name:"XBB",active:false,type:"normal",probs:{1:585.2,2:569.8,5:550.8,6:528.6}},{id:"7bb",name:"7BB",active:false,type:"normal",probs:{1:585.2,2:569.8,5:550.8,6:528.6}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:374.5,2:341.3,5:319.7,6:292.6}},{id:"f_tot",name:"ベル合算",active:false,type:"normal",probs:{1:7.22,2:7.1,5:6.9,6:6.8}},{id:"ba",name:"ベルＡ",active:true,type:"normal",probs:{1:10.9,2:10.7,5:10.5,6:10.2}},{id:"bb_b",name:"ベルＢ",active:true,type:"normal",probs:{1:20.9,2:21.2,5:20.3,6:20.6}},{id:"i_tot",name:"スイカ合算",active:false,type:"normal",probs:{1:55.5,2:53.4,5:54.4,6:52.3}},{id:"sa",name:"スイカＡ",active:true,type:"normal",probs:{1:74.5,2:70.6,5:72.5,6:68.8}},{id:"sb",name:"スイカＢ",active:false,type:"normal",probs:{1:218.5,2:218.5,5:218.5,6:218.5}},{id:"che_tot",name:"チェリー合算",active:false,type:"normal",probs:{1:38.2,2:38.9,5:36.7,6:37.3}},{id:"ca",name:"チェリーＡ",active:false,type:"normal",probs:{1:119.2,2:119.2,5:119.2,6:118.9}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:56.2,2:57.7,5:53.1,6:54.4}},{id:"vc",name:"バーサスチャンス中ハズレ",active:true,type:"vc",probs:{1:5.0,2:4.5,5:4.6,6:4.5}},{id:"vg",name:"バーサスゲーム中ハズレ",active:true,type:"vg",probs:{1:10.1,2:9.4,5:8.7,6:8.1}},{id:"rb_bel",name:"ベル揃い",active:false,type:"big",probs:{1:1.0,2:1.0,5:1.0,6:1.0}},{id:"cbs",name:"チェリー＋ベル揃い",active:true,type:"big",probs:{1:11.1,2:8.9,5:11.1,6:8.9}},{id:"cbh",name:"チェリー＋ベルはずれ",active:true,type:"big",probs:{1:256.0,2:128.0,5:256.0,6:128.0}}];
+/* 定義データは指示通り完全保持 */
+const L_HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:169.8,2:161.0,5:149.3,6:138.8}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:297.9,2:292.6,5:284.9,6:273.1}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"red7",name:"赤七BB",active:false,type:"normal",probs:{1:595.8,2:585.2,5:569.8,6:546.2}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:394.8,2:358.1,5:313.6,6:282.5}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:12.9,2:12.5,5:12.1,6:11.5}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:38.4,2:38.7,5:36.2,6:34.5}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:46.3,2:47.3,5:46.2,6:47.4}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21.0,2:19.4,5:20.5,6:19.6}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:307.7,2:306.2,5:300.6,6:297.9}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:4.7,2:4.5,5:4.3,6:4.2}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:6.4,2:6.0,5:5.4,6:5.4}},{id:"b_bb",name:"BIG中風鈴Ｂ",active:true,type:"big",probs:{1:10.0,2:7.0,5:10.0,6:7.0}}];
+const HANABI_CONFIG = [{id:"total",name:"ボーナス合算",active:false,type:"normal",probs:{1:156.0,2:148.3,5:139.4,6:131.6}},{id:"bb",name:"ビックボーナス",active:true,type:"normal",probs:{1:277.7,2:268.6,5:256.0,6:248.2}},{id:"don",name:"ドンBB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"red",name:"赤七BB",active:false,type:"normal",probs:{1:555.4,2:537.2,5:512.0,6:496.4}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:356.2,2:331.0,5:306.2,6:280.1}},{id:"ba",name:"風鈴Ａ",active:true,type:"normal",probs:{1:15.3,2:14.9,5:14.5,6:14.1}},{id:"bb_b",name:"風鈴Ｂ",active:true,type:"normal",probs:{1:15.3,2:15.6,5:15.3,6:15.1}},{id:"ia",name:"氷Ａ",active:true,type:"normal",probs:{1:52.9,2:53.5,5:49.6,6:50.8}},{id:"ca2",name:"チェリーＡ２",active:true,type:"normal",probs:{1:21.0,2:19.3,5:20.6,6:19.9}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:282.5,2:281.3,5:276.5,6:274.2}},{id:"vc",name:"ハナビチャレンジ中ハズレ",active:true,type:"vc",probs:{1:6.0,2:5.8,5:5.3,6:5.1}},{id:"vg",name:"ハナビゲーム中ハズレ",active:true,type:"vg",probs:{1:13.4,2:12.4,5:10.1,6:9.5}},{id:"nf",name:"斜め風鈴",active:true,type:"big",probs:{1:11.0,2:9.0,5:11.0,6:9.0}}];
+const VERSUS_CONFIG = [{id:"bb",name:"ビックボーナス合算",active:true,type:"normal",probs:{1:292.6,2:284.9,5:275.4,6:264.3}},{id:"rb",name:"レギュラーボーナス",active:true,type:"normal",probs:{1:374.5,2:341.3,5:319.7,6:292.6}},{id:"ba",name:"ベルＡ",active:true,type:"normal",probs:{1:10.9,2:10.7,5:10.5,6:10.2}},{id:"bb_b",name:"ベルＢ",active:true,type:"normal",probs:{1:20.9,2:21.2,5:20.3,6:20.6}},{id:"sa",name:"スイカＡ",active:true,type:"normal",probs:{1:74.5,2:70.6,5:72.5,6:68.8}},{id:"cb",name:"チェリーＢ",active:true,type:"normal",probs:{1:56.2,2:57.7,5:53.1,6:54.4}},{id:"vc",name:"バーサスチャンス中ハズレ",active:true,type:"vc",probs:{1:5.0,2:4.5,5:4.6,6:4.5}},{id:"vg",name:"バーサスゲーム中ハズレ",active:true,type:"vg",probs:{1:10.1,2:9.4,5:8.7,6:8.1}},{id:"cbs",name:"チェリー＋ベル揃い",active:true,type:"big",probs:{1:11.1,2:8.9,5:11.1,6:8.9}},{id:"cbh",name:"チェリー＋ベルはずれ",active:true,type:"big",probs:{1:256.0,2:128.0,5:256.0,6:128.0}}];
 
-const GITHUB_REPO = "YOUR_USERNAME/YOUR_REPO"; // ★ここを変更
-let hPaths = []; let hIdx = -1;
+const REPO_NAME = "VersusRexseHanabi";
+let hList = []; let hPtr = -1;
 
-const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-slate-400") => { 
-    if(!logDisplay) return;
-    const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); 
-    logDisplay.scrollTop=logDisplay.scrollHeight; 
+const logDiv = document.getElementById('log-display');
+const logger = (m, c="text-slate-400") => { 
+    const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDiv.appendChild(e); logDiv.scrollTop=logDiv.scrollHeight; 
 };
 
-async function getAuth(k, n) {
-    try {
-        const d = new TextEncoder().encode(k + (n || "GUEST"));
-        const b = await crypto.subtle.digest('SHA-256', d);
-        return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12);
-    } catch(e) { return "err"; }
+async function getH(k, n) {
+    const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + (n || "G")));
+    return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12);
 }
 
-async function ghCall(method, path, body = null) {
-    const token = document.getElementById('gh-token').value;
-    if(!token || !GITHUB_REPO.includes("/")) return null;
-    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
-    const headers = { "Authorization": `token ${token}`, "Accept": "application/vnd.github.v3+json" };
+// ユーザー名を自動取得して完全なリポジトリパスを作る
+async function getFullRepo() {
+    const t = document.getElementById('gh-token').value;
+    if(!t) return null;
+    const r = await fetch("https://api.github.com/user", { headers: { Authorization: `token ${t}` } });
+    if(!r.ok) return null;
+    const j = await r.json();
+    return `${j.login}/${REPO_NAME}`;
+}
+
+async function api(method, path, body = null) {
+    const t = document.getElementById('gh-token').value;
+    const full = await getFullRepo();
+    if(!t || !full) return null;
+    const url = `https://api.github.com/repos/${full}/contents/${path}`;
+    const h = { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" };
     try {
-        const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+        const res = await fetch(url, { method, headers: h, body: body ? JSON.stringify(body) : null });
         return res.ok ? await res.json() : null;
     } catch(e) { return null; }
 }
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim();
-    if(!k) return alert("API Key Required");
-    logDisplay.innerHTML = "";
+    if(!k) return alert("API Key!");
+    logDiv.innerHTML = "";
     try {
-        const base64 = await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});
-        const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
-        const json = await resp.json();
-        const annotations = json.responses[0].textAnnotations;
-        if(!annotations) throw new Error("OCR Failed");
-        const blocks = annotations.slice(1).map(a=>({text:a.description,y:a.boundingPoly.vertices[0].y})).sort((a,b)=>a.y-b.y);
-        let lines = []; let cur = {y:-100,t:""};
-        blocks.forEach(b=>{if(Math.abs(b.y-cur.y)<8){cur.t+=" "+b.text;}else{if(cur.t)lines.push(cur.t);cur={y:b.y,t:b.text};}});
+        const b64 = await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.readAsDataURL(file);});
+        const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:b64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
+        const data = await res.json();
+        const texts = data.responses[0].textAnnotations;
+        if(!texts) throw new Error("OCR Fail");
+        const lines = []; let cur = {y:-100,t:""};
+        texts.slice(1).map(a=>({t:a.description,y:a.boundingPoly.vertices[0].y})).sort((a,b)=>a.y-b.y).forEach(b=>{
+            if(Math.abs(b.y-cur.y)<8) cur.t+=" "+b.t; else { if(cur.t)lines.push(cur.t); cur={y:b.y,t:b.t}; }
+        });
         lines.push(cur.t);
         const full = lines.join(" ");
-        let m = full.includes("バーサス")?{def:VERSUS_CONFIG,bG:28,name:"バーサス",type:"NORMAL"}:full.includes("スマスロ")?{def:L_HANABI_CONFIG,bG:20,name:"スマスロハナビ",type:"SMASLO"}:{def:HANABI_CONFIG,bG:28,name:"新ハナビ",type:"NORMAL"};
-        let aIdx=-1, gC=[], gL=false;
-        for(let i=0; i<lines.length; i++){
+        let m = full.includes("バーサス")?{def:VERSUS_CONFIG,bG:28,name:"バーサス"}:full.includes("スマスロ")?{def:L_HANABI_CONFIG,bG:20,name:"スマスロハナビ"}:{def:HANABI_CONFIG,bG:28,name:"新ハナビ"};
+        let aI=-1, gC=[], gL=false;
+        for(let i=0;i<lines.length;i++){
             if(gL)break; const t=lines[i].replace(/[\s,]/g,'');
             if(t.includes('G')){
                 const v=parseInt(t.replace(/[^0-9]/g,''));
-                if(!isNaN(v)&&v>0){if(m.type==="NORMAL"){aIdx=i;gC=[v];gL=true;}else{if(aIdx===-1)aIdx=i;if(gC.length===0||i===aIdx+gC.length){gC.push(v);if(gC.length===3)gL=true;}else gL=true;}}
+                if(!isNaN(v)&&v>0){if(m.name!=="スマスロハナビ"){aI=i;gC=[v];gL=true;}else{if(aI===-1)aI=i;if(gC.length===0||i===aI+gC.length){gC.push(v);if(gC.length===3)gL=true;}else gL=true;}}
             }
         }
-        if(aIdx===-1)throw new Error("G NOT FOUND");
-        const dateMatch = full.match(/(\d{4}\/\d{2}\/\d{2})/);
-        const dStr = dateMatch?dateMatch[1]:"Unknown";
-        const ext=[]; let ptr=aIdx+1;
-        while(ext.length<m.def.length && ptr<lines.length){
-            if(lines[ptr].includes('/')){
-                let p=0, c=null, tag=''; const cl=lines[ptr].replace(/,/g,'');
-                const dm=cl.match(/(\d+\.\d+)/); if(dm)p=parseFloat(dm[1]);
-                if(cl.includes('-')&&!cl.includes('.')){c=0;}
-                else{
+        if(aI===-1)throw new Error("G?");
+        const dm = full.match(/(\d{4}\/\d{2}\/\d{2})/); const dStr = dm?dm[1]:"0000/00/00";
+        const ext=[]; let p=aI+1;
+        while(ext.length<m.def.length && p<lines.length){
+            if(lines[p].includes('/')){
+                let prob=0, c=null, tag=''; const cl=lines[p].replace(/,/g,'');
+                const mP=cl.match(/(\d+\.\d+)/); if(mP)prob=parseFloat(mP[1]);
+                if(cl.includes('-')&&!cl.includes('.')) c=0;
+                else {
                     for(let j of [2,1]){
-                        const tl=(lines[ptr-j]||"").replace(/,/g,'');
-                        if(!tl.includes('.')){const im=tl.match(/(\d+)/);if(im){c=parseInt(im[1]);if(!lines[ptr-j].includes("回"))tag=' ⚠️回なし';break;}}
+                        const tl=(lines[p-j]||"").replace(/,/g,'');
+                        if(!tl.includes('.')){const im=tl.match(/(\d+)/);if(im){c=parseInt(im[1]);if(!lines[p-j].includes("回"))tag=' ⚠️'; break;}}
                     }
-                    if(c===null){if(cl.includes('/ -')){c=0;tag=' ※推定';}else if(p>0){c=Math.round(gC[0]/p);tag=' ※計算';}}
+                    if(c===null){if(cl.includes('/ -'))c=0; else if(prob>0)c=Math.round(gC[0]/prob);}
                 }
-                if(c===null)throw new Error("Extract Error");
-                addLog(`[idx:${ext.length}] 1/${p.toFixed(1)} (${c}回)${tag}`,"text-zinc-500 text-[8px]");
-                ext.push({c,p});
+                ext.push({c,p:prob});
             }
-            ptr++;
+            p++;
         }
         let lls={1:0,2:0,5:0,6:0}; let bbc=0;
-        m.def.forEach((df,idx)=>{
-            const da=ext[idx]; if(!da)return; let n=gC[0];
-            if(df.type==="vc")n=gC[1]||Math.round(da.c*da.p); if(df.type==="vg")n=gC[2]||Math.round(da.c*da.p);
-            if(df.type==="big")n=bbc*m.bG; if(df.id==="bb")bbc=da.c;
+        m.def.forEach((df,i)=>{
+            const da=ext[i]; if(!da)return; let n=gC[0];
+            if(df.id==="bb")bbc=da.c;
             if(df.active){[1,2,5,6].forEach(s=>{const tp=1/df.probs[s]; lls[s]+=(da.c*Math.log(tp)+(n-da.c)*Math.log(1-tp));});}
         });
         const mx=Math.max(...Object.values(lls)), sm=Object.values(lls).reduce((a,l)=>a+Math.exp(l-mx),0);
-        const finP={}; [1,2,5,6].forEach(s=>finP[s]=(Math.exp(lls[s]-mx)/sm)*100);
-        const snap={m:m.name,g:gC[0],d:dStr,t:new Date().toLocaleTimeString('ja-JP',{hour12:false}),p:finP,l:logDisplay.innerHTML};
-        apply(snap); await save(snap); await sync(dStr);
-    } catch(e) {addLog(`\n❌ ERROR: ${e.message}`,"text-red-500 font-bold");}
+        const resP={}; [1,2,5,6].forEach(s=>resP[s]=(Math.exp(lls[s]-mx)/sm)*100);
+        const snap={m:m.name,g:gC[0],d:dStr,t:new Date().toLocaleTimeString('ja-JP',{hour12:false}),p:resP,l:logDiv.innerHTML};
+        apply(snap); 
+        // 非同期で保存。解析画面を止めない。
+        save(snap).then(()=>sync(dStr));
+    } catch(e) {logger(`\n❌ ${e.message}`,"text-red-500 font-bold");}
 }
 
-async function save(data) {
-    const h = await getAuth(document.getElementById('api-key').value, document.getElementById('user-name').value);
-    const path = `data/${h}/${data.d.replace(/\//g,'-')}/${data.t.replace(/:/g,'')}.json`;
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    await ghCall("PUT", path, { message: `Log ${data.d}`, content });
-    addLog(`\n✅ SYNCED`,"text-green-500 font-bold");
+async function save(s) {
+    const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
+    const path = `data/${h}/${s.d.replace(/\//g,'-')}/${s.t.replace(/:/g,'')}.json`;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+    await api("PUT", path, { message: "Log", content });
 }
 
-async function sync(date) {
-    try {
-        const h = await getAuth(document.getElementById('api-key').value, document.getElementById('user-name').value);
-        const res = await ghCall("GET", `data/${h}/${date.replace(/\//g,'-')}`);
-        if(res && Array.isArray(res)) { hPaths=res.filter(f=>f.name.endsWith('.json')).map(f=>f.path).sort(); hIdx=hPaths.length-1; updateUI(); }
-    } catch(e){}
+async function sync(d) {
+    const h = await getH(document.getElementById('api-key').value, document.getElementById('user-name').value);
+    const res = await api("GET", `data/${h}/${d.replace(/\//g,'-')}`);
+    if(res && Array.isArray(res)) { hList=res.map(f=>f.path).sort(); hPtr=hList.length-1; updateUI(); }
 }
 
-async function load(path) {
-    const res = await ghCall("GET", path);
-    if(res && res.content) { apply(JSON.parse(decodeURIComponent(escape(atob(res.content))))); }
+async function load(p) {
+    const res = await api("GET", p);
+    if(res && res.content) apply(JSON.parse(decodeURIComponent(escape(atob(res.content)))));
 }
 
 function apply(s) {
-    if(!s || !s.p) return;
     document.getElementById('header-left').innerText = `${s.m}：${s.g}G`;
     document.getElementById('header-right').innerText = s.d;
     [1,2,5,6].forEach(n=>{const v=s.p[n]||0; document.getElementById(`p${n}`).innerText=v.toFixed(1)+"%"; document.getElementById(`b${n}`).style.width=v+"%";});
-    logDisplay.innerHTML = s.l;
+    logDiv.innerHTML = s.l;
 }
 
 function updateUI() {
-    document.getElementById('prev-btn').disabled = (hIdx <= 0);
-    document.getElementById('next-btn').disabled = (hIdx >= hPaths.length - 1);
+    document.getElementById('prev-btn').disabled = (hPtr <= 0);
+    document.getElementById('next-btn').disabled = (hPtr >= hList.length - 1);
 }
 
-document.getElementById('prev-btn').onclick = async() => { if(hIdx>0){ hIdx--; await load(hPaths[hIdx]); updateUI(); } };
-document.getElementById('next-btn').onclick = async() => { if(hIdx<hPaths.length-1){ hIdx++; await load(hPaths[hIdx]); updateUI(); } };
+document.getElementById('prev-btn').onclick = async() => { if(hPtr>0){ hPtr--; await load(hList[hPtr]); updateUI(); } };
+document.getElementById('next-btn').onclick = async() => { if(hPtr<hList.length-1){ hPtr++; await load(hList[hPtr]); updateUI(); } };
 
 document.getElementById('sv-config').onclick = () => {
-    localStorage.setItem('v_key', document.getElementById('api-key').value);
-    localStorage.setItem('u_name', document.getElementById('user-name').value);
-    localStorage.setItem('gh_token', document.getElementById('gh-token').value);
-    alert("SAVED");
+    localStorage.setItem('v_k', document.getElementById('api-key').value);
+    localStorage.setItem('u_n', document.getElementById('user-name').value);
+    localStorage.setItem('g_t', document.getElementById('gh-token').value);
+    alert("OK");
 };
 window.onload = () => {
-    document.getElementById('api-key').value = localStorage.getItem('v_key') || '';
-    document.getElementById('user-name').value = localStorage.getItem('u_name') || '';
-    document.getElementById('gh-token').value = localStorage.getItem('gh_token') || '';
+    document.getElementById('api-key').value = localStorage.getItem('v_k') || '';
+    document.getElementById('user-name').value = localStorage.getItem('u_n') || '';
+    document.getElementById('gh-token').value = localStorage.getItem('g_t') || '';
 };
 document.getElementById('f-in').onchange = e => { if(e.target.files[0]) run(e.target.files[0]); };
 </script>
