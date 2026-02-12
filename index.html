@@ -53,7 +53,6 @@
     <div class="api-footer flex gap-2"><input type="password" id="api-key" class="api-input" placeholder="Vision API Key"><button id="sv-key" class="save-btn">SAVE KEY</button></div>
 
 <script>
-// 設定データ定義 (Rev 3.2.22以前の完全版を維持)
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -180,20 +179,38 @@ async function run(file) {
         fullLines.forEach(l => addLog(`| ${l}`, "text-[8px] text-zinc-600"));
 
         const fullText = fullLines.join(" ");
-        let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ" };
-        if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス" };
-        else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ" };
+        let machine = { def: HANABI_CONFIG, bG: 28, name: "新ハナビ", type: "NORMAL" };
+        if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス", type: "NORMAL" };
+        else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ", type: "SMASLO" };
         document.getElementById('machine-type').innerText = machine.name;
 
-        let anchorIdx = -1, gCounts = [];
+        // --- G走査ロジックの修正箇所 ---
+        let anchorIdx = -1, gCounts = [], gLocked = false;
         for(let i=0; i<fullLines.length; i++){
+            if(gLocked) break;
             const lineTrim = fullLines[i].replace(/[\s,]/g, ''); 
             if(lineTrim.includes('G')){
                 const val = parseInt(lineTrim.replace(/[^0-9]/g, ''));
-                if(!isNaN(val) && val > 100){ anchorIdx = i; gCounts.push(val); break; }
+                if(!isNaN(val) && val > 0){
+                    if(machine.type === "NORMAL"){
+                        // 新ハナビ・バーサスは最初のGで固定して終了
+                        anchorIdx = i; gCounts = [val]; gLocked = true;
+                    } else if(machine.type === "SMASLO"){
+                        // スマスロハナビは連続する3つを取得
+                        if(anchorIdx === -1) anchorIdx = i;
+                        if(gCounts.length === 0 || (i === anchorIdx + gCounts.length)){
+                            gCounts.push(val);
+                            if(gCounts.length === 3) gLocked = true;
+                        } else {
+                            // 連続性が途切れたら終了
+                            gLocked = true;
+                        }
+                    }
+                }
             }
         }
-        if(anchorIdx === -1) throw new Error("Anchor Error");
+        if(anchorIdx === -1 || gCounts.length === 0) throw new Error("G NOT FOUND / ❌");
+        // ------------------------------
 
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
         const extractedPairs = [];
@@ -251,7 +268,6 @@ async function run(file) {
             finalStorage.push({ ...def, k, n });
         });
 
-        // --- 復活したログセクション (4) ---
         addLog(`\n（４）判別対象データ（実戦値 vs 各設定理論値）`, "text-blue-400 font-bold");
         const table4 = document.createElement('table');
         table4.className = 'log-table';
@@ -265,7 +281,6 @@ async function run(file) {
         });
         logDisplay.appendChild(table4);
 
-        // --- 復活したログセクション (5) ---
         addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
         const intensityData = finalStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
             let itemLLs = {};
@@ -298,7 +313,6 @@ async function run(file) {
         });
         logDisplay.appendChild(table5);
 
-        // --- 設定判別処理 (6) ---
         addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
         const max = Math.max(...Object.values(totalLLs)), sum = Object.values(totalLLs).reduce((a, l) => a + Math.exp(l - max), 0);
         [1,2,5,6].forEach(s => {
