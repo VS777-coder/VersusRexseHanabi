@@ -28,7 +28,8 @@
         .aura-yellow { background-color: rgba(202, 138, 4, 0.5) !important; color: white !important; }
         .api-input { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 10px; font-size: 10px; flex-grow: 1; border-radius: 8px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 0 20px; border-radius: 8px; font-size: 11px; cursor: pointer; }
-        .c-s1 { color: #ffffff; } .bg-s1 { background-color: #3b82f6; }
+        /* 色設定の修正 */
+        .c-s1 { color: #3b82f6; } .bg-s1 { background-color: #3b82f6; }
         .c-s2 { color: #eab308; } .bg-s2 { background-color: #eab308; }
         .c-s5 { color: #22c55e; } .bg-s5 { background-color: #22c55e; }
         .c-s6 { color: #ef4444; } .bg-s6 { background-color: #ef4444; }
@@ -46,10 +47,10 @@
             <span id="header-right"></span>
         </div>
         <div class="mt-4">
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s1 font-black text-xs">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s2 font-black text-xs">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s5 font-black text-xs">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
-            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s6 font-black text-xs">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s1 font-black text-sm">設定1</span><span id="p1" class="c-s1 font-black text-base">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-s1"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s2 font-black text-sm">設定2</span><span id="p2" class="c-s2 font-black text-base">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-s2"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s5 font-black text-sm">設定5</span><span id="p5" class="c-s5 font-black text-base">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-s5"></div></div></div>
+            <div class="mb-3"><div class="flex justify-between items-end"><span class="c-s6 font-black text-sm">設定6</span><span id="p6" class="c-s6 font-black text-base">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-s6"></div></div></div>
         </div>
     </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY LOG</button><div id="log-display" class="log-body">READY...</div></div>
@@ -187,7 +188,6 @@ async function run(file) {
         if (fullText.includes("バーサス")) machine = { def: VERSUS_CONFIG, bG: 28, name: "バーサス", type: "NORMAL" };
         else if (fullText.includes("スマスロ")) machine = { def: L_HANABI_CONFIG, bG: 20, name: "スマスロハナビ", type: "SMASLO" };
         
-        // --- G走査ロジック ---
         let anchorIdx = -1, gCounts = [], gLocked = false;
         for(let i=0; i<fullLines.length; i++){
             if(gLocked) break;
@@ -211,12 +211,10 @@ async function run(file) {
         }
         if(anchorIdx === -1 || gCounts.length === 0) throw new Error("G NOT FOUND / ❌");
 
-        // --- ヘッダー表示の更新：左右分割レイアウト ---
         const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
         const displayDate = dateMatch ? dateMatch[1] : "日付不明";
         const displayG = gCounts[0] ? `${gCounts[0]}G` : "0G";
         
-        // 分割されたspanにそれぞれの情報をセット
         document.getElementById('header-left').innerText = `${machine.name}：${displayG}`;
         document.getElementById('header-right').innerText = displayDate;
 
