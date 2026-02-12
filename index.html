@@ -208,12 +208,10 @@ async function run(file) {
         }
         if(anchorIdx === -1 || gCounts.length === 0) throw new Error("G NOT FOUND / ❌");
 
-        // --- 表示形式の修正：機種名：総ゲーム数：日付 ---
+        // --- ヘッダー表示：機種名：総ゲーム数：日付 ---
         const dateMatch = fullText.match(/(\d{4}\/\d{2}\/\d{2})/);
         const displayDate = dateMatch ? dateMatch[1] : "日付不明";
         const displayG = gCounts[0] ? `${gCounts[0]}G` : "0G";
-        
-        // UI表示を「機種名：総ゲーム数：日付」に更新
         document.getElementById('machine-type').innerText = `${machine.name}：${displayG}：${displayDate}`;
 
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
@@ -222,7 +220,7 @@ async function run(file) {
         while(extractedPairs.length < machine.def.length && ptr < fullLines.length){
             const line = fullLines[ptr];
             if(line.includes('/')){
-                let prob = 0, count = null, noKai = false;
+                let prob = 0, count = null, noKai = false, isCalculated = false, isEstimatedZero = false;
                 const cleanLine = line.replace(/,/g, ''); 
                 const decMatch = cleanLine.match(/(\d+\.\d+)/);
                 if(decMatch) prob = parseFloat(decMatch[1]);
@@ -242,10 +240,29 @@ async function run(file) {
                             }
                         }
                     }
+
+                    // --- 補完ロジック：回数が見つからなかった場合 ---
+                    if (count === null) {
+                        if (cleanLine.includes('/ -')) {
+                            // 確率が 1/- であれば回数を0とする
+                            count = 0;
+                            isEstimatedZero = true;
+                        } else if (prob > 0) {
+                            // 確率があれば計算で回数を出す
+                            count = Math.round(gCounts[0] / prob);
+                            isCalculated = true;
+                        }
+                    }
                 }
                 
+                // エラー明示の修正
                 if (count === null) throw new Error(`回数抽出失敗 at idx:${extractedPairs.length}`);
-                addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)${noKai ? ' ⚠️回なし' : ''}`, "text-zinc-500 text-[8px]");
+                
+                let logSuffix = noKai ? ' ⚠️回なし' : '';
+                if (isCalculated) logSuffix = ' ※計算';
+                if (isEstimatedZero) logSuffix = ' ※推定';
+
+                addLog(`[idx:${extractedPairs.length}] 1/${prob.toFixed(1)} (${count}回)${logSuffix}`, "text-zinc-500 text-[8px]");
                 extractedPairs.push({ count, rawP: prob, noKai });
             }
             ptr++;
