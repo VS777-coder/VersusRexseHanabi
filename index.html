@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.5.48</title>
+    <title>ANALYZER Rev 3.5.49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.48</div>
+        <div class="rev-tag">Revision 3.5.49</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -69,9 +69,7 @@
     </div>
 
 <script>
-/* ============================================================
-   【聖域】CONFIGURATIONS (Rev 3.1.11 復元版)
-   ============================================================ */
+/* === 【聖域】CONFIG (Rev 3.1.11 準拠) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -93,7 +91,6 @@ const L_HANABI_CONFIG = [
     { id: "b_ba", name: "BIG中風鈴Ａ", active: false, type: "big", probs: {1: 1.1, 2: 1.2, 5: 1.1, 6: 1.2} },
     { id: "b_bb", name: "BIG中風鈴Ｂ", active: true, type: "big", probs: {1: 10.0, 2: 7.0, 5: 10.0, 6: 7.0} }
 ];
-
 const HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 156.0, 2: 148.3, 5: 139.4, 6: 131.6} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 277.7, 2: 268.6, 5: 256.0, 6: 248.2} },
@@ -115,7 +112,6 @@ const HANABI_CONFIG = [
     { id: "pf", name: "平行風鈴", active: false, type: "big", probs: {1: 1.1, 2: 1.13, 5: 1.1, 6: 1.13} },
     { id: "nf", name: "斜め風鈴", active: true, type: "big", probs: {1: 11.0, 2: 9.0, 5: 11.0, 6: 9.0} }
 ];
-
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
@@ -145,10 +141,14 @@ let hPaths = []; let hIdx = -1;
 
 function drawAnalysisLogs(machine, gCounts, extracted) {
     let bbCount = 0;
+    // 【同期固定】activeフラグを無視し、インデックスiを直結させる
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
+        // 【動的分母】事実に基づく検定用分母の切り替え
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") {
+            n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
+        }
         if(df.id === "bb" || df.id === "bb_tot") bbCount = da.c;
         return { ...df, k: da.c, n };
     }).filter(x => x !== null);
@@ -213,6 +213,7 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
+        addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
         const fullText = merged.join(" ");
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
         
@@ -249,7 +250,7 @@ async function run(file) {
                     }
                 }
                 
-                // 【聖域】動的分母の決定 (2σガード用)
+                // 【動的分母】事実に基づく2σ検定用分母の算出
                 let nC = gCounts[0]; 
                 if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
                     nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
@@ -261,7 +262,7 @@ async function run(file) {
                 } else if (p > 1.5) { 
                     const prob = 1/p; const sigma = Math.sqrt(nC * prob * (1 - prob));
                     if (Math.abs(c - expC) > 2.5 * sigma || c > expC * 5 || (expC > 20 && c < expC / 4)) {
-                        addLog(`  ⚠️2σ異常乖離(idx:${extracted.length}) OCR:${c} ➔ 補正:${expC}`, "text-red-500 font-bold text-[7px]");
+                        addLog(`  ⚠️2σ異常(idx:${extracted.length}) OCR:${c} ➔ 補正:${expC}`, "text-red-500 font-bold text-[7px]");
                         c = expC;
                     }
                 }
