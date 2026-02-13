@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.6.8</title>
+    <title>HANABI ANALYZER Rev 3.6.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -14,15 +14,12 @@
         .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #ffffff; margin-top: 2px; font-weight: bold; }
         .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 65px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
         .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
-        /* グラフエリア 3/4縮小 */
         .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 12px 16px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        /* ログエリア拡大 */
         .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
         .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
         .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
-        /* 定義表バランス調整 */
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 3px 1px; text-align: center; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
@@ -42,7 +39,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.6.8</div>
+        <div class="rev-tag">Revision 3.6.9</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -260,28 +257,44 @@ async function run(file) {
         addLog(`\n（３）仮想配列作成・補正プロセス`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
-            const l = merged[ptr]; if(l.includes('/')) {
-                const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/,/g,''); const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
+            const l = merged[ptr];
+            if(l.includes('/')) {
+                const cDef = machine.def[extracted.length];
+                let p = 0, c = null;
+                const clL = l.replace(/[\s,]/g,''); // スペース・カンマを除去
                 
-                // 【ブレーキ配線】1/- ならば走査を物理的に遮断して0回確定
-                if (clL.includes('/-')) {
-                    c = 0; addLog(`  [idx:${extracted.length}] 1/- 検出 ➔ 0回確定（走査停止）`, "text-green-500 font-bold text-[7px]");
+                // 【物理安全装置】 / と - が共存すれば 0回確定
+                if (clL.includes('/') && clL.includes('-')) {
+                    c = 0;
+                    addLog(`  [idx:${extracted.length}] スラッシュ＋ハイフン検出 ➔ 0回確定（走査停止）`, "text-green-500 font-bold text-[7px]");
                 } else {
-                    // 1/xx 表記がある場合のみ、従来通り整数走査を続行
-                    for (let j of [2, 3]) {
-                        if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/,/g, ''); const numM = tl.match(/(\d+)/);
+                    const dm = clL.match(/(\d+\.\d+)/);
+                    if(dm) p = parseFloat(dm[1]);
+                    
+                    // 1/xx の場合のみ肝の整数走査を続行
+                    for (let j of [1, 2, 3]) {
+                        if (ptr - j < 0) continue;
+                        const tl = merged[ptr - j].replace(/[\s,]/g, '');
+                        const numM = tl.match(/(\d+)/);
                         if (numM) { c = parseInt(numM[1]); break; }
                     }
-                    let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") { nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG); }
+                    
+                    let nC = gCounts[0];
+                    if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
+                        nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
+                    }
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) {
-                        c = expC; addLog(`  [idx:${extracted.length}] 補正 ➔ ${c}回`, "text-red-400 text-[7px]");
+                        c = expC;
+                        addLog(`  [idx:${extracted.length}] 補正発動 ➔ ${c}回`, "text-red-400 text-[7px]");
                     }
                 }
 
                 if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p}); if(!clL.includes('/-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
-            } ptr++;
+                extracted.push({c, p});
+                if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
+            }
+            ptr++;
         }
         drawAnalysisLogs(machine, gCounts, extracted);
         const dStr = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1] + " " + (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
