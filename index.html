@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.32</title>
+    <title>HANABI ANALYZER Rev 3.5.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.32</div>
+        <div class="rev-tag">Revision 3.5.33</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -160,15 +160,17 @@ function processInference(machine, gCounts, extracted, clearLog = false) {
 
     addLog(`\n（４）判別対象データ`, "text-blue-400 font-bold");
     const t4 = document.createElement('table'); t4.className='log-table';
-    t4.innerHTML=`<thead><tr><th style="width:38%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    t4.innerHTML=`<thead><tr><th style="width:8%">判別</th><th style="width:30%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb4 = t4.querySelector('tbody');
     fStorage.forEach(res => {
         const r = document.createElement('tr'); const rP = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
-        r.innerHTML=`<td style="text-align:left; padding-left:4px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
+        const actMark = res.active ? "<span style='color:#22c55e;'>✅</span>" : "";
+        r.innerHTML=`<td>${actMark}</td><td style="text-align:left; padding-left:4px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
         tb4.appendChild(r);
     });
     logDisplay.appendChild(t4);
 
+    // active: true の項目のみで尤度計算を行うことを厳格化
     const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
@@ -278,7 +280,6 @@ async function syncHistory(d){
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${d.replace(/\//g,'-')}`);
     if(res&&Array.isArray(res)){
-        // 機種名が一致する履歴だけを抽出（コミットメッセージではなく実データの中身で判定）
         const filtered = [];
         for(let file of res) {
             const content = await gh("GET", file.path);
@@ -296,6 +297,7 @@ async function loadHistory(p){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
         const mName = s.machineName || s.m; const gCnt = s.gameCounts || s.g; const exDt = s.extractedData || s.ex;
         let machine = mName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : mName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
+        currentMachineName = mName; // 履歴読込時も機種名を更新
         document.getElementById('machine-info-left').innerText = `${mName} : ${gCnt[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date || s.d;
         processInference(machine, gCnt, exDt, true);
