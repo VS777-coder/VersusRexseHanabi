@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.35</title>
+    <title>HANABI ANALYZER Rev 3.5.36</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -24,7 +24,6 @@
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; white-space: nowrap; overflow: hidden; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
         
-        /* 尤度オーラ：派手さを抑えた「見やすい」塗り */
         .aura-red { background-color: #b91c1c !important; color: white !important; }
         .aura-green { background-color: #15803d !important; color: white !important; }
         .aura-yellow { background-color: #a16207 !important; color: white !important; }
@@ -40,7 +39,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.35</div>
+        <div class="rev-tag">Revision 3.5.36</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -143,7 +142,7 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function processInference(machine, gCounts, extracted, silent = false) {
+function processInference(machine, gCounts, extracted, silent = false, dateStr = "") {
     if(!silent) logDisplay.innerHTML = "";
     if(gCounts[0] < 100) {
         if(!silent) addLog("\n⚠️ 判定不可: 100G未満のデータは解析対象外です。", "text-red-500 font-bold text-sm");
@@ -163,7 +162,7 @@ function processInference(machine, gCounts, extracted, silent = false) {
     }).filter(x => x !== null);
 
     if(!silent) {
-        addLog(`\n（４）判別対象データ`, "text-blue-400 font-bold");
+        addLog(`（４）判別対象データ`, "text-blue-400 font-bold");
         const t4 = document.createElement('table'); t4.className='log-table';
         t4.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
         const tb4 = t4.querySelector('tbody');
@@ -213,6 +212,7 @@ function processInference(machine, gCounts, extracted, silent = false) {
         document.getElementById(`b${s}`).style.width = pr + "%";
         if(!silent) addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
+
     return { isGuard: false };
 }
 
@@ -304,7 +304,7 @@ async function loadHistory(p){
         document.getElementById('machine-info-left').innerText = `${mN} : ${gC[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = dS;
         processInference(m, gC, eD, false);
-        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mN}`, "text-green-400 font-bold");
+        addLog(`\n◀ HISTORY LOADED：${s.name}　${mN}　${dS}`, "text-green-400 font-bold text-[8px]");
     }
 }
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
