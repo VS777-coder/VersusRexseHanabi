@@ -140,6 +140,7 @@ const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'
 let hPaths = []; let hIdx = -1;
 
 function processInference(machine, gCounts, extracted, silent = false) {
+    if(!silent) logDisplay.innerHTML = "";
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
@@ -225,7 +226,6 @@ async function run(file) {
         
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
-        
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
         const offset = dateIdx !== -1 ? dateIdx + 1 : 0;
 
@@ -242,7 +242,7 @@ async function run(file) {
                 }
             }
         }
-        if(anchorIdx === -1) throw new Error("G NotFound (Anchor fail)");
+        if(anchorIdx === -1) throw new Error("G NotFound");
         document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
 
         const extracted = []; let ptr = anchorIdx + 1;
@@ -288,10 +288,10 @@ async function loadHistory(p){
         const gCnt = s.gameCounts || s.g;
         const exDt = s.extractedData || s.ex;
         let machine = mName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : mName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
-        logDisplay.innerHTML = `◀ HISTORY LOADED: [${s.name}] ${mName} / ${s.date || s.d}`;
         document.getElementById('machine-info-left').innerText = `${mName} : ${gCnt[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date || s.d;
         processInference(machine, gCnt, exDt, false);
+        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mName}`, "text-green-400 font-bold");
     }
 }
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
