@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.39</title>
+    <title>HANABI ANALYZER Rev 3.5.40</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.39</div>
+        <div class="rev-tag">Revision 3.5.40</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -69,7 +69,7 @@
     </div>
 
 <script>
-/* === 聖域 (DO NOT TOUCH) === */
+/* === 聖域 === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -133,7 +133,6 @@ const VERSUS_CONFIG = [
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
-/* === 聖域 終了 === */
 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
@@ -185,7 +184,7 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
         const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
-        let cls = `<td class="${aura}" style="text-align:left; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
+        let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
             const gM = c.maxL - c.iLLs[s];
@@ -245,19 +244,37 @@ async function run(file) {
 
         addLog(`\n（３）仮想配列作成・補正プロセス`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1;
+        let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr]; if(l.includes('/')) {
                 const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/,/g,''); const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
+                
+                // OCR回数候補の取得
                 for (let j of [2, 3]) {
                     if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/,/g, ''); const numM = tl.match(/(\d+)/);
-                    if (numM) { c = parseInt(numM[1]); if (!tl.includes('回')) addLog(`  ⚠️回なし(idx:${extracted.length})`, "text-yellow-500 text-[7px]"); if (j === 3) addLog(`  ⚠️ptr-3参照(idx:${extracted.length})`, "text-orange-400 text-[7px]"); break; }
+                    if (numM) { c = parseInt(numM[1]); break; }
                 }
+
+                // 2σガード & 逆算ロジック
+                let nC = gCounts[0];
+                if(cDef.type === "vc") nC = gCounts[1] || Math.round(p * 5); 
+                if(cDef.type === "vg") nC = gCounts[2] || Math.round(p * 1);
+                if(cDef.type === "big") nC = bb_for_rt * machine.bG;
+                
+                const expC = p > 0 ? Math.round(nC / p) : 0;
+                
                 if (c === null) {
-                    if (p > 0) {
-                        let nC = gCounts[0]; if(cDef.type === "vc") nC = gCounts[1] || Math.round(p * 5); if(cDef.type === "vg") nC = gCounts[2] || Math.round(p * 1); if(cDef.type === "big") { const bI = machine.def.findIndex(d => d.id === "bb"); nC = (extracted[bI] ? extracted[bI].c : 0) * machine.bG; }
-                        c = Math.round(nC / p); addLog(`  ⚠️回数欠損補正(idx:${extracted.length}) 確率1/${p}から逆算 ➔ ${c}回`, "text-red-400 font-bold text-[7px]");
-                    } else throw new Error(`Extract Error idx:${extracted.length}`);
+                    c = expC; addLog(`  ⚠️回数欠損補正(idx:${extracted.length}) ➔ ${c}回`, "text-red-400 text-[7px]");
+                } else {
+                    // 桁ズレ・2σ異常乖離チェック
+                    const prob = 1/p;
+                    const sigma = Math.sqrt(nC * prob * (1 - prob));
+                    if (Math.abs(c - expC) > 2 * sigma || c > expC * 3 || (expC > 10 && c < expC / 3)) {
+                        addLog(`  ⚠️2σ異常乖離検知(idx:${extracted.length}) ${c}回を${expC}回に強制補正`, "text-red-500 font-bold text-[7px]");
+                        c = expC;
+                    }
                 }
+                if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p}); addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
             } ptr++;
         }
@@ -290,7 +307,7 @@ async function syncHistory(mName){
 }
 function updateNavUI(){ document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); }
 async function loadHistory(p){
-    logDisplay.innerHTML = ""; // 物理消去
+    logDisplay.innerHTML = "";
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
         let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
