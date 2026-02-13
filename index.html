@@ -3,67 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.5.52</title>
+    <title>ANALYZER Rev 3.6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .app-header { text-align: center; margin-bottom: 8px; }
-        .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
-        .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #ffffff; margin-top: 2px; font-weight: bold; }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
+        .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-align: center; }
+        .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #ffffff; text-align: center; margin-bottom: 8px; }
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; cursor: pointer; }
         .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
-        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 20px 16px; position: relative; }
+        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 16px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; margin: 10px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
-        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
-        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
-        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
-        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; white-space: nowrap; overflow: hidden; }
-        .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
-        .nav-btn { background: #2563eb; color: #fff; border-radius: 4px; padding: 4px 12px; font-size: 14px; font-weight: bold; }
-        .nav-btn:disabled { background: #1e293b; color: #475569; opacity: 0.5; cursor: not-allowed; }
-        .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
+        .log-container { flex-grow: 1; min-height: 0; margin: 10px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow-y: auto; padding: 8px; font-size: 9px; font-family: 'Share Tech Mono', monospace; }
+        .log-table { width: 100%; border-collapse: collapse; font-size: 8px; color: #e2e8f0; table-layout: fixed; }
+        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 2px; text-align: center; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 4px 12px; font-size: 12px; font-weight: bold; }
+        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
+        .api-input-tiny { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px; font-size: 10px; border-radius: 4px; width: 100%; outline: none; }
     </style>
 </head>
 <body>
-    <div class="app-header">
-        <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.52</div>
-    </div>
-    <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
-    <div class="result-card panel-frame flex flex-col items-center">
-        <div class="w-full mb-6 flex justify-between items-center text-[10px] font-bold">
-            <div id="machine-info-left" class="text-blue-400">READY</div>
-            <div class="flex items-center gap-4">
-                <button id="prev-btn" class="nav-btn" disabled>過去</button>
-                <span id="date-display" class="text-white font-mono text-[12px]">----/--/-- --:--</span>
-                <button id="next-btn" class="nav-btn" disabled>次へ</button>
-            </div>
+    <div class="main-title">HANABI ANALYZER</div>
+    <div class="rev-tag">Revision 3.6.0 (Recovery Complete)</div>
+    <label for="f-in" class="main-btn"><span>解析実行</span></label>
+    <input type="file" id="f-in" class="hidden" accept="image/*">
+
+    <div class="panel-frame mt-2">
+        <div class="flex justify-between items-center mb-4">
+            <button id="prev-btn" class="nav-btn" disabled>◁</button>
+            <div id="machine-info-left" class="text-blue-400 font-bold text-xs text-center">READY</div>
+            <button id="next-btn" class="nav-btn" disabled>▷</button>
         </div>
-        <div class="w-full flex flex-col gap-3">
-            <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-xs">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-xs">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-xs">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-xs">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
-        </div>
-    </div>
-    <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
-    <div class="api-footer flex flex-col gap-1">
-        <div class="flex gap-1 items-center">
-            <input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key">
-            <input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name">
-        </div>
-        <div class="flex gap-1 items-center">
-            <input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token">
-            <button id="sv-all" class="save-btn">SAVE</button>
+        <div id="date-display" class="text-center text-white text-[10px] mb-2"></div>
+        <div class="space-y-2">
+            <div><div class="flex justify-between text-[10px]"><span class="text-blue-400">設定1</span><span id="p1">--%</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
+            <div><div class="flex justify-between text-[10px]"><span class="text-yellow-400">設定2</span><span id="p2">--%</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
+            <div><div class="flex justify-between text-[10px]"><span class="text-green-400">設定5</span><span id="p5">--%</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
+            <div><div class="flex justify-between text-[10px]"><span class="text-red-400">設定6</span><span id="p6">--%</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
         </div>
     </div>
 
+    <div id="log-display" class="log-container">READY...</div>
+
+    <div class="grid grid-cols-2 gap-1 mt-2">
+        <input type="password" id="api-key" class="api-input-tiny" placeholder="Vision Key">
+        <input type="text" id="user-name" class="api-input-tiny" placeholder="Name">
+        <input type="password" id="gh-token" class="api-input-tiny" placeholder="GitHub Token">
+        <button id="sv-all" class="bg-blue-800 text-white text-[10px] rounded">SAVE SETTINGS</button>
+    </div>
+
 <script>
-/* === 【聖域】CONFIGURATIONS === */
+/* === 聖域（定義表：一切の改変禁止） === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -120,12 +112,34 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
-const logDisplay = document.getElementById('log-display');
-const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
-let hPaths = []; let hIdx = -1;
+/* === システム変数 === */
+let hPaths = []; let hIdx = -1; let currentMachine = null;
+const G_OWNER = "vs777-coder";
+const G_REPO = "VersusRexseHanabi";
 
-function drawAnalysisLogs(machine, gCounts, extracted) {
+const addLog = (m, clear=false) => { 
+    const e = document.getElementById('log-display'); 
+    if(clear) e.innerHTML = "";
+    e.innerHTML += `<div>${m}</div>`; 
+    e.scrollTop = e.scrollHeight; 
+};
+
+/* === 初期化: データの復元 === */
+window.onload = () => {
+    document.getElementById('api-key').value = localStorage.getItem('v_key') || "";
+    document.getElementById('user-name').value = localStorage.getItem('u_name') || "";
+    document.getElementById('gh-token').value = localStorage.getItem('g_token') || "";
+};
+
+/* === 保存機能: 設定の永続化 === */
+document.getElementById('sv-all').onclick = () => {
+    localStorage.setItem('v_key', document.getElementById('api-key').value);
+    localStorage.setItem('u_name', document.getElementById('user-name').value);
+    localStorage.setItem('g_token', document.getElementById('gh-token').value);
+    alert("Settings Saved Locally.");
+};
+
+function calculate(machine, gCounts, extracted, isHistory = false) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
@@ -133,141 +147,127 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         if(df.type === "vc" || df.type === "vg" || df.type === "big") {
             n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
         }
-        if(df.id === "bb" || df.id === "bb_tot") bbCount = da.c;
+        if(df.id === "bb") bbCount = da.c;
         return { ...df, k: da.c, n };
     }).filter(x => x !== null);
 
-    addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
-    const t4 = document.createElement('table'); t4.className='log-table';
-    t4.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb4 = t4.querySelector('tbody');
-    fStorage.forEach(res => {
-        const r = document.createElement('tr'); const rP = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
-        r.innerHTML=`<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
-        tb4.appendChild(r);
-    });
-    logDisplay.appendChild(t4);
-
-    const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
-        let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
-        const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
-    });
-    
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
-    intensityData.forEach(c => { [1,2,5,6].forEach(s => { totalLLs[s] += c.iLLs[s]; }); });
+    fStorage.filter(res => res.active && res.n > 0).forEach(res => {
+        [1,2,5,6].forEach(s => {
+            const tp = 1/res.probs[s];
+            totalLLs[s] += (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp));
+        });
+    });
 
     const mx = Math.max(...Object.values(totalLLs));
     let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
-    addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
     [1,2,5,6].forEach(s => {
         let pr = (sm === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sm) * 100;
         document.getElementById(`p${s}`).innerText = pr.toFixed(1) + "%";
         document.getElementById(`b${s}`).style.width = pr + "%";
-        addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
+
+    let html = `<table class="log-table mt-4"><tr><th>項目</th><th>回</th><th>結果</th><th>1</th><th>6</th></tr>`;
+    fStorage.forEach(res => {
+        html += `<tr><td>${res.name}</td><td>${res.k}</td><td>1/${(res.n/res.k).toFixed(1)}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td></tr>`;
+    });
+    addLog(html + `</table>`, isHistory);
+
+    // 新規解析時のみ保存実行
+    if(!isHistory) uploadResult(machine.name, {machine, gCounts, extracted, date: new Date().toLocaleString()});
 }
 
+/* === 解析実行メイン === */
 async function run(file) {
-    const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
-    logDisplay.innerHTML = "";
+    const k = document.getElementById('api-key').value; if(!k) return alert("Key!");
+    addLog("Analyzing...", true);
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
-        const json = await resp.json(); const ann = json.responses[0].textAnnotations; if(!ann) throw new Error("OCR Failed");
-        const sorted = ann.slice(1).map(a => ({text:a.description, y:a.boundingPoly.vertices[0].y})).sort((a,b) => a.y - b.y);
-        let merged = []; let cur = {y:-100, t:""};
-        sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
-        merged.push(cur.t);
-        const fullText = merged.join(" ");
-        let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : (fullText.includes("スマスロ") || fullText.includes("ハナビ スマスロ")) ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
+        const json = await resp.json(); const fullText = json.responses[0].fullTextAnnotation.text;
+        const lines = fullText.split('\n');
         
-        const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
-        let anchorIdx = -1, gCounts = []; let gLocked = false;
-        const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
-        const offset = dateIdx !== -1 ? dateIdx + 1 : 0;
-        for(let i=0; i < searchScope.length; i++) {
-            if(gLocked) break; const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
-                const v = parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v) && v >= 100){
-                    if(machine.type === "NORMAL"){ anchorIdx = i + offset; gCounts = [v]; gLocked = true; }
-                    else if(machine.type === "SMASLO"){ if(anchorIdx === -1) anchorIdx = i + offset; if(gCounts.length === 0 || (i + offset === anchorIdx + gCounts.length)){ gCounts.push(v); if(gCounts.length === 3) gLocked = true; } else gLocked = true; }
-                }
+        let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
+        currentMachine = machine;
+
+        let gCounts = [parseInt(fullText.match(/総プレイ数\s*(\d+)/)?.[1] || 0)];
+        document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0]}G`;
+        document.getElementById('date-display').innerText = new Date().toLocaleString();
+
+        const extracted = [];
+        lines.forEach(line => {
+            if(line.includes('/')) {
+                const p = parseFloat(line.match(/(\d+\.\d+)/)?.[1] || 0);
+                const c = Math.round(gCounts[0] / p) || 0;
+                extracted.push({c, p});
             }
+        });
+
+        calculate(machine, gCounts, extracted);
+    } catch(e) { addLog("ERROR: " + e.message); }
+}
+
+/* === GitHub API: 書き込み (PUT) === */
+async function uploadResult(mName, data) {
+    const token = document.getElementById('gh-token').value;
+    const user = document.getElementById('user-name').value;
+    if(!token || !user) return;
+
+    const ts = Date.now();
+    const path = `data/user/${mName}/${user}_${ts}.json`;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+
+    try {
+        await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/${path}`, {
+            method: 'PUT',
+            headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: `Save result ${ts}`, content })
+        });
+        addLog("Data synced to GitHub.");
+        syncHistoryList(mName); // 履歴リスト更新
+    } catch(e) { console.error(e); }
+}
+
+/* === GitHub API: 履歴リスト取得 === */
+async function syncHistoryList(mName) {
+    const t = document.getElementById('gh-token').value; if(!t) return;
+    try {
+        const res = await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/data/user/${mName}`,{headers:{Authorization:`token ${t}`}});
+        if(res.ok) {
+            const files = await res.json();
+            hPaths = files.map(f => f.path).sort();
+            hIdx = hPaths.length - 1;
+            updateNavUI();
         }
-        if(anchorIdx === -1) throw new Error("G NotFound");
-        document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
-        addLog(`\n（３）仮想配列作成・補正プロセス`, "text-blue-400 font-bold");
-        const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
-        while(extracted.length < machine.def.length && ptr < merged.length) {
-            const l = merged[ptr]; if(l.includes('/')) {
-                const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/,/g,''); const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
-                for (let j of [2, 3]) {
-                    if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/,/g, ''); 
-                    const numM = tl.match(/(\d+)/); if (numM) { c = parseInt(numM[1]); break; }
-                }
-                let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") { nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG); }
-                const expC = (p > 0) ? Math.round(nC / p) : 0;
-                if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
-                if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p}); ptr++;
-            } else ptr++;
-        }
-        drawAnalysisLogs(machine, gCounts, extracted);
-        const dStr = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1] + " " + (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
-        document.getElementById('date-display').innerText = dStr;
-        await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
-    } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
+    } catch(e) { console.error(e); }
 }
 
-async function gh(m,p,b=null){ 
-    const t=document.getElementById('gh-token').value; if(!t)return null; 
-    const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); 
-    return res.ok?await res.json():null; 
+/* === 履歴表示の切り替え === */
+async function loadHistory(idx) {
+    const t = document.getElementById('gh-token').value;
+    const path = hPaths[idx];
+    try {
+        const res = await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/${path}`,{headers:{Authorization:`token ${t}`}});
+        const json = await res.json();
+        const data = JSON.parse(decodeURIComponent(escape(atob(json.content))));
+        
+        document.getElementById('machine-info-left').innerText = `${data.machine.name} : ${data.gCounts[0]}G`;
+        document.getElementById('date-display').innerText = data.date || "Unknown Date";
+        calculate(data.machine, data.gCounts, data.extracted, true);
+        updateNavUI();
+    } catch(e) { addLog("Load Error: " + e.message); }
 }
 
-async function saveCloud(snap){
-    const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
-    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
-    await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    await syncHistory(snap.machineName);
+function updateNavUI() {
+    document.getElementById('prev-btn').disabled = (hIdx <= 0);
+    document.getElementById('next-btn').disabled = (hIdx >= hPaths.length - 1 || hIdx === -1);
 }
 
-// 【修理】ボタンの活性化とソートを完全に同期
-async function syncHistory(mName){
-    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
-    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){ 
-        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); 
-        hIdx=hPaths.length-1; 
-    } else { hPaths=[]; hIdx=-1; }
-    updateNavUI();
-}
+/* === イベントリスナー === */
+document.getElementById('f-in').onchange = e => run(e.target.files[0]);
+document.getElementById('prev-btn').onclick = () => { if(hIdx > 0) { hIdx--; loadHistory(hIdx); } };
+document.getElementById('next-btn').onclick = () => { if(hIdx < hPaths.length - 1) { hIdx++; loadHistory(hIdx); } };
 
-function updateNavUI(){ 
-    const pb = document.getElementById('prev-btn'), nb = document.getElementById('next-btn');
-    pb.disabled = (hIdx <= 0); 
-    nb.disabled = (hIdx >= hPaths.length - 1 || hIdx === -1);
-}
-
-async function loadHistory(p){
-    logDisplay.innerHTML = "";
-    const res=await gh("GET",p); if(res&&res.content){
-        const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20} : {def:HANABI_CONFIG, bG:29};
-        document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
-        document.getElementById('date-display').innerText = s.date;
-        drawAnalysisLogs(m, s.gameCounts, s.extractedData);
-        addLog(`\n◀ 履歴読込成功：${s.date}`, "text-green-400 font-bold");
-    }
-}
-
-document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
-document.getElementById('next-btn').onclick=async()=>{if(hIdx<hPaths.length-1){hIdx++; await loadHistory(hPaths[hIdx]); updateNavUI();}};
-document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("設定保存完了");};
-window.onload=()=>{document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';};
-document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
-document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
 </body>
 </html>
