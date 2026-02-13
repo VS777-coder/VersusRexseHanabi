@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.7.1</title>
+    <title>HANABI ANALYZER Rev 3.8.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -31,24 +31,24 @@
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
-        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
+        .nav-btn:disabled { opacity: 0.1; }
         .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.7.1</div>
+        <div class="rev-tag">Revision 3.8.0</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center text-[10px] font-bold">
-            <div id="machine-info-left" class="text-blue-400">READY</div>
-            <div class="flex items-center gap-2">
-                <button id="prev-btn" class="nav-btn" disabled>◁</button>
-                <span id="date-display" class="text-white font-mono"></span>
-                <button id="next-btn" class="nav-btn" disabled>▷</button>
+            <div id="machine-info-left" class="text-blue-400 w-[110px] overflow-hidden whitespace-nowrap">新ハナビ</div>
+            <div class="flex items-center gap-1">
+                <button id="prev-btn" class="nav-btn">◁</button>
+                <div class="w-[125px] text-center"><span id="date-display" class="text-white font-mono text-[9px]">NO DATA</span></div>
+                <button id="next-btn" class="nav-btn">▷</button>
             </div>
         </div>
         <div class="w-full flex flex-col gap-2">
@@ -71,7 +71,7 @@
     </div>
 
 <script>
-/* === CONFIGURATIONS (DEFINITIONS: 固定済) === */
+/* === 聖域：CONFIGURATIONS === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -136,45 +136,54 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
+const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
+let currentMachineIdx = 0;
+let lastAnalysisResult = null; // 【バッファ】解析直後のデータを退避
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
+
+function fullRefresh() {
+    [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText = "---"; document.getElementById(`b${s}`).style.width = "0%"; });
+    document.getElementById('date-display').innerText = "NO DATA";
+    logDisplay.innerHTML = "READY...";
+    lastAnalysisResult = null;
+}
+
+function getMachineDef(name) {
+    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
+    if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
+    return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
+}
 
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") {
-            n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
-        }
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
         if(df.id === "bb") bbCount = da.c;
         return { ...df, k: da.c, n };
     }).filter(x => x !== null);
 
     addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
     const t4 = document.createElement('table'); t4.className='log-table';
-    t4.innerHTML=`<thead><tr><th style="width:28%">項目</th><th style="width:12%">回数</th><th style="width:16%">結果</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
+    t4.innerHTML=`<thead><tr><th style="width:28%">項目</th><th style="width:12%">回数</th><th style="width:16%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb4 = t4.querySelector('tbody');
-    
     fStorage.forEach(res => {
         const r = document.createElement('tr'); 
         const rP_num = res.k > 0 ? (res.n / res.k) : 0;
         const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
-        let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td>`;
-        rowHtml += `<td class="${res.active ? 'val-red' : ''}">${res.k}</td>`;
-        rowHtml += `<td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
-        if (res.active) {
+        let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td class="${res.active ? 'val-red' : ''}">${res.k}</td><td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
+        if(res.active) {
             const diffs = [1, 2, 5, 6].map(s => (rP_num === 0) ? res.probs[s] : Math.abs(rP_num - res.probs[s]));
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => {
                 const isClosest = (diffs[idx] === minDiff);
                 rowHtml += `<td class="${isClosest ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`;
             });
-        } else {
-            [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; });
-        }
+        } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
     logDisplay.appendChild(t4);
@@ -215,8 +224,6 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         document.getElementById(`b${s}`).style.width = pr + "%";
         addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
-
-    // サマリー表示の完全配線
     const finalName = uNameOverride || document.getElementById('user-name').value || "Guest";
     const finalDate = dateOverride || document.getElementById('date-display').innerText;
     addLog(`\n${finalName} : ${machine.name} : ${finalDate}`, "text-white font-bold mt-2");
@@ -236,52 +243,51 @@ async function run(file) {
         merged.push(cur.t);
         addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
         const fullText = merged.join(" ");
-        let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
-        await syncHistory(machine.name);
+        let machine = getMachineDef(fullText);
+        currentMachineIdx = MACHINE_LIST.indexOf(machine.name);
+        document.getElementById('machine-info-left').innerText = machine.name;
+
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
-        let anchorIdx = -1, gCounts = []; let gLocked = false;
+        let anchorIdx = -1, gCounts = [];
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
         const offset = dateIdx !== -1 ? dateIdx + 1 : 0;
         for(let i=0; i < searchScope.length; i++) {
-            if(gLocked) break; const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
-                const v = parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v) && v >= 100){
-                    if(machine.type === "NORMAL"){ anchorIdx = i + offset; gCounts = [v]; gLocked = true; }
-                    else if(machine.type === "SMASLO"){ if(anchorIdx === -1) anchorIdx = i + offset; if(gCounts.length === 0 || (i + offset === anchorIdx + gCounts.length)){ gCounts.push(v); if(gCounts.length === 3) gLocked = true; } else gLocked = true; }
-                }
+            const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
+                const v = parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v) && v >= 100){ anchorIdx = i + offset; gCounts = [v]; break; }
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
         document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
-        addLog(`\n（３）仮想配列作成・補正プロセス`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
             if(l.includes('/')) {
-                const cDef = machine.def[extracted.length];
-                let p = 0, c = null;
-                const clL = l.replace(/[\s,]/g,''); 
-                if (clL.includes('/') && clL.includes('-')) {
-                    c = 0; addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]");
-                } else {
+                const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
+                if (clL.includes('/') && clL.includes('-')) { c = 0; addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]"); }
+                else {
                     const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                     for (let j of [1, 2, 3]) {
-                        if (ptr - j < 0) continue;
-                        const tl = merged[ptr - j].replace(/[\s,]/g, '');
+                        if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/[\s,]/g, '');
                         const numM = tl.match(/(\d+)/); if (numM) { c = parseInt(numM[1]); break; }
                     }
-                    let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") { nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG); }
+                    let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
-                    if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) { c = expC; }
+                    if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p}); if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
             }
             ptr++;
         }
-        const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1];
-        const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
+        const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
+        const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
         document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
+        
+        // 【バッファ保持】解析直後の状態を保存
+        lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "" };
         drawAnalysisLogs(machine, gCounts, extracted);
+        lastAnalysisResult.logHtml = logDisplay.innerHTML;
+
         await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
@@ -292,29 +298,58 @@ async function saveCloud(snap){
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
     await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    await syncHistory(snap.machineName);
+    await syncHistory(snap.machineName, false);
 }
-async function syncHistory(mName){
+async function syncHistory(mName, autoLoad = true){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1; updateNavUI(); }
+    if(res&&Array.isArray(res)){
+        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1;
+        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]);
+    } else { hPaths=[]; hIdx=-1; }
 }
-function updateNavUI(){ document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); }
 async function loadHistory(p){
-    logDisplay.innerHTML = "";
+    // もし今解析したばかりのデータに戻ってきたらバッファから出す
+    if(lastAnalysisResult && p === "current"){
+        logDisplay.innerHTML = lastAnalysisResult.logHtml;
+        drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date);
+        return;
+    }
     const res=await gh("GET",p); if(res&&res.content){
+        logDisplay.innerHTML = "";
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
+        const m = getMachineDef(s.machineName);
         document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
         drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date);
     }
 }
-document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
-document.getElementById('next-btn').onclick=async()=>{if(hIdx<hPaths.length-1){hIdx++; await loadHistory(hPaths[hIdx]); updateNavUI();}};
-document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED");};
-window.onload=()=>{document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';};
+
+document.getElementById('prev-btn').onclick=async()=>{
+    if(lastAnalysisResult && hIdx === hPaths.length-1) { // 今解析した状態から過去へ
+        hIdx--; await loadHistory(hPaths[hIdx+1]);
+    } else {
+        currentMachineIdx = (currentMachineIdx - 1 + MACHINE_LIST.length) % MACHINE_LIST.length;
+        fullRefresh();
+        document.getElementById('machine-info-left').innerText = MACHINE_LIST[currentMachineIdx];
+        await syncHistory(MACHINE_LIST[currentMachineIdx], true);
+    }
+};
+document.getElementById('next-btn').onclick=async()=>{
+    currentMachineIdx = (currentMachineIdx + 1) % MACHINE_LIST.length;
+    fullRefresh();
+    document.getElementById('machine-info-left').innerText = MACHINE_LIST[currentMachineIdx];
+    await syncHistory(MACHINE_LIST[currentMachineIdx], true);
+};
+document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true);};
+window.onload=()=>{
+    document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
+    document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
+    document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';
+    document.getElementById('machine-info-left').innerText = MACHINE_LIST[0];
+    syncHistory(MACHINE_LIST[0], true);
+};
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
 document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
