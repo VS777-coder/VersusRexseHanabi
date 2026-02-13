@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.28</title>
+    <title>HANABI ANALYZER Rev 3.5.29</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -36,7 +36,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.28</div>
+        <div class="rev-tag">Revision 3.5.29</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -141,6 +141,17 @@ let hPaths = []; let hIdx = -1;
 
 function processInference(machine, gCounts, extracted, silent = false) {
     if(!silent) logDisplay.innerHTML = "";
+    
+    // ガード：100G未満は保存せず終了
+    if(gCounts[0] < 100) {
+        if(!silent) addLog("\n⚠️ 判定不可: 100G未満のデータは解析対象外です。", "text-red-500 font-bold text-sm");
+        [1,2,5,6].forEach(s => {
+            document.getElementById(`p${s}`).innerText = "25.0%";
+            document.getElementById(`b${s}`).style.width = "25%";
+        });
+        return { isGuard: true };
+    }
+
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
@@ -204,7 +215,7 @@ function processInference(machine, gCounts, extracted, silent = false) {
         document.getElementById(`b${s}`).style.width = pr + "%";
         if(!silent) addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
-    return { resP, totalLLs };
+    return { resP, totalLLs, isGuard: false };
 }
 
 async function run(file) {
@@ -231,7 +242,8 @@ async function run(file) {
 
         for(let i=0; i < searchScope.length; i++) {
             if(gLocked) break; const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
-                const v = parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v) && v > 100) {
+                const v = parseInt(t.replace(/[^0-9]/g,'')); 
+                if(!isNaN(v) && v >= 0) { // 0G以上をアンカー候補に
                     if(machine.type === "NORMAL") { anchorIdx = i + offset; gCounts = [v]; gLocked = true; }
                     else if(machine.type === "SMASLO") { 
                         if(anchorIdx === -1) anchorIdx = i + offset; 
@@ -257,12 +269,16 @@ async function run(file) {
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
         extracted.forEach((e, idx) => addLog(`[idx:${idx}] 1/${e.p.toFixed(1)} (${e.c}回)`, "text-zinc-500 text-[8px]"));
 
-        processInference(machine, gCounts, extracted, false);
-        const now = new Date(); const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
-        const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        const dStr = (dMatch ? dMatch[1] : now.toLocaleDateString('ja-JP')) + " " + timeStr;
-        document.getElementById('date-display').innerText = dStr;
-        saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
+        const inferRes = processInference(machine, gCounts, extracted, false);
+        
+        // 100G以上の正常データのみ保存
+        if(!inferRes.isGuard) {
+            const now = new Date(); const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
+            const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+            const dStr = (dMatch ? dMatch[1] : now.toLocaleDateString('ja-JP')) + " " + timeStr;
+            document.getElementById('date-display').innerText = dStr;
+            saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
+        }
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
