@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.6.5</title>
+    <title>HANABI ANALYZER Rev 3.6.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -12,13 +12,11 @@
         .app-header { text-align: center; margin-bottom: 8px; }
         .main-title { font-family: 'Squada One', cursive; color: #60a5fa; font-size: 2.8rem; line-height: 1; text-shadow: 0 0 15px rgba(96, 165, 250, 0.4); }
         .rev-tag { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: #ffffff; margin-top: 2px; font-weight: bold; }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 60px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
-        .main-btn span { font-weight: 900; font-size: 1.6rem; color: #ffffff; letter-spacing: 2px; }
-        /* グラフエリア縮小 (Padding 20->12) */
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 70px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
+        .main-btn span { font-weight: 900; font-size: 1.8rem; color: #ffffff; letter-spacing: 2px; }
         .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 12px 16px; position: relative; }
         .bar-bg { background-color: #020617; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        /* ログエリア拡大 (flex-grow: 1) */
         .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
         .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
         .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
@@ -28,6 +26,8 @@
         .aura-red { background-color: #b91c1c !important; color: white !important; font-weight: bold; }
         .aura-green { background-color: #15803d !important; color: white !important; font-weight: bold; }
         .aura-yellow { background-color: #a16207 !important; color: white !important; font-weight: bold; }
+        .val-red { color: #ef4444 !important; font-weight: 900; }
+        .val-yellow { color: #fbbf24 !important; font-weight: 900; }
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
@@ -39,7 +39,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.6.5</div>
+        <div class="rev-tag">Revision 3.6.6</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -53,9 +53,9 @@
         </div>
         <div class="w-full flex flex-col gap-2">
             <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-[10px]">設定1</span><span id="p1" class="c-s1 font-black text-xs">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-[10px]">設定2</span><span id="p2" class="c-s2 font-black text-xs">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-[10px]">設定5</span><span id="p5" class="c-s5 font-black text-xs">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-[10px]">設定6</span><span id="p6" class="c-s6 font-black text-xs">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-[10px]">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-[10px]">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-[10px]">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
         </div>
     </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
@@ -120,18 +120,12 @@ const VERSUS_CONFIG = [
     { id: "xbb", name: "XBB", active: true, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "red7", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: true, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: true, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: true, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: true, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
@@ -143,7 +137,6 @@ let hPaths = []; let hIdx = -1;
 
 function drawAnalysisLogs(machine, gCounts, extracted) {
     let bbCount = 0;
-    // インデックス同期絶対死守
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
@@ -156,16 +149,33 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
 
     addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
     const t4 = document.createElement('table'); t4.className='log-table';
-    t4.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    t4.innerHTML=`<thead><tr><th style="width:28%">項目</th><th style="width:12%">回数</th><th style="width:16%">結果</th><th>設定1</th><th>設定2</th><th>設定5</th><th>設定6</th></tr></thead><tbody></tbody>`;
     const tb4 = t4.querySelector('tbody');
+    
     fStorage.forEach(res => {
-        const r = document.createElement('tr'); const rP = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
-        r.innerHTML=`<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
-        tb4.appendChild(r);
+        const r = document.createElement('tr'); 
+        const rP_num = res.k > 0 ? (res.n / res.k) : 0;
+        const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
+        
+        // 色付け判定（active: trueのみ）
+        let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td>`;
+        rowHtml += `<td class="${res.active ? 'val-red' : ''}">${res.k}</td>`;
+        rowHtml += `<td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
+        
+        if (res.active && rP_num > 0) {
+            const diffs = [1, 2, 5, 6].map(s => Math.abs(rP_num - res.probs[s]));
+            const minDiff = Math.min(...diffs);
+            [1, 2, 5, 6].forEach((s, idx) => {
+                const isClosest = (diffs[idx] === minDiff);
+                rowHtml += `<td class="${isClosest ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(0)}</td>`;
+            });
+        } else {
+            [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(0)}</td>`; });
+        }
+        r.innerHTML = rowHtml; tb4.appendChild(r);
     });
     logDisplay.appendChild(t4);
 
-    // 強度・ギャップログの完全維持
     const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
@@ -216,7 +226,6 @@ async function run(file) {
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
         const fullText = merged.join(" ");
-        // 新ハナビ bG: 29 死守
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
         
         await syncHistory(machine.name);
