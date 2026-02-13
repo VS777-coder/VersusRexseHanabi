@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.38</title>
+    <title>HANABI ANALYZER Rev 3.5.39</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.38</div>
+        <div class="rev-tag">Revision 3.5.39</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -69,7 +69,7 @@
     </div>
 
 <script>
-/* === 神の領域 (DO NOT TOUCH) === */
+/* === 聖域 (DO NOT TOUCH) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -133,17 +133,16 @@ const VERSUS_CONFIG = [
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
-/* === 神の領域 終了 === */
+/* === 聖域 終了 === */
 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function processInference(machine, gCounts, extracted, silent = false) {
-    if(!silent) logDisplay.innerHTML = "";
+function drawAnalysisLogs(machine, gCounts, extracted) {
     if(gCounts[0] < 100) {
-        if(!silent) addLog("\n⚠️ 判定不可: 100G未満のデータは解析対象外です。", "text-red-500 font-bold text-sm");
+        addLog("\n⚠️ 判定不可: 100G未満のデータは解析対象外です。", "text-red-500 font-bold text-sm");
         [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText="25.0%"; document.getElementById(`b${s}`).style.width="25%"; });
         return { isGuard: true };
     }
@@ -159,27 +158,24 @@ function processInference(machine, gCounts, extracted, silent = false) {
         return { ...df, k: da.c, n };
     }).filter(x => x !== null);
 
-    if(!silent) {
-        addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
-        const t4 = document.createElement('table'); t4.className='log-table';
-        t4.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-        const tb4 = t4.querySelector('tbody');
-        fStorage.forEach(res => {
-            const r = document.createElement('tr'); const rP = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
-            r.innerHTML=`<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
-            tb4.appendChild(r);
-        });
-        logDisplay.appendChild(t4);
-    }
+    addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
+    const t4 = document.createElement('table'); t4.className='log-table';
+    t4.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">回</th><th style="width:14%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    const tb4 = t4.querySelector('tbody');
+    fStorage.forEach(res => {
+        const r = document.createElement('tr'); const rP = res.k > 0 ? (res.n / res.k).toFixed(1) : "0.0";
+        r.innerHTML=`<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td style="color:#60a5fa; font-weight:bold;">1/${rP}</td><td>1/${res.probs[1].toFixed(0)}</td><td>1/${res.probs[2].toFixed(0)}</td><td>1/${res.probs[5].toFixed(0)}</td><td>1/${res.probs[6].toFixed(0)}</td>`;
+        tb4.appendChild(r);
+    });
+    logDisplay.appendChild(t4);
 
     const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
     });
-    const sortedInt = [...intensityData].sort((a,b) => b.int - a.int);
-    const top3Ids = sortedInt.slice(0,3).map(x => x.id);
+    const top3Ids = [...intensityData].sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
 
-    if(!silent) addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
+    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
     t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb5 = t5.querySelector('tbody');
@@ -189,7 +185,7 @@ function processInference(machine, gCounts, extracted, silent = false) {
         let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
         const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
-        let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
+        let cls = `<td class="${aura}" style="text-align:left; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
             const gM = c.maxL - c.iLLs[s];
@@ -198,16 +194,16 @@ function processInference(machine, gCounts, extracted, silent = false) {
         });
         r.innerHTML = cls; tb5.appendChild(r);
     });
-    if(!silent) logDisplay.appendChild(t5);
+    logDisplay.appendChild(t5);
 
     const mx = Math.max(...Object.values(totalLLs));
     let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
-    if(!silent) addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
+    addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
     [1,2,5,6].forEach(s => {
         let pr = (sm === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sm) * 100;
         document.getElementById(`p${s}`).innerText = pr.toFixed(1) + "%";
         document.getElementById(`b${s}`).style.width = pr + "%";
-        if(!silent) addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
+        addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
     return { isGuard: false };
 }
@@ -266,14 +262,13 @@ async function run(file) {
             } ptr++;
         }
 
-        const inferRes = processInference(machine, gCounts, extracted, false);
+        const inferRes = drawAnalysisLogs(machine, gCounts, extracted);
         if(!inferRes.isGuard) {
             const finalDate = dMatch ? dMatch[1] : new Date().toLocaleDateString('ja-JP');
             const finalTime = tMatch ? tMatch[1] : (new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0'));
             const dStr = finalDate + " " + finalTime;
             document.getElementById('date-display').innerText = dStr;
-            const snap = { name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted };
-            saveCloud(snap);
+            saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
         }
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
@@ -284,7 +279,8 @@ async function saveCloud(snap){
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
     await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    addLog(`\n✅ Cloud Synced：${n}　${snap.machineName}　${snap.date}`, "text-green-600 font-bold text-[8px]"); syncHistory(snap.machineName);
+    addLog(`\n✅ Cloud Synced：${n}　${snap.machineName}　${snap.date}`, "text-green-600 font-bold text-[8px]");
+    await syncHistory(snap.machineName);
 }
 async function syncHistory(mName){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
@@ -294,12 +290,13 @@ async function syncHistory(mName){
 }
 function updateNavUI(){ document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); }
 async function loadHistory(p){
+    logDisplay.innerHTML = ""; // 物理消去
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
         let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
         document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
-        processInference(m, s.gameCounts, s.extractedData, false);
+        drawAnalysisLogs(m, s.gameCounts, s.extractedData);
         addLog(`\n◀ HISTORY LOADED：${s.name}　${s.machineName}　${s.date}`, "text-green-400 font-bold text-[8px]");
     }
 }
