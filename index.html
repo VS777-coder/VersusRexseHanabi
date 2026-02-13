@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.7.0</title>
+    <title>HANABI ANALYZER Rev 3.7.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -39,7 +39,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.7.0</div>
+        <div class="rev-tag">Revision 3.7.1</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -71,7 +71,7 @@
     </div>
 
 <script>
-/* === CONFIGURATIONS (DEFINITIONS) [反映済み] === */
+/* === CONFIGURATIONS (DEFINITIONS: 固定済) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -141,7 +141,7 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function drawAnalysisLogs(machine, gCounts, extracted) {
+function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
@@ -162,17 +162,11 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         const r = document.createElement('tr'); 
         const rP_num = res.k > 0 ? (res.n / res.k) : 0;
         const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
-        
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td>`;
         rowHtml += `<td class="${res.active ? 'val-red' : ''}">${res.k}</td>`;
         rowHtml += `<td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
-        
-        // 0回でもハイライト判定をスキップしないように修正
         if (res.active) {
-            const diffs = [1, 2, 5, 6].map(s => {
-                if (rP_num === 0) return res.probs[s]; // 0回なら分母が大きいほど近い
-                return Math.abs(rP_num - res.probs[s]);
-            });
+            const diffs = [1, 2, 5, 6].map(s => (rP_num === 0) ? res.probs[s] : Math.abs(rP_num - res.probs[s]));
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => {
                 const isClosest = (diffs[idx] === minDiff);
@@ -222,10 +216,10 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
 
-    // 名前：機種名：日付 サマリーの復旧
-    const dStr = document.getElementById('date-display').innerText;
-    const uName = document.getElementById('user-name').value || "Guest";
-    addLog(`\n${uName} : ${machine.name} : ${dStr}`, "text-white font-bold mt-2");
+    // サマリー表示の完全配線
+    const finalName = uNameOverride || document.getElementById('user-name').value || "Guest";
+    const finalDate = dateOverride || document.getElementById('date-display').innerText;
+    addLog(`\n${finalName} : ${machine.name} : ${finalDate}`, "text-white font-bold mt-2");
 }
 
 async function run(file) {
@@ -240,14 +234,10 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-        
         addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
-        
         const fullText = merged.join(" ");
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
-        
         await syncHistory(machine.name);
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -262,7 +252,6 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
         document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
-        
         addLog(`\n（３）仮想配列作成・補正プロセス`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
@@ -271,38 +260,28 @@ async function run(file) {
                 const cDef = machine.def[extracted.length];
                 let p = 0, c = null;
                 const clL = l.replace(/[\s,]/g,''); 
-                
                 if (clL.includes('/') && clL.includes('-')) {
-                    c = 0;
-                    addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]");
+                    c = 0; addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]");
                 } else {
-                    const dm = clL.match(/(\d+\.\d+)/);
-                    if(dm) p = parseFloat(dm[1]);
+                    const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                     for (let j of [1, 2, 3]) {
                         if (ptr - j < 0) continue;
                         const tl = merged[ptr - j].replace(/[\s,]/g, '');
-                        const numM = tl.match(/(\d+)/);
-                        if (numM) { c = parseInt(numM[1]); break; }
+                        const numM = tl.match(/(\d+)/); if (numM) { c = parseInt(numM[1]); break; }
                     }
-                    let nC = gCounts[0];
-                    if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
-                        nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
-                    }
+                    let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") { nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG); }
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
-                    if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) {
-                        c = expC;
-                    }
+                    if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) { c = expC; }
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p});
-                if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
+                extracted.push({c, p}); if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
             }
             ptr++;
         }
-        drawAnalysisLogs(machine, gCounts, extracted);
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
         document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
+        drawAnalysisLogs(machine, gCounts, extracted);
         await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
@@ -326,10 +305,10 @@ async function loadHistory(p){
     logDisplay.innerHTML = "";
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20} : {def:HANABI_CONFIG, bG:29};
+        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
         document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
-        drawAnalysisLogs(m, s.gameCounts, s.extractedData);
+        drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date);
     }
 }
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
