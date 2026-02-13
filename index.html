@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.5.50</title>
+    <title>ANALYZER Rev 3.5.52</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -23,30 +23,24 @@
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; white-space: nowrap; overflow: hidden; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
-        .aura-red { background-color: #b91c1c !important; color: white !important; font-weight: bold; }
-        .aura-green { background-color: #15803d !important; color: white !important; font-weight: bold; }
-        .aura-yellow { background-color: #a16207 !important; color: white !important; font-weight: bold; }
-        .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
-        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 14px; font-weight: bold; border-radius: 6px; outline: none; }
-        .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
-        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
+        .nav-btn { background: #2563eb; color: #fff; border-radius: 4px; padding: 4px 12px; font-size: 14px; font-weight: bold; }
+        .nav-btn:disabled { background: #1e293b; color: #475569; opacity: 0.5; cursor: not-allowed; }
         .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.50</div>
+        <div class="rev-tag">Revision 3.5.52</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-6 flex justify-between items-center text-[10px] font-bold">
             <div id="machine-info-left" class="text-blue-400">READY</div>
-            <div class="flex items-center gap-2">
-                <button id="prev-btn" class="nav-btn" disabled>◁</button>
-                <span id="date-display" class="text-white font-mono"></span>
-                <button id="next-btn" class="nav-btn" disabled>▷</button>
+            <div class="flex items-center gap-4">
+                <button id="prev-btn" class="nav-btn" disabled>過去</button>
+                <span id="date-display" class="text-white font-mono text-[12px]">----/--/-- --:--</span>
+                <button id="next-btn" class="nav-btn" disabled>次へ</button>
             </div>
         </div>
         <div class="w-full flex flex-col gap-3">
@@ -69,9 +63,7 @@
     </div>
 
 <script>
-/* ============================================================
-   【聖域】CONFIGURATIONS (Rev 3.1.11 復元版)
-   ============================================================ */
+/* === 【聖域】CONFIGURATIONS === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -117,21 +109,13 @@ const HANABI_CONFIG = [
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
-    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
-    { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
@@ -143,11 +127,9 @@ let hPaths = []; let hIdx = -1;
 
 function drawAnalysisLogs(machine, gCounts, extracted) {
     let bbCount = 0;
-    // 【同期固定】df.mapのインデックスiでextracted[i]を絶対同期
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
-        // 【動的分母】事実に基づく検定用分母の切り替え
         if(df.type === "vc" || df.type === "vg" || df.type === "big") {
             n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
         }
@@ -170,28 +152,9 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
     });
-    const top3Ids = [...intensityData].sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
-
-    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
-    const t5 = document.createElement('table'); t5.className='log-table';
-    t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb5 = t5.querySelector('tbody');
+    
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
-    intensityData.forEach(c => {
-        const r = document.createElement('tr');
-        let aura = ""; const rk = top3Ids.indexOf(c.id);
-        if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
-        const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
-        let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
-        [1,2,5,6].forEach(s => {
-            totalLLs[s] += c.iLLs[s];
-            const gM = c.maxL - c.iLLs[s];
-            const st = gM < 0.2 ? 5 : gM < 0.8 ? 4 : gM < 1.6 ? 3 : gM < 3.2 ? 2 : 1;
-            cls += `<td style="color:${gM < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
-        });
-        r.innerHTML = cls; tb5.appendChild(r);
-    });
-    logDisplay.appendChild(t5);
+    intensityData.forEach(c => { [1,2,5,6].forEach(s => { totalLLs[s] += c.iLLs[s]; }); });
 
     const mx = Math.max(...Object.values(totalLLs));
     let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
@@ -215,13 +178,9 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-        addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
         const fullText = merged.join(" ");
-        let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
+        let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : (fullText.includes("スマスロ") || fullText.includes("ハナビ スマスロ")) ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
         
-        // 【修正】判明した瞬間に履歴リストを取得
-        await syncHistory(machine.name);
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -241,37 +200,16 @@ async function run(file) {
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr]; if(l.includes('/')) {
                 const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/,/g,''); const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
-                
-                // 【聖域】抽出優先度：ptr-2 ➔ ptr-3
                 for (let j of [2, 3]) {
                     if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/,/g, ''); 
-                    const numM = tl.match(/(\d+)/); 
-                    if (numM) { 
-                        c = parseInt(numM[1]); 
-                        if (!tl.includes('回')) addLog(`  ⚠️回なし(idx:${extracted.length})`, "text-yellow-500 text-[7px]");
-                        break; 
-                    }
+                    const numM = tl.match(/(\d+)/); if (numM) { c = parseInt(numM[1]); break; }
                 }
-                
-                // 動的分母の算出 (2σ検定用)
-                let nC = gCounts[0]; 
-                if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
-                    nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
-                }
-                
+                let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") { nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG); }
                 const expC = (p > 0) ? Math.round(nC / p) : 0;
-                if (c === null) {
-                    c = expC; addLog(`  ⚠️欠損補正(idx:${extracted.length}) ➔ ${c}回`, "text-red-400 text-[7px]");
-                } else if (p > 1.5) { 
-                    const prob = 1/p; const sigma = Math.sqrt(nC * prob * (1 - prob));
-                    if (Math.abs(c - expC) > 2.5 * sigma || c > expC * 5 || (expC > 20 && c < expC / 4)) {
-                        addLog(`  ⚠️2σ異常(idx:${extracted.length}) OCR:${c} ➔ 補正:${expC}`, "text-red-500 font-bold text-[7px]");
-                        c = expC;
-                    }
-                }
-                if(cDef.id === "bb" || cDef.id === "bb_tot") bb_for_rt = c;
-                extracted.push({c, p}); addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
-            } ptr++;
+                if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
+                if(cDef.id === "bb") bb_for_rt = c;
+                extracted.push({c, p}); ptr++;
+            } else ptr++;
         }
         drawAnalysisLogs(machine, gCounts, extracted);
         const dStr = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1] + " " + (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
@@ -280,53 +218,53 @@ async function run(file) {
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-async function gh(m,p,b=null){ const t=document.getElementById('gh-token').value; if(!t)return null; const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); return res.ok?await res.json():null; }
+async function gh(m,p,b=null){ 
+    const t=document.getElementById('gh-token').value; if(!t)return null; 
+    const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); 
+    return res.ok?await res.json():null; 
+}
 
 async function saveCloud(snap){
     const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
     await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    addLog(`\n✅ Cloud Synced：${n}　${snap.machineName}　${snap.date}`, "text-green-600 font-bold text-[8px]");
     await syncHistory(snap.machineName);
 }
 
-// 【修正】非同期処理の待ち合わせを徹底
+// 【修理】ボタンの活性化とソートを完全に同期
 async function syncHistory(mName){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const res=await gh("GET",`data/${h}/${mName}`);
+    const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
     if(res&&Array.isArray(res)){ 
-        hPaths=res.map(f=>f.path).sort(); 
+        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); 
         hIdx=hPaths.length-1; 
-    } else { 
-        hPaths=[]; hIdx=-1; 
-    }
+    } else { hPaths=[]; hIdx=-1; }
     updateNavUI();
 }
 
 function updateNavUI(){ 
-    document.getElementById('prev-btn').disabled=(hIdx<=0); 
-    document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); 
+    const pb = document.getElementById('prev-btn'), nb = document.getElementById('next-btn');
+    pb.disabled = (hIdx <= 0); 
+    nb.disabled = (hIdx >= hPaths.length - 1 || hIdx === -1);
 }
 
-// 【修理】履歴読み込みと再描画の配線
 async function loadHistory(p){
     logDisplay.innerHTML = "";
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
+        let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20} : {def:HANABI_CONFIG, bG:29};
         document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
-        // 再描画を呼び出し
         drawAnalysisLogs(m, s.gameCounts, s.extractedData);
-        addLog(`\n◀ HISTORY LOADED：${s.name}　${s.machineName}　${s.date}`, "text-green-400 font-bold text-[8px]");
+        addLog(`\n◀ 履歴読込成功：${s.date}`, "text-green-400 font-bold");
     }
 }
 
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
 document.getElementById('next-btn').onclick=async()=>{if(hIdx<hPaths.length-1){hIdx++; await loadHistory(hPaths[hIdx]); updateNavUI();}};
-document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED");};
+document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("設定保存完了");};
 window.onload=()=>{document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';};
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
 document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
