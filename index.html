@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.33</title>
+    <title>HANABI ANALYZER Rev 3.5.34</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.33</div>
+        <div class="rev-tag">Revision 3.5.34</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -170,7 +170,6 @@ function processInference(machine, gCounts, extracted, clearLog = false) {
     });
     logDisplay.appendChild(t4);
 
-    // active: true の項目のみで尤度計算を行うことを厳格化
     const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
@@ -222,12 +221,10 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-
         addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
         const fullText = merged.join(" ");
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ", type:"NORMAL"};
         currentMachineName = machine.name;
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -243,7 +240,6 @@ async function run(file) {
         }
         if(anchorIdx === -1) throw new Error("GNotFound");
         document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
-
         const extracted = []; let ptr = anchorIdx + 1;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr]; if(l.includes('/')) {
@@ -255,7 +251,6 @@ async function run(file) {
         }
         addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
         extracted.forEach((e, idx) => addLog(`[idx:${idx}] 1/${e.p.toFixed(1)} (${e.c}回)`, "text-zinc-500 text-[8px]"));
-
         const inferRes = processInference(machine, gCounts, extracted, false);
         if(!inferRes.isGuard) {
             const now = new Date(); const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
@@ -296,12 +291,13 @@ async function loadHistory(p){
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
         const mName = s.machineName || s.m; const gCnt = s.gameCounts || s.g; const exDt = s.extractedData || s.ex;
+        const sDate = s.date || s.d;
         let machine = mName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : mName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
-        currentMachineName = mName; // 履歴読込時も機種名を更新
+        currentMachineName = mName;
         document.getElementById('machine-info-left').innerText = `${mName} : ${gCnt[0].toLocaleString()}G`;
-        document.getElementById('date-display').innerText = s.date || s.d;
+        document.getElementById('date-display').innerText = sDate;
         processInference(machine, gCnt, exDt, true);
-        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mName}`, "text-green-400 font-bold");
+        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mName} (${sDate})`, "text-green-400 font-bold");
     }
 }
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
