@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.6.0</title>
+    <title>ANALYZER Rev 3.6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -26,7 +26,7 @@
 </head>
 <body>
     <div class="main-title">HANABI ANALYZER</div>
-    <div class="rev-tag">Revision 3.6.0 (Recovery Complete)</div>
+    <div class="rev-tag">Revision 3.6.1 (Integrated Repair)</div>
     <label for="f-in" class="main-btn"><span>解析実行</span></label>
     <input type="file" id="f-in" class="hidden" accept="image/*">
 
@@ -55,7 +55,7 @@
     </div>
 
 <script>
-/* === 聖域（定義表：一切の改変禁止） === */
+/* === 聖域（定義表：機種構成19項目絶対死守） === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -112,38 +112,36 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-/* === システム変数 === */
+/* === システム制御 === */
 let hPaths = []; let hIdx = -1; let currentMachine = null;
-const G_OWNER = "vs777-coder";
-const G_REPO = "VersusRexseHanabi";
+const G_OWNER = "vs777-coder"; const G_REPO = "VersusRexseHanabi";
 
 const addLog = (m, clear=false) => { 
     const e = document.getElementById('log-display'); 
     if(clear) e.innerHTML = "";
-    e.innerHTML += `<div>${m}</div>`; 
-    e.scrollTop = e.scrollHeight; 
+    e.innerHTML += `<div>${m}</div>`; e.scrollTop = e.scrollHeight; 
 };
 
-/* === 初期化: データの復元 === */
 window.onload = () => {
     document.getElementById('api-key').value = localStorage.getItem('v_key') || "";
     document.getElementById('user-name').value = localStorage.getItem('u_name') || "";
     document.getElementById('gh-token').value = localStorage.getItem('g_token') || "";
 };
 
-/* === 保存機能: 設定の永続化 === */
 document.getElementById('sv-all').onclick = () => {
     localStorage.setItem('v_key', document.getElementById('api-key').value);
     localStorage.setItem('u_name', document.getElementById('user-name').value);
     localStorage.setItem('g_token', document.getElementById('gh-token').value);
-    alert("Settings Saved Locally.");
+    alert("設定を保存しました。");
 };
 
 function calculate(machine, gCounts, extracted, isHistory = false) {
     let bbCount = 0;
+    // インデックス同期絶対死守
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
+        // 動的分母: RT中・BIG中を事実から算出
         if(df.type === "vc" || df.type === "vg" || df.type === "big") {
             n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
         }
@@ -173,11 +171,9 @@ function calculate(machine, gCounts, extracted, isHistory = false) {
     });
     addLog(html + `</table>`, isHistory);
 
-    // 新規解析時のみ保存実行
     if(!isHistory) uploadResult(machine.name, {machine, gCounts, extracted, date: new Date().toLocaleString()});
 }
 
-/* === 解析実行メイン === */
 async function run(file) {
     const k = document.getElementById('api-key').value; if(!k) return alert("Key!");
     addLog("Analyzing...", true);
@@ -195,44 +191,43 @@ async function run(file) {
         document.getElementById('date-display').innerText = new Date().toLocaleString();
 
         const extracted = [];
-        lines.forEach(line => {
-            if(line.includes('/')) {
-                const p = parseFloat(line.match(/(\d+\.\d+)/)?.[1] || 0);
-                const c = Math.round(gCounts[0] / p) || 0;
+        // ptr-2, ptr-3 抽出ルール復元
+        for(let i=0; i < lines.length; i++) {
+            if(lines[i].includes('/')) {
+                const p = parseFloat(lines[i].match(/(\d+\.\d+)/)?.[1] || 0);
+                let c = 0;
+                for(let j of [1,2,3]) {
+                    const prev = lines[i-j]?.match(/(\d+)/);
+                    if(prev) { c = parseInt(prev[1]); break; }
+                }
                 extracted.push({c, p});
             }
-        });
-
+        }
         calculate(machine, gCounts, extracted);
     } catch(e) { addLog("ERROR: " + e.message); }
 }
 
-/* === GitHub API: 書き込み (PUT) === */
 async function uploadResult(mName, data) {
     const token = document.getElementById('gh-token').value;
     const user = document.getElementById('user-name').value;
     if(!token || !user) return;
-
     const ts = Date.now();
     const path = `data/user/${mName}/${user}_${ts}.json`;
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-
     try {
         await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/${path}`, {
             method: 'PUT',
             headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: `Save result ${ts}`, content })
+            body: JSON.stringify({ message: `Save ${ts}`, content })
         });
-        addLog("Data synced to GitHub.");
-        syncHistoryList(mName); // 履歴リスト更新
+        syncHistoryList(mName);
     } catch(e) { console.error(e); }
 }
 
-/* === GitHub API: 履歴リスト取得 === */
 async function syncHistoryList(mName) {
     const t = document.getElementById('gh-token').value; if(!t) return;
     try {
-        const res = await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/data/user/${mName}`,{headers:{Authorization:`token ${t}`}});
+        const res = await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/data/user/${mName}?t=${Date.now()}`,{headers:{Authorization:`token ${t}`}});
         if(res.ok) {
             const files = await res.json();
             hPaths = files.map(f => f.path).sort();
@@ -242,7 +237,6 @@ async function syncHistoryList(mName) {
     } catch(e) { console.error(e); }
 }
 
-/* === 履歴表示の切り替え === */
 async function loadHistory(idx) {
     const t = document.getElementById('gh-token').value;
     const path = hPaths[idx];
@@ -250,12 +244,11 @@ async function loadHistory(idx) {
         const res = await fetch(`https://api.github.com/repos/${G_OWNER}/${G_REPO}/contents/${path}`,{headers:{Authorization:`token ${t}`}});
         const json = await res.json();
         const data = JSON.parse(decodeURIComponent(escape(atob(json.content))));
-        
         document.getElementById('machine-info-left').innerText = `${data.machine.name} : ${data.gCounts[0]}G`;
-        document.getElementById('date-display').innerText = data.date || "Unknown Date";
+        document.getElementById('date-display').innerText = data.date;
         calculate(data.machine, data.gCounts, data.extracted, true);
         updateNavUI();
-    } catch(e) { addLog("Load Error: " + e.message); }
+    } catch(e) { addLog("Load Error"); }
 }
 
 function updateNavUI() {
@@ -263,11 +256,9 @@ function updateNavUI() {
     document.getElementById('next-btn').disabled = (hIdx >= hPaths.length - 1 || hIdx === -1);
 }
 
-/* === イベントリスナー === */
 document.getElementById('f-in').onchange = e => run(e.target.files[0]);
 document.getElementById('prev-btn').onclick = () => { if(hIdx > 0) { hIdx--; loadHistory(hIdx); } };
 document.getElementById('next-btn').onclick = () => { if(hIdx < hPaths.length - 1) { hIdx++; loadHistory(hIdx); } };
-
 </script>
 </body>
 </html>
