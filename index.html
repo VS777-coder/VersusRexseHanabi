@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.33</title>
+    <title>HANABI ANALYZER Rev 3.5.35</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -24,23 +24,23 @@
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; white-space: nowrap; overflow: hidden; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
         
-        /* 尤度オーラの修正 (背景重視) */
-        .aura-red { background-color: #ef4444 !important; color: #ffffff !important; font-weight: 900; }
-        .aura-green { background-color: #22c55e !important; color: #ffffff !important; font-weight: 900; }
-        .aura-yellow { background-color: #eab308 !important; color: #ffffff !important; font-weight: 900; }
+        /* 尤度オーラ：派手さを抑えた「見やすい」塗り */
+        .aura-red { background-color: #b91c1c !important; color: white !important; }
+        .aura-green { background-color: #15803d !important; color: white !important; }
+        .aura-yellow { background-color: #a16207 !important; color: white !important; }
 
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 14px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
-        .nav-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+        .nav-btn:disabled { opacity: 0.1; cursor: not-allowed; }
         .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
     </style>
 </head>
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.33</div>
+        <div class="rev-tag">Revision 3.5.35</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -189,8 +189,7 @@ function processInference(machine, gCounts, extracted, silent = false) {
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
     intensityData.forEach(c => {
         const r = document.createElement('tr');
-        let aura = ""; 
-        const rk = top3Ids.indexOf(c.id);
+        let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
         const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
@@ -235,6 +234,7 @@ async function run(file) {
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ", type:"NORMAL"};
         
         const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
+        const tMatch = fullText.match(/(\d{1,2}:\d{2})/);
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -272,8 +272,9 @@ async function run(file) {
 
         const resIn = processInference(machine, gCounts, extracted, false);
         if(!resIn.isGuard) {
-            const timeStr = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
-            const dStr = (dMatch ? dMatch[1] : new Date().toLocaleDateString('ja-JP')) + " " + timeStr;
+            const finalDate = dMatch ? dMatch[1] : new Date().toLocaleDateString('ja-JP');
+            const finalTime = tMatch ? tMatch[1] : (new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0'));
+            const dStr = finalDate + " " + finalTime;
             document.getElementById('date-display').innerText = dStr;
             saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
         }
