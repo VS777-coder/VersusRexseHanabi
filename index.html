@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.5.32</title>
+    <title>HANABI ANALYZER Rev 3.5.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -23,9 +23,12 @@
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 4px 1px; text-align: center; white-space: nowrap; overflow: hidden; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
-        .aura-red { background: #ef4444 !important; color: white !important; box-shadow: 0 0 10px #ef4444; }
-        .aura-green { background: #22c55e !important; color: white !important; box-shadow: 0 0 10px #22c55e; }
-        .aura-yellow { background: #eab308 !important; color: white !important; box-shadow: 0 0 10px #eab308; }
+        
+        /* 尤度オーラの修正 (背景重視) */
+        .aura-red { background-color: #ef4444 !important; color: #ffffff !important; font-weight: 900; }
+        .aura-green { background-color: #22c55e !important; color: #ffffff !important; font-weight: 900; }
+        .aura-yellow { background-color: #eab308 !important; color: #ffffff !important; font-weight: 900; }
+
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 6px 8px; font-size: 14px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
@@ -37,7 +40,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.32</div>
+        <div class="rev-tag">Revision 3.5.33</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -140,15 +143,11 @@ const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function processInference(machine, gCounts, extracted, silent = false, dateStr = "") {
+function processInference(machine, gCounts, extracted, silent = false) {
     if(!silent) logDisplay.innerHTML = "";
-    
     if(gCounts[0] < 100) {
         if(!silent) addLog("\n⚠️ 判定不可: 100G未満のデータは解析対象外です。", "text-red-500 font-bold text-sm");
-        [1,2,5,6].forEach(s => {
-            document.getElementById(`p${s}`).innerText = "25.0%";
-            document.getElementById(`b${s}`).style.width = "25%";
-        });
+        [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText="25.0%"; document.getElementById(`b${s}`).style.width="25%"; });
         return { isGuard: true };
     }
 
@@ -180,8 +179,8 @@ function processInference(machine, gCounts, extracted, silent = false, dateStr =
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
     });
-    const sortedIntensity = [...intensityData].sort((a,b) => b.int - a.int);
-    const top3Ids = sortedIntensity.slice(0,3).map(x => x.id);
+    const sortedInt = [...intensityData].sort((a,b) => b.int - a.int);
+    const top3Ids = sortedInt.slice(0,3).map(x => x.id);
 
     if(!silent) addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
@@ -190,14 +189,11 @@ function processInference(machine, gCounts, extracted, silent = false, dateStr =
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
     intensityData.forEach(c => {
         const r = document.createElement('tr');
-        let auraClass = ""; 
-        const rank = top3Ids.indexOf(c.id);
-        if(rank === 0) auraClass = "aura-red"; 
-        else if(rank === 1) auraClass = "aura-green"; 
-        else if(rank === 2) auraClass = "aura-yellow";
-
+        let aura = ""; 
+        const rk = top3Ids.indexOf(c.id);
+        if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
         const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
-        let cls = `<td class="${auraClass}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${auraClass}">${gB}</td>`;
+        let cls = `<td class="${aura}" style="text-align:left; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
             const gM = c.maxL - c.iLLs[s];
@@ -209,23 +205,16 @@ function processInference(machine, gCounts, extracted, silent = false, dateStr =
     if(!silent) logDisplay.appendChild(t5);
 
     const mx = Math.max(...Object.values(totalLLs));
-    let sumExp = 0; [1,2,5,6].forEach(s => { sumExp += Math.exp(totalLLs[s] - mx); });
+    let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
     
-    const resP = {};
     if(!silent) addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
     [1,2,5,6].forEach(s => {
-        let pr = (sumExp === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sumExp) * 100;
-        resP[s] = pr;
+        let pr = (sm === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sm) * 100;
         document.getElementById(`p${s}`).innerText = pr.toFixed(1) + "%";
         document.getElementById(`b${s}`).style.width = pr + "%";
         if(!silent) addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
-
-    if(!silent && dateStr) {
-        addLog(`\n解析完了: ${dateStr}`, "text-[8px] text-zinc-500 italic mt-2");
-    }
-
-    return { resP, totalLLs, isGuard: false };
+    return { isGuard: false };
 }
 
 async function run(file) {
@@ -245,6 +234,7 @@ async function run(file) {
         const fullText = merged.join(" ");
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ", type:"NORMAL"};
         
+        const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = []; let gLocked = false;
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -252,15 +242,9 @@ async function run(file) {
 
         for(let i=0; i < searchScope.length; i++) {
             if(gLocked) break; const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
-                const v = parseInt(t.replace(/[^0-9]/g,'')); 
-                if(!isNaN(v) && v >= 0) {
+                const v = parseInt(t.replace(/[^0-9]/g,'')); if(!isNaN(v) && v >= 0) {
                     if(machine.type === "NORMAL") { anchorIdx = i + offset; gCounts = [v]; gLocked = true; }
-                    else if(machine.type === "SMASLO") { 
-                        if(anchorIdx === -1) anchorIdx = i + offset; 
-                        if(gCounts.length === 0 || (i + offset === anchorIdx + gCounts.length)) { 
-                            gCounts.push(v); if(gCounts.length === 3) gLocked = true; 
-                        } else gLocked = true; 
-                    }
+                    else if(machine.type === "SMASLO") { if(anchorIdx === -1) anchorIdx = i + offset; if(gCounts.length === 0 || (i + offset === anchorIdx + gCounts.length)) { gCounts.push(v); if(gCounts.length === 3) gLocked = true; } else gLocked = true; }
                 }
             }
         }
@@ -269,54 +253,27 @@ async function run(file) {
 
         const extracted = []; let ptr = anchorIdx + 1;
         while(extracted.length < machine.def.length && ptr < merged.length) {
-            const l = merged[ptr]; 
-            if(l.includes('/')) {
-                const currentDef = machine.def[extracted.length];
-                let p = 0, c = null; 
-                const cleanL = l.replace(/,/g,''); 
-                const dm = cleanL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
-
+            const l = merged[ptr]; if(l.includes('/')) {
+                const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/,/g,''); const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                 for (let j of [2, 3]) {
-                    if (ptr - j < 0) continue;
-                    const tl = merged[ptr - j].replace(/,/g, '');
-                    const hasKai = tl.includes('回');
-                    const numMatch = tl.match(/(\d+)/);
-                    if (numMatch) {
-                        c = parseInt(numMatch[1]);
-                        if (!hasKai) addLog(`⚠️回なし(idx:${extracted.length})`, "text-yellow-500 text-[7px]");
-                        if (j === 3) addLog(`⚠️ptr-3参照(idx:${extracted.length})`, "text-orange-400 text-[7px]");
-                        break;
-                    }
+                    if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/,/g, ''); const numM = tl.match(/(\d+)/);
+                    if (numM) { c = parseInt(numM[1]); if (!tl.includes('回')) addLog(`⚠️回なし(idx:${extracted.length})`, "text-yellow-500 text-[7px]"); if (j === 3) addLog(`⚠️ptr-3参照(idx:${extracted.length})`, "text-orange-400 text-[7px]"); break; }
                 }
-
                 if (c === null) {
                     if (p > 0) {
-                        let nForCalc = gCounts[0];
-                        if(currentDef.type === "vc") nForCalc = gCounts[1] || Math.round(p * 5);
-                        if(currentDef.type === "vg") nForCalc = gCounts[2] || Math.round(p * 1);
-                        if(currentDef.type === "big") {
-                            const bbIdx = machine.def.findIndex(d => d.id === "bb");
-                            const bbVal = extracted[bbIdx] ? extracted[bbIdx].c : 0;
-                            nForCalc = bbVal * machine.bG;
-                        }
-                        c = Math.round(nForCalc / p);
-                        addLog(`⚠️回数欠損補正(idx:${extracted.length}) calc:${c}`, "text-red-400 font-bold text-[7px]");
-                    } else {
-                        throw new Error(`Extract Error idx:${extracted.length}`);
-                    }
+                        let nC = gCounts[0]; if(cDef.type === "vc") nC = gCounts[1] || Math.round(p * 5); if(cDef.type === "vg") nC = gCounts[2] || Math.round(p * 1); if(cDef.type === "big") { const bI = machine.def.findIndex(d => d.id === "bb"); nC = (extracted[bI] ? extracted[bI].c : 0) * machine.bG; }
+                        c = Math.round(nC / p); addLog(`⚠️回数欠損補正(idx:${extracted.length}) calc:${c}`, "text-red-400 font-bold text-[7px]");
+                    } else throw new Error(`Extract Error idx:${extracted.length}`);
                 }
                 extracted.push({c, p});
             } ptr++;
         }
-        addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold");
-        extracted.forEach((e, idx) => addLog(`[idx:${idx}] 1/${e.p.toFixed(1)} (${e.c}回)`, "text-zinc-500 text-[8px]"));
+        addLog(`\n（３）抽出データ・バリデーション`, "text-blue-400 font-bold"); extracted.forEach((e, idx) => addLog(`[idx:${idx}] 1/${e.p.toFixed(1)} (${e.c}回)`, "text-zinc-500 text-[8px]"));
 
-        const now = new Date(); const dMatch = fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/);
-        const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-        const dStr = (dMatch ? dMatch[1] : now.toLocaleDateString('ja-JP')) + " " + timeStr;
-        
-        const inferRes = processInference(machine, gCounts, extracted, false, dStr);
-        if(!inferRes.isGuard) {
+        const resIn = processInference(machine, gCounts, extracted, false);
+        if(!resIn.isGuard) {
+            const timeStr = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
+            const dStr = (dMatch ? dMatch[1] : new Date().toLocaleDateString('ja-JP')) + " " + timeStr;
             document.getElementById('date-display').innerText = dStr;
             saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
         }
@@ -337,22 +294,16 @@ async function syncHistory(d){
     const res=await gh("GET",`data/${h}/${d.replace(/\//g,'-')}`);
     if(res&&Array.isArray(res)){hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; updateNavUI();}
 }
-function updateNavUI(){ 
-    document.getElementById('prev-btn').disabled=(hIdx<=0); 
-    document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx === -1); 
-}
+function updateNavUI(){ document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx === -1); }
 async function loadHistory(p){
     const res=await gh("GET",p); if(res&&res.content){
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        const mName = s.machineName || s.m;
-        const gCnt = s.gameCounts || s.g;
-        const exDt = s.extractedData || s.ex;
-        const dStr = s.date || s.d;
-        let machine = mName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : mName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
-        document.getElementById('machine-info-left').innerText = `${mName} : ${gCnt[0].toLocaleString()}G`;
-        document.getElementById('date-display').innerText = dStr;
-        processInference(machine, gCnt, exDt, false, dStr);
-        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mName}`, "text-green-400 font-bold");
+        const mN = s.machineName || s.m, gC = s.gameCounts || s.g, eD = s.extractedData || s.ex, dS = s.date || s.d;
+        let m = mN.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : mN.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:28, name:"新ハナビ"};
+        document.getElementById('machine-info-left').innerText = `${mN} : ${gC[0].toLocaleString()}G`;
+        document.getElementById('date-display').innerText = dS;
+        processInference(m, gC, eD, false);
+        addLog(`\n◀ HISTORY LOADED: [${s.name}] ${mN}`, "text-green-400 font-bold");
     }
 }
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
