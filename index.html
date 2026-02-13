@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANALYZER Rev 3.5.49</title>
+    <title>ANALYZER Rev 3.5.50</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -37,7 +37,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.5.49</div>
+        <div class="rev-tag">Revision 3.5.50</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -69,7 +69,9 @@
     </div>
 
 <script>
-/* === 【聖域】CONFIG (Rev 3.1.11 準拠) === */
+/* ============================================================
+   【聖域】CONFIGURATIONS (Rev 3.1.11 復元版)
+   ============================================================ */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -141,7 +143,7 @@ let hPaths = []; let hIdx = -1;
 
 function drawAnalysisLogs(machine, gCounts, extracted) {
     let bbCount = 0;
-    // 【同期固定】activeフラグを無視し、インデックスiを直結させる
+    // 【同期固定】df.mapのインデックスiでextracted[i]を絶対同期
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; if(!da) return null;
         let n = gCounts[0];
@@ -217,6 +219,7 @@ async function run(file) {
         const fullText = merged.join(" ");
         let machine = fullText.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス", type:"NORMAL"} : fullText.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ", type:"SMASLO"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ", type:"NORMAL"};
         
+        // 【修正】判明した瞬間に履歴リストを取得
         await syncHistory(machine.name);
 
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
@@ -250,7 +253,7 @@ async function run(file) {
                     }
                 }
                 
-                // 【動的分母】事実に基づく2σ検定用分母の算出
+                // 動的分母の算出 (2σ検定用)
                 let nC = gCounts[0]; 
                 if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
                     nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
@@ -278,6 +281,7 @@ async function run(file) {
 }
 
 async function gh(m,p,b=null){ const t=document.getElementById('gh-token').value; if(!t)return null; const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); return res.ok?await res.json():null; }
+
 async function saveCloud(snap){
     const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
@@ -286,14 +290,27 @@ async function saveCloud(snap){
     addLog(`\n✅ Cloud Synced：${n}　${snap.machineName}　${snap.date}`, "text-green-600 font-bold text-[8px]");
     await syncHistory(snap.machineName);
 }
+
+// 【修正】非同期処理の待ち合わせを徹底
 async function syncHistory(mName){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${mName}`);
-    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort(); hIdx=hPaths.length-1; } else { hPaths=[]; hIdx=-1; }
+    if(res&&Array.isArray(res)){ 
+        hPaths=res.map(f=>f.path).sort(); 
+        hIdx=hPaths.length-1; 
+    } else { 
+        hPaths=[]; hIdx=-1; 
+    }
     updateNavUI();
 }
-function updateNavUI(){ document.getElementById('prev-btn').disabled=(hIdx<=0); document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); }
+
+function updateNavUI(){ 
+    document.getElementById('prev-btn').disabled=(hIdx<=0); 
+    document.getElementById('next-btn').disabled=(hIdx>=hPaths.length-1 || hIdx===-1); 
+}
+
+// 【修理】履歴読み込みと再描画の配線
 async function loadHistory(p){
     logDisplay.innerHTML = "";
     const res=await gh("GET",p); if(res&&res.content){
@@ -301,10 +318,12 @@ async function loadHistory(p){
         let m = s.machineName.includes("バーサス") ? {def:VERSUS_CONFIG, bG:28, name:"バーサス"} : s.machineName.includes("スマスロ") ? {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"} : {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
         document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
+        // 再描画を呼び出し
         drawAnalysisLogs(m, s.gameCounts, s.extractedData);
         addLog(`\n◀ HISTORY LOADED：${s.name}　${s.machineName}　${s.date}`, "text-green-400 font-bold text-[8px]");
     }
 }
+
 document.getElementById('prev-btn').onclick=async()=>{if(hIdx>0){hIdx--; await loadHistory(hPaths[hIdx]); updateNavUI();}};
 document.getElementById('next-btn').onclick=async()=>{if(hIdx<hPaths.length-1){hIdx++; await loadHistory(hPaths[hIdx]); updateNavUI();}};
 document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED");};
