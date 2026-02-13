@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.8.0</title>
+    <title>HANABI ANALYZER Rev 3.8.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -31,7 +31,8 @@
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: bold; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
+        .nav-btn:active { background: #3b82f6; }
         .nav-btn:disabled { opacity: 0.1; }
         .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
     </style>
@@ -39,16 +40,20 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.8.0</div>
+        <div class="rev-tag">Revision 3.8.1</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
-        <div class="w-full mb-3 flex justify-between items-center text-[10px] font-bold">
-            <div id="machine-info-left" class="text-blue-400 w-[110px] overflow-hidden whitespace-nowrap">新ハナビ</div>
-            <div class="flex items-center gap-1">
-                <button id="prev-btn" class="nav-btn">◁</button>
-                <div class="w-[125px] text-center"><span id="date-display" class="text-white font-mono text-[9px]">NO DATA</span></div>
-                <button id="next-btn" class="nav-btn">▷</button>
+        <div class="w-full mb-3 flex justify-between items-center font-bold">
+            <div class="flex items-center gap-1 text-blue-400 text-[10px]">
+                <button id="m-prev" class="nav-btn">◁</button>
+                <span id="machine-name-display">新ハナビ</span>
+                <button id="m-next" class="nav-btn">▷</button>
+            </div>
+            <div class="flex items-center gap-1 text-white text-[9px]">
+                <button id="d-prev" class="nav-btn">◁</button>
+                <span id="date-display" class="font-mono">NO DATA</span>
+                <button id="d-next" class="nav-btn">▷</button>
             </div>
         </div>
         <div class="w-full flex flex-col gap-2">
@@ -71,7 +76,7 @@
     </div>
 
 <script>
-/* === 聖域：CONFIGURATIONS === */
+/* === 聖域：CONFIGURATIONS (デグレード厳禁) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -138,13 +143,13 @@ const VERSUS_CONFIG = [
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
 let currentMachineIdx = 0;
-let lastAnalysisResult = null; // 【バッファ】解析直後のデータを退避
+let lastAnalysisResult = null;
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function fullRefresh() {
+function resetUI() {
     [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText = "---"; document.getElementById(`b${s}`).style.width = "0%"; });
     document.getElementById('date-display').innerText = "NO DATA";
     logDisplay.innerHTML = "READY...";
@@ -176,13 +181,10 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const rP_num = res.k > 0 ? (res.n / res.k) : 0;
         const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td class="${res.active ? 'val-red' : ''}">${res.k}</td><td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
-        if(res.active) {
+        if (res.active) {
             const diffs = [1, 2, 5, 6].map(s => (rP_num === 0) ? res.probs[s] : Math.abs(rP_num - res.probs[s]));
             const minDiff = Math.min(...diffs);
-            [1, 2, 5, 6].forEach((s, idx) => {
-                const isClosest = (diffs[idx] === minDiff);
-                rowHtml += `<td class="${isClosest ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`;
-            });
+            [1, 2, 5, 6].forEach((s, idx) => { rowHtml += `<td class="${diffs[idx] === minDiff ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`; });
         } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
@@ -206,8 +208,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
-            totalLLs[s] += c.iLLs[s];
-            const gM = c.maxL - c.iLLs[s];
+            totalLLs[s] += c.iLLs[s]; const gM = c.maxL - c.iLLs[s];
             const st = gM < 0.2 ? 5 : gM < 0.8 ? 4 : gM < 1.6 ? 3 : gM < 3.2 ? 2 : 1;
             cls += `<td style="color:${gM < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
@@ -232,7 +233,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
     logDisplay.innerHTML = "";
-    addLog(`（１）画像情報`, "text-blue-400 font-bold"); addLog(`  FILE: ${file.name}`);
+    addLog(`（１）画像情報`, "text-blue-400 font-bold");
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -241,11 +242,10 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-        addLog(`\n（２）画像の生データ出力`, "text-blue-400 font-bold"); merged.forEach(l => addLog(`| ${l}`, "text-[7px] text-zinc-600"));
         const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
         currentMachineIdx = MACHINE_LIST.indexOf(machine.name);
-        document.getElementById('machine-info-left').innerText = machine.name;
+        document.getElementById('machine-name-display').innerText = machine.name;
 
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = [];
@@ -257,25 +257,21 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
-        document.getElementById('machine-info-left').innerText = `${machine.name} : ${gCounts[0].toLocaleString()}G`;
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
             if(l.includes('/')) {
                 const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
-                if (clL.includes('/') && clL.includes('-')) { c = 0; addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]"); }
+                if (clL.includes('/') && clL.includes('-')) c = 0;
                 else {
                     const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
-                    for (let j of [1, 2, 3]) {
-                        if (ptr - j < 0) continue; const tl = merged[ptr - j].replace(/[\s,]/g, '');
-                        const numM = tl.match(/(\d+)/); if (numM) { c = parseInt(numM[1]); break; }
-                    }
+                    for (let j of [1,2,3]) { const tl = (merged[ptr-j]||"").replace(/[\s,]/g,''); const nm = tl.match(/(\d+)/); if(nm){ c = parseInt(nm[1]); break; } }
                     let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p}); if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
+                extracted.push({c, p});
             }
             ptr++;
         }
@@ -283,7 +279,6 @@ async function run(file) {
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
         document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
         
-        // 【バッファ保持】解析直後の状態を保存
         lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "" };
         drawAnalysisLogs(machine, gCounts, extracted);
         lastAnalysisResult.logHtml = logDisplay.innerHTML;
@@ -310,7 +305,6 @@ async function syncHistory(mName, autoLoad = true){
     } else { hPaths=[]; hIdx=-1; }
 }
 async function loadHistory(p){
-    // もし今解析したばかりのデータに戻ってきたらバッファから出す
     if(lastAnalysisResult && p === "current"){
         logDisplay.innerHTML = lastAnalysisResult.logHtml;
         drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date);
@@ -320,34 +314,38 @@ async function loadHistory(p){
         logDisplay.innerHTML = "";
         const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
         const m = getMachineDef(s.machineName);
-        document.getElementById('machine-info-left').innerText = `${s.machineName} : ${s.gameCounts[0].toLocaleString()}G`;
         document.getElementById('date-display').innerText = s.date;
         drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date);
     }
 }
 
-document.getElementById('prev-btn').onclick=async()=>{
-    if(lastAnalysisResult && hIdx === hPaths.length-1) { // 今解析した状態から過去へ
-        hIdx--; await loadHistory(hPaths[hIdx+1]);
-    } else {
-        currentMachineIdx = (currentMachineIdx - 1 + MACHINE_LIST.length) % MACHINE_LIST.length;
-        fullRefresh();
-        document.getElementById('machine-info-left').innerText = MACHINE_LIST[currentMachineIdx];
-        await syncHistory(MACHINE_LIST[currentMachineIdx], true);
-    }
-};
-document.getElementById('next-btn').onclick=async()=>{
-    currentMachineIdx = (currentMachineIdx + 1) % MACHINE_LIST.length;
-    fullRefresh();
-    document.getElementById('machine-info-left').innerText = MACHINE_LIST[currentMachineIdx];
+// 【左側】機種切替ナビ
+document.getElementById('m-prev').onclick=async()=>{
+    currentMachineIdx = (currentMachineIdx - 1 + MACHINE_LIST.length) % MACHINE_LIST.length;
+    fullRefresh(); document.getElementById('machine-name-display').innerText = MACHINE_LIST[currentMachineIdx];
     await syncHistory(MACHINE_LIST[currentMachineIdx], true);
 };
+document.getElementById('m-next').onclick=async()=>{
+    currentMachineIdx = (currentMachineIdx + 1) % MACHINE_LIST.length;
+    fullRefresh(); document.getElementById('machine-name-display').innerText = MACHINE_LIST[currentMachineIdx];
+    await syncHistory(MACHINE_LIST[currentMachineIdx], true);
+};
+
+// 【右側】日付遷移ナビ
+document.getElementById('d-prev').onclick=async()=>{
+    if(hIdx > 0){ hIdx--; await loadHistory(hPaths[hIdx]); }
+};
+document.getElementById('d-next').onclick=async()=>{
+    if(hIdx < hPaths.length - 1){ hIdx++; await loadHistory(hPaths[hIdx]); }
+    else if(lastAnalysisResult && hIdx === hPaths.length - 1){ await loadHistory("current"); }
+};
+
 document.getElementById('sv-all').onclick=()=>{localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true);};
 window.onload=()=>{
     document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
     document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
     document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';
-    document.getElementById('machine-info-left').innerText = MACHINE_LIST[0];
+    document.getElementById('machine-name-display').innerText = MACHINE_LIST[0];
     syncHistory(MACHINE_LIST[0], true);
 };
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
