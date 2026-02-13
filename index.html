@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.6.9</title>
+    <title>HANABI ANALYZER Rev 3.7.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -39,7 +39,7 @@
 <body>
     <div class="app-header">
         <div class="main-title">HANABI ANALYZER</div>
-        <div class="rev-tag">Revision 3.6.9</div>
+        <div class="rev-tag">Revision 3.7.0</div>
     </div>
     <div class="shrink-0 mb-2"><label for="f-in" class="main-btn"><span>解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
@@ -71,7 +71,7 @@
     </div>
 
 <script>
-/* === 聖域（19項目マッピング順序を固定） === */
+/* === CONFIGURATIONS (DEFINITIONS) [反映済み] === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -117,17 +117,17 @@ const HANABI_CONFIG = [
 const VERSUS_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 164.3, 2: 155.3, 5: 147.9, 6: 138.8} },
     { id: "bb", name: "ビックボーナス合算", active: true, type: "normal", probs: {1: 292.6, 2: 284.9, 5: 275.4, 6: 264.3} },
-    { id: "xbb", name: "XBB", active: true, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
-    { id: "red7", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
+    { id: "xbb", name: "XBB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
+    { id: "7bb", name: "7BB", active: false, type: "normal", probs: {1: 585.2, 2: 569.8, 5: 550.8, 6: 528.6} },
     { id: "rb", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 374.5, 2: 341.3, 5: 319.7, 6: 292.6} },
     { id: "f_tot", name: "ベル合算", active: false, type: "normal", probs: {1: 7.22, 2: 7.1, 5: 6.9, 6: 6.8} },
     { id: "ba", name: "ベルＡ", active: true, type: "normal", probs: {1: 10.9, 2: 10.7, 5: 10.5, 6: 10.2} },
     { id: "bb_b", name: "ベルＢ", active: true, type: "normal", probs: {1: 20.9, 2: 21.2, 5: 20.3, 6: 20.6} },
-    { id: "i_tot", name: "スイカ合算", active: true, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
+    { id: "i_tot", name: "スイカ合算", active: false, type: "normal", probs: {1: 55.5, 2: 53.4, 5: 54.4, 6: 52.3} },
     { id: "sa", name: "スイカＡ", active: true, type: "normal", probs: {1: 74.5, 2: 70.6, 5: 72.5, 6: 68.8} },
-    { id: "sb", name: "スイカＢ", active: true, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
-    { id: "che_tot", name: "チェリー合算", active: true, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
-    { id: "ca", name: "チェリーＡ", active: true, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
+    { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
+    { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
+    { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
     { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
@@ -167,15 +167,19 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         rowHtml += `<td class="${res.active ? 'val-red' : ''}">${res.k}</td>`;
         rowHtml += `<td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
         
-        if (res.active && rP_num > 0) {
-            const diffs = [1, 2, 5, 6].map(s => Math.abs(rP_num - res.probs[s]));
+        // 0回でもハイライト判定をスキップしないように修正
+        if (res.active) {
+            const diffs = [1, 2, 5, 6].map(s => {
+                if (rP_num === 0) return res.probs[s]; // 0回なら分母が大きいほど近い
+                return Math.abs(rP_num - res.probs[s]);
+            });
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => {
                 const isClosest = (diffs[idx] === minDiff);
-                rowHtml += `<td class="${isClosest ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(0)}</td>`;
+                rowHtml += `<td class="${isClosest ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`;
             });
         } else {
-            [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(0)}</td>`; });
+            [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; });
         }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
@@ -217,6 +221,11 @@ function drawAnalysisLogs(machine, gCounts, extracted) {
         document.getElementById(`b${s}`).style.width = pr + "%";
         addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
+
+    // 名前：機種名：日付 サマリーの復旧
+    const dStr = document.getElementById('date-display').innerText;
+    const uName = document.getElementById('user-name').value || "Guest";
+    addLog(`\n${uName} : ${machine.name} : ${dStr}`, "text-white font-bold mt-2");
 }
 
 async function run(file) {
@@ -261,24 +270,20 @@ async function run(file) {
             if(l.includes('/')) {
                 const cDef = machine.def[extracted.length];
                 let p = 0, c = null;
-                const clL = l.replace(/[\s,]/g,''); // スペース・カンマを除去
+                const clL = l.replace(/[\s,]/g,''); 
                 
-                // 【物理安全装置】 / と - が共存すれば 0回確定
                 if (clL.includes('/') && clL.includes('-')) {
                     c = 0;
-                    addLog(`  [idx:${extracted.length}] スラッシュ＋ハイフン検出 ➔ 0回確定（走査停止）`, "text-green-500 font-bold text-[7px]");
+                    addLog(`  [idx:${extracted.length}] ハイフン検出 ➔ 0回固定`, "text-green-500 font-bold text-[7px]");
                 } else {
                     const dm = clL.match(/(\d+\.\d+)/);
                     if(dm) p = parseFloat(dm[1]);
-                    
-                    // 1/xx の場合のみ肝の整数走査を続行
                     for (let j of [1, 2, 3]) {
                         if (ptr - j < 0) continue;
                         const tl = merged[ptr - j].replace(/[\s,]/g, '');
                         const numM = tl.match(/(\d+)/);
                         if (numM) { c = parseInt(numM[1]); break; }
                     }
-                    
                     let nC = gCounts[0];
                     if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") {
                         nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
@@ -286,10 +291,8 @@ async function run(file) {
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) {
                         c = expC;
-                        addLog(`  [idx:${extracted.length}] 補正発動 ➔ ${c}回`, "text-red-400 text-[7px]");
                     }
                 }
-
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p});
                 if (!l.includes('-')) addLog(`  [idx:${extracted.length-1}] 1/${p.toFixed(1)} (${c}回) OK`, "text-zinc-500 text-[7px]");
@@ -297,9 +300,10 @@ async function run(file) {
             ptr++;
         }
         drawAnalysisLogs(machine, gCounts, extracted);
-        const dStr = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1] + " " + (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
-        document.getElementById('date-display').innerText = dStr;
-        await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStr, gameCounts: gCounts, extractedData: extracted });
+        const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, new Date().toLocaleDateString('ja-JP')])[1];
+        const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, new Date().toTimeString().slice(0,5)])[1];
+        document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
+        await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
