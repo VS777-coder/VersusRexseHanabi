@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.8.2</title>
+    <title>HANABI ANALYZER Rev 3.9.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -30,28 +30,19 @@
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
         .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
-        .nav-btn:active { background: #3b82f6; }
         .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
     </style>
 </head>
 <body>
-    <div class="rev-tag-top">Rev 3.8.2</div>
+    <div class="rev-tag-top">Rev 3.9.0</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center font-bold">
-            <div class="flex items-center gap-1 text-white text-[10px]">
-                <button id="m-prev" class="nav-btn">◁</button>
-                <span id="machine-name-display" class="min-w-[70px]">新ハナビ</span>
-                <button id="m-next" class="nav-btn">▷</button>
-            </div>
-            <div class="flex items-center gap-1 text-white text-[9px]">
-                <button id="d-prev" class="nav-btn">◁</button>
-                <span id="date-display" class="font-mono">NO DATA</span>
-                <button id="d-next" class="nav-btn">▷</button>
-            </div>
+            <div class="flex items-center gap-1 text-white text-[10px]"><button id="m-prev" class="nav-btn">◁</button><span id="machine-name-display" class="min-w-[70px]">新ハナビ</span><button id="m-next" class="nav-btn">▷</button></div>
+            <div class="flex items-center gap-1 text-white text-[9px]"><button id="d-prev" class="nav-btn">◁</button><span id="date-display" class="font-mono">NO DATA</span><button id="d-next" class="nav-btn">▷</button></div>
         </div>
         <div class="w-full flex flex-col gap-2">
-            <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-[10px]">設定1</span><span id="p1" class="c-s1 font-black text-xs">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-[10px]">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
             <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-[10px]">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
             <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-[10px]">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
             <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-[10px]">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
@@ -59,18 +50,12 @@
     </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
     <div class="api-footer flex flex-col gap-1">
-        <div class="flex gap-1 items-center">
-            <input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key">
-            <input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name">
-        </div>
-        <div class="flex gap-1 items-center">
-            <input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token">
-            <button id="sv-all" class="save-btn">SAVE</button>
-        </div>
+        <div class="flex gap-1 items-center"><input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key"><input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name"></div>
+        <div class="flex gap-1 items-center"><input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token"><button id="sv-all" class="save-btn">SAVE</button></div>
     </div>
 
 <script>
-/* === 聖域：CONFIGURATIONS (デグレード禁止・全再点検済) === */
+/* === 聖域：CONFIGURATIONS (フルセット完全版) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -136,31 +121,27 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 0;
-let lastAnalysisResult = null;
+let currentMachineIdx = 0; let lastAnalysisResult = null;
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
-function fullRefresh() {
-    [1,2,5,6].forEach(s => { document.getElementById(`p${s}`).innerText = "---"; document.getElementById(`b${s}`).style.width = "0%"; });
-    document.getElementById('date-display').innerText = "NO DATA";
-    logDisplay.innerHTML = "READY...";
-    lastAnalysisResult = null;
-}
-
-function updateMachineDisplay() {
-    const mName = MACHINE_LIST[currentMachineIdx];
-    document.getElementById('machine-name-display').innerText = mName;
-    fullRefresh();
-    syncHistory(mName, true);
-}
-
 function getMachineDef(name) {
     if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
+}
+
+async function gh(m,p,b=null){ 
+    const t=document.getElementById('gh-token').value; if(!t)return null;
+    const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
+    if(m==="PUT"){
+        const ex = await fetch(url,{headers:{Authorization:`token ${t}`}}).then(r=>r.ok?r.json():null).catch(()=>null);
+        if(ex) b.sha = ex.sha;
+    }
+    const res=await fetch(url,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null});
+    return res.ok?await res.json():null;
 }
 
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
@@ -183,7 +164,10 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td class="${res.active ? 'val-red' : ''}">${res.k}</td><td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
         if (res.active) {
-            const diffs = [1, 2, 5, 6].map(s => (rP_num === 0) ? res.probs[s] : Math.abs(rP_num - res.probs[s]));
+            const diffs = [1, 2, 5, 6].map(s => {
+                if (res.k === 0) return 1 / res.probs[s]; // 0回の時は分母が大きい（＝当たりにくい）ほど期待に沿う
+                return Math.abs(rP_num - res.probs[s]);
+            });
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => { rowHtml += `<td class="${diffs[idx] === minDiff ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`; });
         } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
@@ -191,7 +175,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
     logDisplay.appendChild(t4);
 
-    const intensityData = fStorage.filter(res => res.active && res.k >= 0 && res.n > 0).map(res => {
+    const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
         let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
     });
@@ -228,13 +212,13 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
     const finalName = uNameOverride || document.getElementById('user-name').value || "Guest";
     const finalDate = dateOverride || document.getElementById('date-display').innerText;
-    addLog(`\n${finalName} : ${machine.name} : ${finalDate}`, "text-white font-bold mt-2");
+    addLog(`\n${finalName} : ${machine.name} : ${gCounts[0]}G : ${finalDate}`, "text-white font-bold mt-2");
 }
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
     logDisplay.innerHTML = "";
-    addLog(`（１）画像情報`, "text-blue-400 font-bold");
+    addLog(`（１）画像情報抽出中...`, "text-blue-400 font-bold");
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -243,10 +227,16 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
+        addLog(`  > 読み取りテキスト数: ${merged.length}行`);
+
+        addLog(`\n（２）画像の生データ解析`, "text-blue-400 font-bold");
         const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
-        currentMachineIdx = MACHINE_LIST.indexOf(machine.name);
-        document.getElementById('machine-name-display').innerText = machine.name;
+        addLog(`  > 機種判定: ${machine.name}`);
+        
+        const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
+        const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
+        addLog(`  > 日時抽出: ${dStrRaw} ${tStrRaw}`);
 
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = [];
@@ -258,6 +248,9 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
+        addLog(`  > 総ゲーム数: ${gCounts[0]}G`);
+
+        addLog(`\n（３）仮想配列作成・項目紐付け`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
@@ -273,85 +266,53 @@ async function run(file) {
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p});
+                addLog(`  [${cDef.name}] 回数:${c} / 確率:1/${p.toFixed(1)}`);
             }
             ptr++;
         }
-        const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
-        const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
         document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
-        
         lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "" };
         drawAnalysisLogs(machine, gCounts, extracted);
         lastAnalysisResult.logHtml = logDisplay.innerHTML;
-
         await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-async function gh(m,p,b=null){ const t=document.getElementById('gh-token').value; if(!t)return null; const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null}); return res.ok?await res.json():null; }
 async function saveCloud(snap){
     const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
-    await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
+    const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
+    if(res) addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold");
     await syncHistory(snap.machineName, false);
 }
+
 async function syncHistory(mName, autoLoad = true){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){
-        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1;
-        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]);
-    } else { hPaths=[]; hIdx=-1; resetUI(); }
+    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1; if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); }
 }
+
 async function loadHistory(p){
-    if(lastAnalysisResult && p === "current"){
-        logDisplay.innerHTML = lastAnalysisResult.logHtml;
-        drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date);
-        return;
-    }
-    const res=await gh("GET",p); if(res&&res.content){
-        logDisplay.innerHTML = "";
-        const s=JSON.parse(decodeURIComponent(escape(atob(res.content))));
-        const m = getMachineDef(s.machineName);
-        document.getElementById('date-display').innerText = s.date;
-        drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date);
-    }
+    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date); return; }
+    const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); }
 }
 
-// 【左側】機種切替
-document.getElementById('m-prev').onclick=()=>{
-    currentMachineIdx = (currentMachineIdx - 1 + MACHINE_LIST.length) % MACHINE_LIST.length;
-    updateMachineDisplay();
-};
-document.getElementById('m-next').onclick=()=>{
-    currentMachineIdx = (currentMachineIdx + 1) % MACHINE_LIST.length;
-    updateMachineDisplay();
-};
+function updateMachineDisplay(){ 
+    const mName = MACHINE_LIST[currentMachineIdx]; 
+    document.getElementById('machine-name-display').innerText = mName; 
+    [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); 
+    document.getElementById('date-display').innerText="NO DATA"; 
+    logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); 
+}
 
-// 【右側】日付遷移
-document.getElementById('d-prev').onclick=async()=>{
-    if(hIdx > 0){ hIdx--; await loadHistory(hPaths[hIdx]); }
-};
-document.getElementById('d-next').onclick=async()=>{
-    if(hIdx < hPaths.length - 1){ hIdx++; await loadHistory(hPaths[hIdx]); }
-    else if(lastAnalysisResult && hIdx === hPaths.length - 1){ await loadHistory("current"); }
-};
-
-document.getElementById('sv-all').onclick=()=>{
-    localStorage.setItem('v_k',document.getElementById('api-key').value); 
-    localStorage.setItem('u_n',document.getElementById('user-name').value); 
-    localStorage.setItem('g_t',document.getElementById('gh-token').value); 
-    alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true);
-};
-
-window.onload=()=>{
-    document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
-    document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
-    document.getElementById('gh-token').value=localStorage.getItem('g_t')||'';
-    updateMachineDisplay();
-};
+document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+MACHINE_LIST.length)%MACHINE_LIST.length; updateMachineDisplay(); };
+document.getElementById('m-next').onclick=()=>{ currentMachineIdx=(currentMachineIdx+1)%MACHINE_LIST.length; updateMachineDisplay(); };
+document.getElementById('d-prev').onclick=async()=>{ if(hIdx>0){ hIdx--; await loadHistory(hPaths[hIdx]); } };
+document.getElementById('d-next').onclick=async()=>{ if(hIdx<hPaths.length-1){ hIdx++; await loadHistory(hPaths[hIdx]); } else if(lastAnalysisResult&&hIdx===hPaths.length-1){ await loadHistory("current"); } };
+document.getElementById('sv-all').onclick=()=>{ localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true); };
+window.onload=()=>{ document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; updateMachineDisplay(); };
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
 document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
