@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.9.1</title>
+    <title>HANABI ANALYZER Rev 3.9.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -34,7 +34,7 @@
     </style>
 </head>
 <body>
-    <div class="rev-tag-top">Rev 3.9.1</div>
+    <div class="rev-tag-top">Rev 3.9.2</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center font-bold">
@@ -147,12 +147,15 @@ async function gh(m,p,b=null){
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
-        const da = extracted[i]; if(!da) return null;
+        const da = extracted[i]; 
         let n = gCounts[0];
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da.c !== null && da.p > 0) ? Math.round(da.c * da.p) : (bbCount * machine.bG);
-        if(df.id === "bb") bbCount = da.c;
-        return { ...df, k: da.c, n };
-    }).filter(x => x !== null);
+        let k = (da && da.c !== null) ? da.c : 0;
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") {
+            n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
+        }
+        if(df.id === "bb") bbCount = k;
+        return { ...df, k, n };
+    });
 
     addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
     const t4 = document.createElement('table'); t4.className='log-table';
@@ -161,11 +164,11 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     fStorage.forEach(res => {
         const r = document.createElement('tr'); 
         const rP_num = res.k > 0 ? (res.n / res.k) : 0;
-        const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/0.0";
-        let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td class="${res.active ? 'val-red' : ''}">${res.k}</td><td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
+        const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/---";
+        let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td>`;
         if (res.active) {
             const diffs = [1, 2, 5, 6].map(s => {
-                if (res.k === 0) return 1 / res.probs[s]; // 0回時:分母最大を優先
+                if (res.k === 0) return 1 / res.probs[s]; 
                 return Math.abs(rP_num - res.probs[s]);
             });
             const minDiff = Math.min(...diffs);
@@ -175,15 +178,21 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
     logDisplay.appendChild(t4);
 
-    const intensityData = fStorage.filter(res => res.active).map(res => {
+    const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
         let iLLs = {}; 
         [1,2,5,6].forEach(s => { 
             const tp = 1/res.probs[s]; 
-            iLLs[s] = (res.n > 0) ? (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)) : 0; 
+            iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); 
         });
-        const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
+        const vs = Object.values(iLLs); 
+        const maxV = Math.max(...vs); const minV = Math.min(...vs);
+        // 設定差の「絶対量」を評価（貢献度）
+        const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
+        const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
+        const power = res.n * (maxP - minP); // ゲーム数と設定差の掛け合わせ
+        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
     });
-    const top3Ids = [...intensityData].filter(x => x.int > 0).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
+    const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
 
     addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
@@ -194,12 +203,16 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const r = document.createElement('tr');
         let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
-        const gB = c.int > 4 ? "■■■" : c.int > 2 ? "■■" : c.int > 0.5 ? "■" : "";
+        
+        const gB = c.int > 4 ? "■■■" : c.int > 1 ? "■■" : c.int > 0.3 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
-            totalLLs[s] += c.iLLs[s]; const gM = c.maxL - c.iLLs[s];
-            const st = gM < 0.2 ? 5 : gM < 0.8 ? 4 : gM < 1.6 ? 3 : gM < 3.2 ? 2 : 1;
-            cls += `<td style="color:${gM < 0.001 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
+            totalLLs[s] += c.iLLs[s];
+            const gM = c.maxL - c.iLLs[s];
+            // 星の上限を「パワー（貢献度）」で制限する
+            const maxStars = Math.min(5, Math.ceil(c.power * 25)); // 係数25は感度調整
+            const st = (c.int < 0.01) ? 0 : gM < 0.2 ? maxStars : gM < 0.8 ? Math.max(0, maxStars-1) : gM < 1.6 ? Math.max(0, maxStars-2) : gM < 3.2 ? Math.max(0, maxStars-3) : 1;
+            cls += `<td style="color:${gM < 0.001 && c.int > 0.01 && maxStars > 0 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
         r.innerHTML = cls; tb5.appendChild(r);
     });
@@ -223,7 +236,7 @@ async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
     logDisplay.innerHTML = "";
     addLog(`（１）画像情報`, "text-blue-400 font-bold");
-    addLog(`  > ファイル名: ${file.name}`);
+    addLog(`  > ファイル: ${file.name}`);
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -232,17 +245,15 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-        const fullText = merged.join(" ");
 
         addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold");
-        addLog(fullText);
+        merged.forEach(line => addLog(line));
 
+        const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
-        currentMachineIdx = MACHINE_LIST.indexOf(machine.name);
-        document.getElementById('machine-name-display').innerText = machine.name;
-        
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
+
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = [];
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -255,22 +266,33 @@ async function run(file) {
         if(anchorIdx === -1) throw new Error("G NotFound");
 
         addLog(`\n（３）仮想配列作成・項目紐付け`, "text-blue-400 font-bold");
+        let lastType = "";
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
             if(l.includes('/')) {
-                const cDef = machine.def[extracted.length]; let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
+                const cDef = machine.def[extracted.length]; 
+                let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (bb_for_rt * machine.bG);
+                
+                if(cDef.type !== lastType) {
+                    const typeLabel = cDef.type === "normal" ? "通常" : cDef.type === "big" ? "BIG中" : cDef.type.toUpperCase();
+                    addLog(`--- ${typeLabel}(${nC}G) ---`, "text-slate-500");
+                    lastType = cDef.type;
+                }
+
+                let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
                 if (clL.includes('/') && clL.includes('-')) c = 0;
                 else {
                     const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                     for (let j of [1,2,3]) { const tl = (merged[ptr-j]||"").replace(/[\s,]/g,''); const nm = tl.match(/(\d+)/); if(nm){ c = parseInt(nm[1]); break; } }
-                    let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
+                    if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
-                    addLog(`  [${cDef.name}] 回数:${c} (試行:${nC}) / 確率:1/${p.toFixed(1)}`);
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p});
+                const probStr = p > 0 ? `1/${p.toFixed(1)}` : "1/---";
+                addLog(`  [${cDef.name}] ${c}回 (${probStr})`);
             }
             ptr++;
         }
@@ -303,14 +325,7 @@ async function loadHistory(p){
     const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); }
 }
 
-function updateMachineDisplay(){ 
-    const mName = MACHINE_LIST[currentMachineIdx]; 
-    document.getElementById('machine-name-display').innerText = mName; 
-    [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); 
-    document.getElementById('date-display').innerText="NO DATA"; 
-    logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); 
-}
-
+function updateMachineDisplay(){ const mName = MACHINE_LIST[currentMachineIdx]; document.getElementById('machine-name-display').innerText = mName; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); document.getElementById('date-display').innerText="NO DATA"; logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); }
 document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+MACHINE_LIST.length)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('m-next').onclick=()=>{ currentMachineIdx=(currentMachineIdx+1)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('d-prev').onclick=async()=>{ if(hIdx>0){ hIdx--; await loadHistory(hPaths[hIdx]); } };
