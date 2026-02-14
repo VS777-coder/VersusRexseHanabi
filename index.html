@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.9.0</title>
+    <title>HANABI ANALYZER Rev 3.9.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -34,7 +34,7 @@
     </style>
 </head>
 <body>
-    <div class="rev-tag-top">Rev 3.9.0</div>
+    <div class="rev-tag-top">Rev 3.9.1</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center font-bold">
@@ -55,7 +55,7 @@
     </div>
 
 <script>
-/* === 聖域：CONFIGURATIONS (フルセット完全版) === */
+/* === 聖域：CONFIGURATIONS === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -165,7 +165,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td class="${res.active ? 'val-red' : ''}">${res.k}</td><td class="${res.active ? 'val-red' : ''}">${rP_str}</td>`;
         if (res.active) {
             const diffs = [1, 2, 5, 6].map(s => {
-                if (res.k === 0) return 1 / res.probs[s]; // 0回の時は分母が大きい（＝当たりにくい）ほど期待に沿う
+                if (res.k === 0) return 1 / res.probs[s]; // 0回時:分母最大を優先
                 return Math.abs(rP_num - res.probs[s]);
             });
             const minDiff = Math.min(...diffs);
@@ -175,11 +175,15 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
     logDisplay.appendChild(t4);
 
-    const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
-        let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
+    const intensityData = fStorage.filter(res => res.active).map(res => {
+        let iLLs = {}; 
+        [1,2,5,6].forEach(s => { 
+            const tp = 1/res.probs[s]; 
+            iLLs[s] = (res.n > 0) ? (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)) : 0; 
+        });
         const vs = Object.values(iLLs); return { id: res.id, name: res.name, iLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs) };
     });
-    const top3Ids = [...intensityData].sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
+    const top3Ids = [...intensityData].filter(x => x.int > 0).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
 
     addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
@@ -218,7 +222,8 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
     logDisplay.innerHTML = "";
-    addLog(`（１）画像情報抽出中...`, "text-blue-400 font-bold");
+    addLog(`（１）画像情報`, "text-blue-400 font-bold");
+    addLog(`  > ファイル名: ${file.name}`);
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -227,17 +232,17 @@ async function run(file) {
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
         merged.push(cur.t);
-        addLog(`  > 読み取りテキスト数: ${merged.length}行`);
-
-        addLog(`\n（２）画像の生データ解析`, "text-blue-400 font-bold");
         const fullText = merged.join(" ");
+
+        addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold");
+        addLog(fullText);
+
         let machine = getMachineDef(fullText);
-        addLog(`  > 機種判定: ${machine.name}`);
+        currentMachineIdx = MACHINE_LIST.indexOf(machine.name);
+        document.getElementById('machine-name-display').innerText = machine.name;
         
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
-        addLog(`  > 日時抽出: ${dStrRaw} ${tStrRaw}`);
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
         let anchorIdx = -1, gCounts = [];
         const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
@@ -248,7 +253,6 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
-        addLog(`  > 総ゲーム数: ${gCounts[0]}G`);
 
         addLog(`\n（３）仮想配列作成・項目紐付け`, "text-blue-400 font-bold");
         const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
@@ -263,10 +267,10 @@ async function run(file) {
                     let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
+                    addLog(`  [${cDef.name}] 回数:${c} (試行:${nC}) / 確率:1/${p.toFixed(1)}`);
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p});
-                addLog(`  [${cDef.name}] 回数:${c} / 確率:1/${p.toFixed(1)}`);
             }
             ptr++;
         }
@@ -283,7 +287,7 @@ async function saveCloud(snap){
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
     const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    if(res) addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold");
+    if(res) addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
     await syncHistory(snap.machineName, false);
 }
 
