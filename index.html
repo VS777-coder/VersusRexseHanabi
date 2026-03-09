@@ -121,7 +121,7 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 0; let lastAnalysisResult = null;
+let currentMachineIdx = 2; let lastAnalysisResult = null; // 【修正箇所1】初期値を2（バーサスリヴァイズ）に変更
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
@@ -251,6 +251,12 @@ async function run(file) {
 
         const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
+
+        // 【修正箇所2】読み込んだ機種名を画面表示と内部インデックスに同期させる
+        document.getElementById('machine-name-display').innerText = machine.name;
+        const mIdx = MACHINE_LIST.indexOf(machine.name);
+        if (mIdx !== -1) currentMachineIdx = mIdx;
+
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
 
