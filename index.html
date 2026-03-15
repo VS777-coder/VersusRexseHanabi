@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.9.3</title>
+    <title>HANABI ANALYZER Rev 3.9.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -34,7 +34,7 @@
     </style>
 </head>
 <body>
-    <div class="rev-tag-top">Rev 3.9.3</div>
+    <div class="rev-tag-top">Rev 3.9.4</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center font-bold">
@@ -128,7 +128,7 @@ const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'
 let hPaths = []; let hIdx = -1;
 
 function getMachineDef(name) {
-    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
+    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"}; // bGを25に修正
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
@@ -177,20 +177,26 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
 
-    // --- 可変項目：バーサスリヴァイズ中段チェリー個別抽出・表示 ---
+    // --- 可変項目：バーサスリヴァイズ中段チェリー個別抽出（補正あり） ---
     let midCherryCount = 0;
     const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
+    const bG_total = bbCount * machine.bG;
+    
     if (machine.name === "バーサスリヴァイズ") {
         const hitIdx = merged.findIndex(line => line.includes("中段") && line.includes("チェリー"));
         if (hitIdx !== -1) {
+            let p_val = 0, c_val = null;
             const search = [merged[hitIdx-1]||"", merged[hitIdx+1]||"", merged[hitIdx+2]||""];
             for (let line of search) {
-                const m = line.match(/(\d+)/);
-                if (m) { midCherryCount = parseInt(m[1]); break; }
+                const clL = line.replace(/[\s,]/g,'');
+                const dm = clL.match(/(\d+\.\d+)/); if(dm) p_val = parseFloat(dm[1]);
+                const nm = clL.match(/(\d+)/); if(nm && !clL.includes('.')) c_val = parseInt(nm[1]);
             }
+            // 乖離補正: 確率から逆算した期待回数
+            const expC = (p_val > 0) ? Math.round(bG_total / p_val) : 0;
+            midCherryCount = (c_val === null || (p_val > 0 && Math.abs(c_val - expC) > 1)) ? expC : c_val;
         }
         const r = document.createElement('tr');
-        const bG_total = bbCount * machine.bG;
         const rP_str = midCherryCount > 0 ? `1/${(bG_total / midCherryCount).toFixed(1)}` : "1/---";
         let rowHtml = `<td style="text-align:left; padding-left:2px;">中段チェリー</td><td>${midCherryCount}</td><td class="${midCherryCount > 0 ? 'val-red' : ''}">${rP_str}</td>`;
         [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${midCherryProbs[s].toFixed(1)}</td>`; });
@@ -218,17 +224,15 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     const tb5 = t5.querySelector('tbody');
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
 
-    // 可変項目（中段チェリー）の尤度計算
+    // 可変項目（中段チェリー）の尤度加算
     if (machine.name === "バーサスリヴァイズ" && midCherryCount > 0) {
-        const nG = bbCount * machine.bG;
         let vLLs = {};
         [1,2,5,6].forEach(s => {
             const tp = 1 / midCherryProbs[s];
-            vLLs[s] = (midCherryCount * Math.log(tp) + (nG - midCherryCount) * Math.log(1 - tp));
+            vLLs[s] = (midCherryCount * Math.log(tp) + (bG_total - midCherryCount) * Math.log(1 - tp));
         });
         const vs = Object.values(vLLs);
-        const maxV = Math.max(...vs);
-        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: maxV, int: maxV - Math.min(...vs), power: nG * (1/897.8 - 1/16384.0) });
+        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
     }
 
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
@@ -260,7 +264,6 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
 
     if (machine.name === "バーサスリヴァイズ") {
-        const bG_total = bbCount * machine.bG;
         const logProb = midCherryCount > 0 ? `(1/${(bG_total / midCherryCount).toFixed(1)})` : "";
         addLog(`\n  [中段チェリー] ${midCherryCount}回 ${logProb}`, "text-yellow-500 font-bold");
     }
