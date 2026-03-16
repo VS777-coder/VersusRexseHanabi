@@ -55,7 +55,7 @@
     </div>
 
 <script>
-// Rev 3.9.4 : 定義表(Rev 3.9.2完全一致) ＋ 中段チェリー追加
+// 【重要】Rev 3.9.4：バーサス初期表示＆最新データ自動取得を復元
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -121,7 +121,8 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 2; let lastAnalysisResult = null; 
+let currentMachineIdx = 2; // バーサスに固定
+let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
@@ -133,7 +134,6 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-// 通信ロジック復元
 async function gh(m,p,b=null){ 
     const t=document.getElementById('gh-token').value; if(!t)return null;
     const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
@@ -173,7 +173,6 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
 
-    // 中段チェリー計算
     let midCherryCount = 0; const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
     const bG_total = bbCount * machine.bG;
     if (machine.name === "バーサスリヴァイズ") {
@@ -308,7 +307,11 @@ async function syncHistory(mName, autoLoad = true){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1; if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); }
+    if(res&&Array.isArray(res)){ 
+        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); 
+        hIdx=hPaths.length-1; 
+        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
+    }
 }
 
 async function loadHistory(p){
@@ -316,13 +319,29 @@ async function loadHistory(p){
     const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date, []); }
 }
 
-function updateMachineDisplay(){ const mName = MACHINE_LIST[currentMachineIdx]; document.getElementById('machine-name-display').innerText = mName; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); document.getElementById('date-display').innerText="NO DATA"; logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); }
+function updateMachineDisplay(){ 
+    const mName = MACHINE_LIST[currentMachineIdx]; 
+    document.getElementById('machine-name-display').innerText = mName; 
+    [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); 
+    document.getElementById('date-display').innerText="NO DATA"; 
+    logDisplay.innerHTML="READY..."; 
+    lastAnalysisResult=null; 
+    syncHistory(mName, true); // trueで最新を自動ロード
+}
+
 document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+MACHINE_LIST.length)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('m-next').onclick=()=>{ currentMachineIdx=(currentMachineIdx+1)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('d-prev').onclick=async()=>{ if(hIdx>0){ hIdx--; await loadHistory(hPaths[hIdx]); } };
 document.getElementById('d-next').onclick=async()=>{ if(hIdx<hPaths.length-1){ hIdx++; await loadHistory(hPaths[hIdx]); } else if(lastAnalysisResult&&hIdx===hPaths.length-1){ await loadHistory("current"); } };
 document.getElementById('sv-all').onclick=()=>{ localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true); };
-window.onload=()=>{ document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; updateMachineDisplay(); };
+
+window.onload=()=>{ 
+    document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
+    document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
+    document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; 
+    updateMachineDisplay(); // 起動時にバーサスを表示し、履歴を追う
+};
+
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
 document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
