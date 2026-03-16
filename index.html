@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HANABI ANALYZER Rev 3.9.2</title>
+    <title>HANABI ANALYZER Rev 3.9.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
@@ -34,11 +34,11 @@
     </style>
 </head>
 <body>
-    <div class="rev-tag-top">Rev 3.9.2</div>
+    <div class="rev-tag-top">Rev 3.9.4</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
     <div class="result-card panel-frame flex flex-col items-center">
         <div class="w-full mb-3 flex justify-between items-center font-bold">
-            <div class="flex items-center gap-1 text-white text-[10px]"><button id="m-prev" class="nav-btn">◁</button><span id="machine-name-display" class="min-w-[70px]">新ハナビ</span><button id="m-next" class="nav-btn">▷</button></div>
+            <div class="flex items-center gap-1 text-white text-[10px]"><button id="m-prev" class="nav-btn">◁</button><span id="machine-name-display" class="min-w-[70px]">バーサスリヴァイズ</span><button id="m-next" class="nav-btn">▷</button></div>
             <div class="flex items-center gap-1 text-white text-[9px]"><button id="d-prev" class="nav-btn">◁</button><span id="date-display" class="font-mono">NO DATA</span><button id="d-next" class="nav-btn">▷</button></div>
         </div>
         <div class="w-full flex flex-col gap-2">
@@ -121,14 +121,14 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 0; let lastAnalysisResult = null;
+let currentMachineIdx = 2; let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
 function getMachineDef(name) {
-    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
+    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"}; // bGを25に修正
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
@@ -144,7 +144,7 @@ async function gh(m,p,b=null){
     return res.ok?await res.json():null;
 }
 
-function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
+function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null, merged = []) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; 
@@ -176,6 +176,32 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
+
+    // --- 可変項目：バーサスリヴァイズ中段チェリー個別抽出（補正あり） ---
+    let midCherryCount = 0;
+    const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
+    const bG_total = bbCount * machine.bG;
+    
+    if (machine.name === "バーサスリヴァイズ") {
+        const hitIdx = merged.findIndex(line => line.includes("中段") && line.includes("チェリー"));
+        if (hitIdx !== -1) {
+            let p_val = 0, c_val = null;
+            const search = [merged[hitIdx-1]||"", merged[hitIdx+1]||"", merged[hitIdx+2]||""];
+            for (let line of search) {
+                const clL = line.replace(/[\s,]/g,'');
+                const dm = clL.match(/(\d+\.\d+)/); if(dm) p_val = parseFloat(dm[1]);
+                const nm = clL.match(/(\d+)/); if(nm && !clL.includes('.')) c_val = parseInt(nm[1]);
+            }
+            // 乖離補正: 確率から逆算した期待回数
+            const expC = (p_val > 0) ? Math.round(bG_total / p_val) : 0;
+            midCherryCount = (c_val === null || (p_val > 0 && Math.abs(c_val - expC) > 1)) ? expC : c_val;
+        }
+        const r = document.createElement('tr');
+        const rP_str = midCherryCount > 0 ? `1/${(bG_total / midCherryCount).toFixed(1)}` : "1/---";
+        let rowHtml = `<td style="text-align:left; padding-left:2px;">中段チェリー</td><td>${midCherryCount}</td><td class="${midCherryCount > 0 ? 'val-red' : ''}">${rP_str}</td>`;
+        [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${midCherryProbs[s].toFixed(1)}</td>`; });
+        r.innerHTML = rowHtml; tb4.appendChild(r);
+    }
     logDisplay.appendChild(t4);
 
     const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
@@ -186,31 +212,40 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         });
         const vs = Object.values(iLLs); 
         const maxV = Math.max(...vs); const minV = Math.min(...vs);
-        // 設定差の「絶対量」を評価（貢献度）
         const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
         const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
-        const power = res.n * (maxP - minP); // ゲーム数と設定差の掛け合わせ
+        const power = res.n * (maxP - minP); 
         return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
     });
-    const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
 
     addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
     t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb5 = t5.querySelector('tbody');
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
+
+    // 可変項目（中段チェリー）の尤度加算
+    if (machine.name === "バーサスリヴァイズ" && midCherryCount > 0) {
+        let vLLs = {};
+        [1,2,5,6].forEach(s => {
+            const tp = 1 / midCherryProbs[s];
+            vLLs[s] = (midCherryCount * Math.log(tp) + (bG_total - midCherryCount) * Math.log(1 - tp));
+        });
+        const vs = Object.values(vLLs);
+        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
+    }
+
+    const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
     intensityData.forEach(c => {
         const r = document.createElement('tr');
         let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
-        
         const gB = c.int > 4 ? "■■■" : c.int > 1 ? "■■" : c.int > 0.3 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
             const gM = c.maxL - c.iLLs[s];
-            // 星の上限を「パワー（貢献度）」で制限する
-            const maxStars = Math.min(5, Math.ceil(c.power * 25)); // 係数25は感度調整
+            const maxStars = Math.min(5, Math.ceil(c.power * 25));
             const st = (c.int < 0.01) ? 0 : gM < 0.2 ? maxStars : gM < 0.8 ? Math.max(0, maxStars-1) : gM < 1.6 ? Math.max(0, maxStars-2) : gM < 3.2 ? Math.max(0, maxStars-3) : 1;
             cls += `<td style="color:${gM < 0.001 && c.int > 0.01 && maxStars > 0 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
@@ -227,6 +262,12 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         document.getElementById(`b${s}`).style.width = pr + "%";
         addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
+
+    if (machine.name === "バーサスリヴァイズ") {
+        const logProb = midCherryCount > 0 ? `(1/${(bG_total / midCherryCount).toFixed(1)})` : "";
+        addLog(`\n  [中段チェリー] ${midCherryCount}回 ${logProb}`, "text-yellow-500 font-bold");
+    }
+
     const finalName = uNameOverride || document.getElementById('user-name').value || "Guest";
     const finalDate = dateOverride || document.getElementById('date-display').innerText;
     addLog(`\n${finalName} : ${machine.name} : ${gCounts[0]}G : ${finalDate}`, "text-white font-bold mt-2");
@@ -251,6 +292,10 @@ async function run(file) {
 
         const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
+        document.getElementById('machine-name-display').innerText = machine.name;
+        const mIdx = MACHINE_LIST.indexOf(machine.name);
+        if (mIdx !== -1) currentMachineIdx = mIdx;
+
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
 
@@ -273,13 +318,11 @@ async function run(file) {
             if(l.includes('/')) {
                 const cDef = machine.def[extracted.length]; 
                 let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (bb_for_rt * machine.bG);
-                
                 if(cDef.type !== lastType) {
                     const typeLabel = cDef.type === "normal" ? "通常" : cDef.type === "big" ? "BIG中" : cDef.type.toUpperCase();
                     addLog(`--- ${typeLabel}(${nC}G) ---`, "text-slate-500");
                     lastType = cDef.type;
                 }
-
                 let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
                 if (clL.includes('/') && clL.includes('-')) c = 0;
                 else {
@@ -291,14 +334,13 @@ async function run(file) {
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
                 extracted.push({c, p});
-                const probStr = p > 0 ? `1/${p.toFixed(1)}` : "1/---";
-                addLog(`  [${cDef.name}] ${c}回 (${probStr})`);
+                addLog(`  [${cDef.name}] ${c}回 (${p > 0 ? `1/${p.toFixed(1)}` : "1/---"})`);
             }
             ptr++;
         }
         document.getElementById('date-display').innerText = dStrRaw + " " + tStrRaw;
-        lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "" };
-        drawAnalysisLogs(machine, gCounts, extracted);
+        lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "", merged };
+        drawAnalysisLogs(machine, gCounts, extracted, null, null, merged);
         lastAnalysisResult.logHtml = logDisplay.innerHTML;
         await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
@@ -321,8 +363,8 @@ async function syncHistory(mName, autoLoad = true){
 }
 
 async function loadHistory(p){
-    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date); return; }
-    const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); }
+    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date, lastAnalysisResult.merged); return; }
+    const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date, []); }
 }
 
 function updateMachineDisplay(){ const mName = MACHINE_LIST[currentMachineIdx]; document.getElementById('machine-name-display').innerText = mName; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); document.getElementById('date-display').innerText="NO DATA"; logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); }
