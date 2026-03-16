@@ -122,13 +122,14 @@ const VERSUS_CONFIG = [
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
 let currentMachineIdx = 2; let lastAnalysisResult = null; 
+let midCherryCount = 0; // グローバル管理
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
 let hPaths = []; let hIdx = -1;
 
 function getMachineDef(name) {
-    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"}; // bGを25に修正
+    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"};
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
@@ -177,24 +178,24 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
 
-    // --- 可変項目：バーサスリヴァイズ中段チェリー個別抽出（補正あり） ---
-    let midCherryCount = 0;
+    // --- バーサスリヴァイズ中段チェリー個別抽出 ---
     const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
     const bG_total = bbCount * machine.bG;
     
     if (machine.name === "バーサスリヴァイズ") {
-        const hitIdx = merged.findIndex(line => line.includes("中段") && line.includes("チェリー"));
-        if (hitIdx !== -1) {
-            let p_val = 0, c_val = null;
-            const search = [merged[hitIdx-1]||"", merged[hitIdx+1]||"", merged[hitIdx+2]||""];
-            for (let line of search) {
-                const clL = line.replace(/[\s,]/g,'');
-                const dm = clL.match(/(\d+\.\d+)/); if(dm) p_val = parseFloat(dm[1]);
-                const nm = clL.match(/(\d+)/); if(nm && !clL.includes('.')) c_val = parseInt(nm[1]);
+        if (merged.length > 0) { // OCR直後の場合のみ抽出を実行
+            const hitIdx = merged.findIndex(line => line.includes("中段") && line.includes("チェリー"));
+            if (hitIdx !== -1) {
+                let p_val = 0, c_val = null;
+                const search = [merged[hitIdx-1]||"", merged[hitIdx+1]||"", merged[hitIdx+2]||""];
+                for (let line of search) {
+                    const clL = line.replace(/[\s,]/g,'');
+                    const dm = clL.match(/(\d+\.\d+)/); if(dm) p_val = parseFloat(dm[1]);
+                    const nm = clL.match(/(\d+)/); if(nm && !clL.includes('.')) c_val = parseInt(nm[1]);
+                }
+                const expC = (p_val > 0) ? Math.round(bG_total / p_val) : 0;
+                midCherryCount = (c_val === null || (p_val > 0 && Math.abs(c_val - expC) > 1)) ? expC : c_val;
             }
-            // 乖離補正: 確率から逆算した期待回数
-            const expC = (p_val > 0) ? Math.round(bG_total / p_val) : 0;
-            midCherryCount = (c_val === null || (p_val > 0 && Math.abs(c_val - expC) > 1)) ? expC : c_val;
         }
         const r = document.createElement('tr');
         const rP_str = midCherryCount > 0 ? `1/${(bG_total / midCherryCount).toFixed(1)}` : "1/---";
@@ -218,22 +219,20 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
     });
 
-    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
-    const t5 = document.createElement('table'); t5.className='log-table';
-    t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb5 = t5.querySelector('tbody');
-    let totalLLs = {1:0, 2:0, 5:0, 6:0};
-
-    // 可変項目（中段チェリー）の尤度加算
     if (machine.name === "バーサスリヴァイズ" && midCherryCount > 0) {
         let vLLs = {};
         [1,2,5,6].forEach(s => {
             const tp = 1 / midCherryProbs[s];
             vLLs[s] = (midCherryCount * Math.log(tp) + (bG_total - midCherryCount) * Math.log(1 - tp));
         });
-        const vs = Object.values(vLLs);
-        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
+        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...Object.values(vLLs)), int: Math.max(...Object.values(vLLs)) - Math.min(...Object.values(vLLs)), power: bG_total * (1/897.8 - 1/16384.0) });
     }
+
+    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
+    const t5 = document.createElement('table'); t5.className='log-table';
+    t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    const tb5 = t5.querySelector('tbody');
+    let totalLLs = {1:0, 2:0, 5:0, 6:0};
 
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
     intensityData.forEach(c => {
@@ -276,6 +275,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
     logDisplay.innerHTML = "";
+    midCherryCount = 0; // リセット
     addLog(`（１）画像情報`, "text-blue-400 font-bold");
     addLog(`  > ファイル: ${file.name}`);
     try {
@@ -342,38 +342,83 @@ async function run(file) {
         lastAnalysisResult = { machine, gCounts, extracted, uName: document.getElementById('user-name').value, date: dStrRaw + " " + tStrRaw, logHtml: "", merged };
         drawAnalysisLogs(machine, gCounts, extracted, null, null, merged);
         lastAnalysisResult.logHtml = logDisplay.innerHTML;
-        await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted });
+        await saveCloud({ name: document.getElementById('user-name').value, machineName: machine.name, date: dStrRaw + " " + tStrRaw, gameCounts: gCounts, extractedData: extracted, merged: merged });
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
 async function saveCloud(snap){
-    const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
+    const k=document.getElementById('api-key').value, n=snap.name, gt=document.getElementById('gh-token').value; 
+    if(!k||!n||!gt) return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
-    const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    if(res) addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
-    await syncHistory(snap.machineName, false);
+    const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1] ? snap.date.split(' ')[1].replace(/:/g,'') : "0000";
+    
+    const saveObj = { ...snap, midCherryCount: midCherryCount };
+    const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(saveObj))))});
+    if(res) {
+        addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
+        await syncHistory(snap.machineName, false);
+    }
 }
 
 async function syncHistory(mName, autoLoad = true){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1; if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); }
+    if(res&&Array.isArray(res)){ 
+        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); 
+        hIdx=hPaths.length-1; 
+        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
+    }
 }
 
 async function loadHistory(p){
-    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date, lastAnalysisResult.merged); return; }
-    const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date, []); }
+    if(lastAnalysisResult && p === "current"){ 
+        logDisplay.innerHTML = lastAnalysisResult.logHtml; 
+        drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date, lastAnalysisResult.merged); 
+        return; 
+    }
+    const res=await gh("GET",p); 
+    if(res&&res.content){ 
+        logDisplay.innerHTML = ""; 
+        const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); 
+        const m = getMachineDef(s.machineName || (s.machine ? s.machine.name : "")); 
+        midCherryCount = s.midCherryCount || 0;
+        document.getElementById('date-display').innerText = s.date; 
+        drawAnalysisLogs(m, s.gameCounts || s.gCounts, s.extractedData || s.extracted, s.name || s.uName, s.date, s.merged || []); 
+        hIdx = hPaths.indexOf(p);
+    }
 }
 
-function updateMachineDisplay(){ const mName = MACHINE_LIST[currentMachineIdx]; document.getElementById('machine-name-display').innerText = mName; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); document.getElementById('date-display').innerText="NO DATA"; logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); }
+function updateMachineDisplay(){ 
+    const mName = MACHINE_LIST[currentMachineIdx]; 
+    document.getElementById('machine-name-display').innerText = mName; 
+    [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); 
+    document.getElementById('date-display').innerText="NO DATA"; 
+    logDisplay.innerHTML="READY..."; 
+    lastAnalysisResult=null; 
+    midCherryCount=0;
+    syncHistory(mName, true); 
+}
+
 document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+MACHINE_LIST.length)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('m-next').onclick=()=>{ currentMachineIdx=(currentMachineIdx+1)%MACHINE_LIST.length; updateMachineDisplay(); };
 document.getElementById('d-prev').onclick=async()=>{ if(hIdx>0){ hIdx--; await loadHistory(hPaths[hIdx]); } };
 document.getElementById('d-next').onclick=async()=>{ if(hIdx<hPaths.length-1){ hIdx++; await loadHistory(hPaths[hIdx]); } else if(lastAnalysisResult&&hIdx===hPaths.length-1){ await loadHistory("current"); } };
 document.getElementById('sv-all').onclick=()=>{ localStorage.setItem('v_k',document.getElementById('api-key').value); localStorage.setItem('u_n',document.getElementById('user-name').value); localStorage.setItem('g_t',document.getElementById('gh-token').value); alert("SAVED"); syncHistory(MACHINE_LIST[currentMachineIdx], true); };
-window.onload=()=>{ document.getElementById('api-key').value=localStorage.getItem('v_k')||''; document.getElementById('user-name').value=localStorage.getItem('u_n')||''; document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; updateMachineDisplay(); };
+
+window.onload=async()=>{ 
+    document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
+    document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
+    document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; 
+    currentMachineIdx = 2; // バーサスリヴァイズ
+    const mName = MACHINE_LIST[currentMachineIdx];
+    document.getElementById('machine-name-display').innerText = mName;
+    if(document.getElementById('api-key').value && document.getElementById('gh-token').value) {
+        addLog("☁️ 履歴を同期中...");
+        await syncHistory(mName, true); 
+    }
+};
+
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
 document.getElementById('copy-log').onclick=()=>{navigator.clipboard.writeText(logDisplay.innerText); alert("COPY");};
 </script>
