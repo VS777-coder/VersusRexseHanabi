@@ -55,7 +55,7 @@
     </div>
 
 <script>
-// 【重要】Rev 3.9.4：バーサス初期表示＆最新データ自動取得を復元
+// 【Rev 3.9.4 固定仕様】初期表示:バーサス / 起動時:最新自動ロード / ロジック:3.9.2準拠
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -121,7 +121,7 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 2; // バーサスに固定
+let currentMachineIdx = 2; // 初期値をバーサスに固定
 let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
@@ -173,6 +173,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
 
+    // 中段チェリー（バーサス限定追加ロジック）
     let midCherryCount = 0; const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
     const bG_total = bbCount * machine.bG;
     if (machine.name === "バーサスリヴァイズ") {
@@ -326,7 +327,7 @@ function updateMachineDisplay(){
     document.getElementById('date-display').innerText="NO DATA"; 
     logDisplay.innerHTML="READY..."; 
     lastAnalysisResult=null; 
-    syncHistory(mName, true); // trueで最新を自動ロード
+    syncHistory(mName, true); 
 }
 
 document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+MACHINE_LIST.length)%MACHINE_LIST.length; updateMachineDisplay(); };
@@ -339,7 +340,7 @@ window.onload=()=>{
     document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
     document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
     document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; 
-    updateMachineDisplay(); // 起動時にバーサスを表示し、履歴を追う
+    updateMachineDisplay(); 
 };
 
 document.getElementById('f-in').onchange=e=>{if(e.target.files[0])run(e.target.files[0]);};
