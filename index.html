@@ -55,12 +55,7 @@
     </div>
 
 <script>
-/* Rev 3.9.4 : UI・通信ロジック完全復旧版
-   - UI/CSS: index - コピー (100).html を完全維持
-   - GitHub通信: 元のパス定義、通信ルールを完全維持（過去データ復旧）
-   - 修正: VERSUSのbGを25に、中段チェリーの計算を追加
-*/
-
+// Rev 3.9.4 : 定義表(Rev 3.9.2完全一致) ＋ 中段チェリー追加
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -138,6 +133,7 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
+// 通信ロジック復元
 async function gh(m,p,b=null){ 
     const t=document.getElementById('gh-token').value; if(!t)return null;
     const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
@@ -155,9 +151,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const da = extracted[i]; 
         let n = gCounts[0];
         let k = (da && da.c !== null) ? da.c : 0;
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") {
-            n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
-        }
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
         if(df.id === "bb") bbCount = k;
         return { ...df, k, n };
     });
@@ -172,20 +166,16 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/---";
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td>`;
         if (res.active) {
-            const diffs = [1, 2, 5, 6].map(s => {
-                if (res.k === 0) return 1 / res.probs[s]; 
-                return Math.abs(rP_num - res.probs[s]);
-            });
+            const diffs = [1, 2, 5, 6].map(s => res.k === 0 ? 1/res.probs[s] : Math.abs(rP_num - res.probs[s]));
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => { rowHtml += `<td class="${diffs[idx] === minDiff ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`; });
         } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
 
-    let midCherryCount = 0;
-    const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
+    // 中段チェリー計算
+    let midCherryCount = 0; const midCherryProbs = { 1: 16384.0, 2: 16384.0, 5: 16384.0, 6: 897.8 };
     const bG_total = bbCount * machine.bG;
-    
     if (machine.name === "バーサスリヴァイズ") {
         const hitIdx = merged.findIndex(line => line.includes("中段") && line.includes("チェリー"));
         if (hitIdx !== -1) {
@@ -209,27 +199,14 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 
     let totalLLs = {1:0, 2:0, 5:0, 6:0};
     const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
-        let iLLs = {}; 
-        [1,2,5,6].forEach(s => { 
-            const tp = 1/res.probs[s]; 
-            iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); 
-        });
-        const vs = Object.values(iLLs); 
-        const maxV = Math.max(...vs);
-        const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
-        const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
-        const power = res.n * (maxP - minP); 
-        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - Math.min(...vs), power };
+        let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
+        const vs = Object.values(iLLs); const maxV = Math.max(...vs);
+        const pArr = [1,2,5,6].map(s => 1/res.probs[s]); const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
+        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - Math.min(...vs), power: res.n * (maxP - minP) };
     });
-
     if (machine.name === "バーサスリヴァイズ" && midCherryCount > 0) {
-        let vLLs = {};
-        [1,2,5,6].forEach(s => {
-            const tp = 1 / midCherryProbs[s];
-            vLLs[s] = (midCherryCount * Math.log(tp) + (bG_total - midCherryCount) * Math.log(1 - tp));
-        });
-        const vs = Object.values(vLLs);
-        intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
+        let vLLs = {}; [1,2,5,6].forEach(s => { const tp = 1 / midCherryProbs[s]; vLLs[s] = (midCherryCount * Math.log(tp) + (bG_total - midCherryCount) * Math.log(1 - tp)); });
+        const vs = Object.values(vLLs); intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
     }
 
     addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
@@ -237,17 +214,14 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb5 = t5.querySelector('tbody');
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
-    
     intensityData.forEach(c => {
-        const r = document.createElement('tr');
-        let aura = ""; const rk = top3Ids.indexOf(c.id);
+        const r = document.createElement('tr'); let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
         const gB = c.int > 4 ? "■■■" : c.int > 1 ? "■■" : c.int > 0.3 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
-            const gM = c.maxL - c.iLLs[s];
-            const maxStars = Math.min(5, Math.ceil(c.power * 25));
+            const gM = c.maxL - c.iLLs[s]; const maxStars = Math.min(5, Math.ceil(c.power * 25));
             const st = (c.int < 0.01) ? 0 : gM < 0.2 ? maxStars : gM < 0.8 ? Math.max(0, maxStars-1) : gM < 1.6 ? Math.max(0, maxStars-2) : gM < 3.2 ? Math.max(0, maxStars-3) : 1;
             cls += `<td style="color:${gM < 0.001 && c.int > 0.01 && maxStars > 0 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
@@ -255,8 +229,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     });
     logDisplay.appendChild(t5);
 
-    const mx = Math.max(...Object.values(totalLLs));
-    let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
+    const mx = Math.max(...Object.values(totalLLs)); let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
     addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
     [1,2,5,6].forEach(s => {
         let pr = (sm === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sm) * 100;
@@ -264,12 +237,6 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         document.getElementById(`b${s}`).style.width = pr + "%";
         addLog(`  設定${s}: ${pr.toFixed(2)}%`, `c-s${s} font-bold`);
     });
-
-    if (machine.name === "バーサスリヴァイズ") {
-        const logProb = midCherryCount > 0 ? `(1/${(bG_total / midCherryCount).toFixed(1)})` : "";
-        addLog(`\n  [中段チェリー] ${midCherryCount}回 ${logProb}`, "text-yellow-500 font-bold");
-    }
-
     const finalName = uNameOverride || document.getElementById('user-name').value || "Guest";
     const finalDate = dateOverride || document.getElementById('date-display').innerText;
     addLog(`\n${finalName} : ${machine.name} : ${gCounts[0]}G : ${finalDate}`, "text-white font-bold mt-2");
@@ -277,9 +244,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
-    logDisplay.innerHTML = "";
-    addLog(`（１）画像情報`, "text-blue-400 font-bold");
-    addLog(`  > ファイル: ${file.name}`);
+    logDisplay.innerHTML = ""; addLog(`（１）画像情報`, "text-blue-400 font-bold");
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -287,23 +252,13 @@ async function run(file) {
         const sorted = ann.slice(1).map(a => ({text:a.description, y:a.boundingPoly.vertices[0].y})).sort((a,b) => a.y - b.y);
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
-        merged.push(cur.t);
-
-        addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold");
-        merged.forEach(line => addLog(line));
-
-        const fullText = merged.join(" ");
-        let machine = getMachineDef(fullText);
+        merged.push(cur.t); addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold"); merged.forEach(line => addLog(line));
+        const fullText = merged.join(" "); let machine = getMachineDef(fullText);
         document.getElementById('machine-name-display').innerText = machine.name;
-        const mIdx = MACHINE_LIST.indexOf(machine.name);
-        if (mIdx !== -1) currentMachineIdx = mIdx;
-
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
-        let anchorIdx = -1, gCounts = [];
-        const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
+        let anchorIdx = -1, gCounts = []; const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
         const offset = dateIdx !== -1 ? dateIdx + 1 : 0;
         for(let i=0; i < searchScope.length; i++) {
             const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
@@ -311,32 +266,24 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
-
         addLog(`\n（３）仮想配列作成・項目紐付け`, "text-blue-400 font-bold");
-        let lastType = "";
-        const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
+        let ptr = anchorIdx + 1; let bb_for_rt = 0; const extracted = [];
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
             if(l.includes('/')) {
                 const cDef = machine.def[extracted.length]; 
-                let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (bb_for_rt * machine.bG);
-                if(cDef.type !== lastType) {
-                    const typeLabel = cDef.type === "normal" ? "通常" : cDef.type === "big" ? "BIG中" : cDef.type.toUpperCase();
-                    addLog(`--- ${typeLabel}(${nC}G) ---`, "text-slate-500");
-                    lastType = cDef.type;
-                }
+                let nC = gCounts[0]; if(cDef.type !== "normal") nC = (bb_for_rt * machine.bG);
                 let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
                 if (clL.includes('/') && clL.includes('-')) c = 0;
                 else {
                     const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                     for (let j of [1,2,3]) { const tl = (merged[ptr-j]||"").replace(/[\s,]/g,''); const nm = tl.match(/(\d+)/); if(nm){ c = parseInt(nm[1]); break; } }
-                    if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
+                    if(cDef.type !== "normal") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
                     const expC = (p > 0) ? Math.round(nC / p) : 0;
                     if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
                 }
                 if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p});
-                addLog(`  [${cDef.name}] ${c}回 (${p > 0 ? `1/${p.toFixed(1)}` : "1/---"})`);
+                extracted.push({c, p}); addLog(`  [${cDef.name}] ${c}回 (${p > 0 ? `1/${p.toFixed(1)}` : "1/---"})`);
             }
             ptr++;
         }
@@ -365,7 +312,7 @@ async function syncHistory(mName, autoLoad = true){
 }
 
 async function loadHistory(p){
-    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date, lastAnalysisResult.merged); return; }
+    if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; return; }
     const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date, []); }
 }
 
