@@ -55,7 +55,12 @@
     </div>
 
 <script>
-/* === 聖域：CONFIGURATIONS === */
+/* Rev 3.9.4 : UI・通信ロジック完全復旧版
+   - UI/CSS: index - コピー (100).html を完全維持
+   - GitHub通信: 元のパス定義、通信ルールを完全維持（過去データ復旧）
+   - 修正: VERSUSのbGを25に、中段チェリーの計算を追加
+*/
+
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -202,6 +207,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
     }
     logDisplay.appendChild(t4);
 
+    let totalLLs = {1:0, 2:0, 5:0, 6:0};
     const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
         let iLLs = {}; 
         [1,2,5,6].forEach(s => { 
@@ -209,18 +215,12 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
             iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); 
         });
         const vs = Object.values(iLLs); 
-        const maxV = Math.max(...vs); const minV = Math.min(...vs);
+        const maxV = Math.max(...vs);
         const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
         const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
         const power = res.n * (maxP - minP); 
-        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
+        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - Math.min(...vs), power };
     });
-
-    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
-    const t5 = document.createElement('table'); t5.className='log-table';
-    t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb5 = t5.querySelector('tbody');
-    let totalLLs = {1:0, 2:0, 5:0, 6:0};
 
     if (machine.name === "バーサスリヴァイズ" && midCherryCount > 0) {
         let vLLs = {};
@@ -232,7 +232,12 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         intensityData.push({ id:"mid_c", name:"中段チェリー", iLLs: vLLs, maxL: Math.max(...vs), int: Math.max(...vs) - Math.min(...vs), power: bG_total * (1/897.8 - 1/16384.0) });
     }
 
+    addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
+    const t5 = document.createElement('table'); t5.className='log-table';
+    t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    const tb5 = t5.querySelector('tbody');
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
+    
     intensityData.forEach(c => {
         const r = document.createElement('tr');
         let aura = ""; const rk = top3Ids.indexOf(c.id);
@@ -344,7 +349,7 @@ async function run(file) {
 }
 
 async function saveCloud(snap){
-    const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
+    const k=document.getElementById('api-key').value, n=snap.name, t=document.getElementById('gh-token').value; if(!k||!n||!t)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
     const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
