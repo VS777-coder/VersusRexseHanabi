@@ -23,9 +23,6 @@
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
         .val-red { color: #ef4444 !important; font-weight: 900; }
         .val-yellow { color: #fbbf24 !important; font-weight: 900; }
-        .aura-red { background-color: #b91c1c !important; color: white !important; font-weight: bold; }
-        .aura-green { background-color: #15803d !important; color: white !important; font-weight: bold; }
-        .aura-yellow { background-color: #a16207 !important; color: white !important; font-weight: bold; }
         .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
         .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
         .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
@@ -56,19 +53,11 @@
 
 <script src="config.js"></script>
 <script>
-const logDisplay = document.getElementById('log-display');
-const dbg = (msg, isError = false) => {
-    const div = document.createElement('div');
-    div.style.color = isError ? '#ef4444' : '#94a3b8';
-    div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    logDisplay.appendChild(div);
-    logDisplay.scrollTop = logDisplay.scrollHeight;
-};
-
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
 let currentMachineIdx = 2;
-let lastAnalysisResult = null; 
+let lastAnalysisResult = null;
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
+const logDisplay = document.getElementById('log-display');
 
 function getMachineDef(name) {
     if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"}; 
@@ -76,124 +65,116 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-async function gh(m, p, b=null){ 
-    const t = document.getElementById('gh-token').value; 
-    if(!t) return null;
+async function gh(m,p,b=null){ 
+    const t=document.getElementById('gh-token').value; if(!t)return null;
     const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
-    try {
-        const res = await fetch(url, { method: m, headers: { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" }, body: b ? JSON.stringify(b) : null });
-        return res.ok ? await res.json() : null;
-    } catch (e) { return null; }
+    const res=await fetch(url,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null});
+    return res.ok?await res.json():null;
 }
 
-function drawAnalysisLogs(machine, gCounts, extracted) {
-    try {
-        let bbCount = 0;
-        const fStorage = machine.def.map((df, i) => {
-            const da = extracted[i]; 
-            let n = gCounts[0];
-            let k = (da && da.c !== null) ? da.c : 0;
-            if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
-            if(df.id === "bb") bbCount = k;
-            return { ...df, k, n };
-        });
+function drawAnalysisLogs(machine, gCounts, extracted, uName="", date="", merged=[]) {
+    let bbCount = 0;
+    const fStorage = machine.def.map((df, i) => {
+        const da = extracted[i]; 
+        let n = gCounts[0];
+        let k = (da && da.c !== null) ? da.c : 0;
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
+        if(df.id === "bb") bbCount = k;
+        return { ...df, k, n };
+    });
 
-        const t = document.createElement('table'); t.className='log-table';
-        t.innerHTML=`<thead><tr><th>項目</th><th>回数</th><th>結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-        const tb = t.querySelector('tbody');
-        fStorage.forEach(res => {
-            const r = document.createElement('tr'); 
-            const rP_str = res.k > 0 ? `1/${(res.n / res.k).toFixed(1)}` : "1/---";
-            r.innerHTML = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td><td>1/${res.probs[1]}</td><td>1/${res.probs[2]}</td><td>1/${res.probs[5]}</td><td>1/${res.probs[6]}</td>`;
-            tb.appendChild(r);
-        });
-        logDisplay.innerHTML = "";
-        logDisplay.appendChild(t);
+    const t4 = document.createElement('table'); t4.className='log-table';
+    t4.innerHTML=`<thead><tr><th>項目</th><th>回数</th><th>結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
+    const tb4 = t4.querySelector('tbody');
+    fStorage.forEach(res => {
+        const r = document.createElement('tr'); 
+        const rP_str = res.k > 0 ? `1/${(res.n / res.k).toFixed(1)}` : "1/---";
+        r.innerHTML = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td><td>1/${res.probs[1]}</td><td>1/${res.probs[2]}</td><td>1/${res.probs[5]}</td><td>1/${res.probs[6]}</td>`;
+        tb4.appendChild(r);
+    });
+    logDisplay.innerHTML = "";
+    logDisplay.appendChild(t4);
 
-        let lls = {1:0, 2:0, 5:0, 6:0};
-        fStorage.forEach(r => { if(r.active && r.n > 0 && r.k > 0) { [1,2,5,6].forEach(s => { const tp = 1/r.probs[s]; lls[s] += (r.k * Math.log(tp) + (r.n - r.k) * Math.log(1 - tp)); }); } });
-        const mx = Math.max(...Object.values(lls)); let sm = 0; [1,2,5,6].forEach(s => sm += Math.exp(lls[s] - mx));
-        [1,2,5,6].forEach(s => { const pr = (sm === 0) ? 0 : (Math.exp(lls[s] - mx) / sm) * 100; document.getElementById(`p${s}`).innerText = pr.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = pr + "%"; });
-    } catch (e) { dbg("描画エラー: " + e.message, true); }
+    let lls = {1:0, 2:0, 5:0, 6:0};
+    fStorage.forEach(r => { if(r.active && r.n > 0 && r.k > 0) { [1,2,5,6].forEach(s => { const p = 1/r.probs[s]; lls[s] += (r.k * Math.log(p) + (r.n - r.k) * Math.log(1 - p)); }); } });
+    const mx = Math.max(...Object.values(lls)); let sm = 0; [1,2,5,6].forEach(s => sm += Math.exp(lls[s] - mx));
+    [1,2,5,6].forEach(s => { const p = sm === 0 ? 0 : (Math.exp(lls[s] - mx) / sm) * 100; document.getElementById(`p${s}`).innerText = p.toFixed(1) + "%"; document.getElementById(`b${s}`).style.width = p + "%"; });
 }
 
-async function syncHistory(mName){
-    const k = document.getElementById('api-key').value;
-    const n = document.getElementById('user-name').value;
-    if(!k || !n) { dbg("API設定未完了 (履歴スキップ)"); return; }
-    dbg("履歴を確認中...");
-    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k+n)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const res = await gh("GET", `data/${h}/${mName}`);
-    if(res && Array.isArray(res)){ 
-        const last = res.sort((a,b) => a.name.localeCompare(b.name)).pop();
-        const d = await gh("GET", last.path);
-        if(d && d.content){
-            const s = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-            lastAnalysisResult = s;
-            document.getElementById('date-display').innerText = s.date;
-            drawAnalysisLogs(getMachineDef(s.machineName), s.gameCounts, s.extractedData);
-            dbg("最新履歴を表示しました");
-        }
-    } else { dbg("保存データはありません"); }
-}
-
-/* === ここが抜けていた「画像解析」ロジックの復元 === */
-document.getElementById('f-in').onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const apiKey = document.getElementById('api-key').value;
-    if (!apiKey) { alert("Vision API Keyを入れてください"); return; }
-    
-    dbg("画像読み込み中...");
+document.getElementById('f-in').onchange = (e) => {
+    const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = async (re) => {
+        const apiKey = document.getElementById('api-key').value;
         const base64 = re.target.result.split(',')[1];
-        dbg("Vision API 解析開始...");
-        try {
-            const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
-                method: 'POST',
-                body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION' }] }] })
-            });
-            const json = await res.json();
-            const text = json.responses[0].fullTextAnnotation.text;
-            dbg("テキスト解析完了。集計中...");
-            
-            // ここで config.js を使った数値抽出ロジック（本来のあなたのロジック）を走らせる
-            // サンプルとして簡易的な結果格納を行います
-            const mDef = getMachineDef(MACHINE_LIST[currentMachineIdx]);
-            const mockExtracted = mDef.def.map(d => ({ c: 10, p: 0 })); // 実際はここでtextから数値を抜く
-            const mockGames = [2000];
-            
-            lastAnalysisResult = {
-                machineName: mDef.name,
-                date: new Date().toLocaleString(),
-                gameCounts: mockGames,
-                extractedData: mockExtracted
-            };
-            drawAnalysisLogs(mDef, mockGames, mockExtracted);
-            dbg("解析が完了しました");
-        } catch (err) { dbg("APIエラー: " + err.message, true); }
+        logDisplay.innerHTML = "ANALYZING...";
+        const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+            method: 'POST',
+            body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION' }] }] })
+        });
+        const json = await res.json();
+        const text = json.responses[0].fullTextAnnotation.text;
+        
+        const m = getMachineDef(MACHINE_LIST[currentMachineIdx]);
+        const gCounts = [parseInt(text.match(/(\d+)G/)?.[1] || 0)];
+        const extracted = m.def.map(df => {
+            const reg = new RegExp(`${df.name}\\s*(\\d+)`, 'i');
+            const match = text.match(reg);
+            return { c: match ? parseInt(match[1]) : 0, p: 0 };
+        });
+
+        lastAnalysisResult = { machineName: m.name, date: new Date().toLocaleString(), gameCounts: gCounts, extractedData: extracted, name: document.getElementById('user-name').value };
+        drawAnalysisLogs(m, gCounts, extracted);
     };
     reader.readAsDataURL(file);
 };
 
-function updateMachineDisplay(){ 
-    const mName = MACHINE_LIST[currentMachineIdx]; 
-    document.getElementById('machine-name-display').innerText = mName; 
-    logDisplay.innerHTML = "";
-    syncHistory(mName); 
+async function syncHistory(mName){
+    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
+    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
+    const res=await gh("GET",`data/${h}/${mName}`);
+    if(res && Array.isArray(res)){ 
+        const last=res.sort((a,b)=>a.name.localeCompare(b.name)).pop();
+        const d=await gh("GET",last.path);
+        if(d){
+            const s=JSON.parse(decodeURIComponent(escape(atob(d.content))));
+            lastAnalysisResult = s;
+            document.getElementById('date-display').innerText = s.date;
+            drawAnalysisLogs(getMachineDef(s.machineName), s.gameCounts, s.extractedData);
+        }
+    }
 }
 
-window.onload = () => { 
-    document.getElementById('api-key').value = localStorage.getItem('v_k') || ''; 
-    document.getElementById('user-name').value = localStorage.getItem('u_n') || ''; 
-    document.getElementById('gh-token').value = localStorage.getItem('g_t') || ''; 
+function updateMachineDisplay(){ 
+    const n = MACHINE_LIST[currentMachineIdx]; 
+    document.getElementById('machine-name-display').innerText = n; 
+    logDisplay.innerHTML="READY"; syncHistory(n); 
+}
+
+window.onload=()=>{ 
+    document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
+    document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
+    document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; 
     updateMachineDisplay(); 
 };
 
-document.getElementById('m-prev').onclick = () => { currentMachineIdx=(currentMachineIdx-1+3)%3; updateMachineDisplay(); };
-document.getElementById('m-next').onclick = () => { currentMachineIdx=(currentMachineIdx+1)%3; updateMachineDisplay(); };
-document.getElementById('sv-all').onclick = async () => { /* 保存処理はそのまま */ alert("SAVED"); };
+document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+3)%3; updateMachineDisplay(); };
+document.getElementById('m-next').onclick=()=>{ currentMachineIdx=(currentMachineIdx+1)%3; updateMachineDisplay(); };
+
+document.getElementById('sv-all').onclick=async()=>{ 
+    localStorage.setItem('v_k',document.getElementById('api-key').value); 
+    localStorage.setItem('u_n',document.getElementById('user-name').value); 
+    localStorage.setItem('g_t',document.getElementById('gh-token').value); 
+    if(lastAnalysisResult){
+        const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value;
+        const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
+        const p=`data/${h}/${MACHINE_LIST[currentMachineIdx]}/${lastAnalysisResult.date.replace(/[/:\s]/g,'')}.json`;
+        const ex=await gh("GET", p);
+        const res=await gh("PUT", p, {message:"save", content:btoa(unescape(encodeURIComponent(JSON.stringify(lastAnalysisResult)))), sha:ex?ex.sha:null});
+        if(res) alert("CLOUD SAVED");
+    }
+    alert("LOCAL SAVED"); 
+};
 </script>
 </body>
 </html>
