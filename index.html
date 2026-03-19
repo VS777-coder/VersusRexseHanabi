@@ -52,169 +52,210 @@
 
 <script src="config.js"></script>
 <script>
-// グローバル変数
+// --- グローバル変数と定数 ---
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 2;
+let currentMachineIdx = 2; // デフォルト：バーサス
 let lastAnalysisResult = null;
 const GH_USER = "vs777-coder";
 const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 
-// 安全なJSONパース
-function safeParse(str) { try { return JSON.parse(decodeURIComponent(escape(atob(str)))); } catch(e) { return null; } }
+// --- ユーティリティ ---
+const safeBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
+const decodeBase64 = (str) => decodeURIComponent(escape(atob(str)));
 
 function getMachineDef(name) {
-    if (typeof VERSUS_CONFIG === 'undefined') return null; // config未ロード対策
-    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"}; 
+    if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:25, name:"バーサスリヴァイズ"};
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-async function gh(m, p, b = null) {
-    const t = document.getElementById('gh-token').value;
-    if (!t) return null;
+// --- GitHub API ---
+async function gh(method, path, body = null) {
+    const token = document.getElementById('gh-token').value;
+    if (!token) return null;
     try {
-        const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`, {
-            method: m,
-            headers: { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" },
-            body: b ? JSON.stringify(b) : null
+        const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${path}`, {
+            method: method,
+            headers: { Authorization: `token ${token}`, Accept: "application/vnd.github.v3+json" },
+            body: body ? JSON.stringify(body) : null
         });
         return res.ok ? await res.json() : null;
-    } catch(e) { return null; }
+    } catch (e) { return null; }
 }
 
+// --- コアロジック：判別・描画・尤度計算 ---
 function drawAnalysisLogs(machine, gCounts, extracted) {
-    if (!machine) return;
+    if (!machine || !machine.def) return;
+    
     let bbCount = 0;
+    // 1. 各項目の出現回数と試行回数を確定させる（定義表の当て込み）
     const fStorage = machine.def.map((df, i) => {
-        const da = extracted[i]; 
-        let n = gCounts[0] || 0;
-        let k = (da && da.c !== null) ? da.c : 0;
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
-        if(df.id === "bb") bbCount = k;
+        const data = extracted[i];
+        let n = gCounts[0] || 0; // 通常時ゲーム数
+        let k = (data && data.c !== null) ? data.c : 0; // 出現回数
+        
+        // RT/BIG中などの特殊区間ゲーム数算出
+        if (df.type === "vc" || df.type === "vg" || df.type === "big") {
+            n = (data && data.p > 0) ? Math.round(k * data.p) : (bbCount * machine.bG);
+        }
+        if (df.id === "bb") bbCount = k;
+        
         return { ...df, k, n };
     });
 
-    const t = document.createElement('table'); t.className='log-table';
-    t.innerHTML=`<thead><tr><th>項目</th><th>回数</th><th>結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb = t.querySelector('tbody');
+    // 2. ログテーブルの作成
+    const table = document.createElement('table');
+    table.className = 'log-table';
+    let html = `<thead><tr><th>項目</th><th>回数</th><th>結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody>`;
+    
     fStorage.forEach(res => {
-        const r = document.createElement('tr'); 
-        const rP_str = res.k > 0 ? `1/${(res.n / res.k).toFixed(1)}` : "1/---";
-        r.innerHTML = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td><td>1/${res.probs[1]}</td><td>1/${res.probs[2]}</td><td>1/${res.probs[5]}</td><td>1/${res.probs[6]}</td>`;
-        tb.appendChild(r);
+        const resProb = res.k > 0 ? `1/${(res.n / res.k).toFixed(1)}` : "1/---";
+        html += `<tr>
+            <td style="text-align:left; padding-left:2px;">${res.name}</td>
+            <td>${res.k}</td>
+            <td class="${res.active && res.k > 0 ? 'val-red' : ''}">${resProb}</td>
+            <td>1/${res.probs[1].toFixed(1)}</td><td>1/${res.probs[2].toFixed(1)}</td>
+            <td>1/${res.probs[5].toFixed(1)}</td><td>1/${res.probs[6].toFixed(1)}</td>
+        </tr>`;
     });
+    html += `</tbody>`;
+    table.innerHTML = html;
     logDisplay.innerHTML = "";
-    logDisplay.appendChild(t);
+    logDisplay.appendChild(table);
 
-    let lls = {1:0, 2:0, 5:0, 6:0};
+    // 3. 尤度計算（設定判別）
+    let lls = {1: 0, 2: 0, 5: 0, 6: 0};
     fStorage.forEach(r => {
-        if(r.active && r.n > 0 && r.k > 0) {
-            [1,2,5,6].forEach(s => {
-                const tp = 1/r.probs[s];
-                if(tp > 0 && tp < 1) lls[s] += (r.k * Math.log(tp) + (r.n - r.k) * Math.log(1 - tp));
+        if (r.active && r.n > 0 && r.k >= 0) {
+            [1, 2, 5, 6].forEach(s => {
+                const p = 1 / r.probs[s];
+                // 二項分布の対数尤度: k*log(p) + (n-k)*log(1-p)
+                lls[s] += (r.k * Math.log(p) + (r.n - r.k) * Math.log(1 - p));
             });
         }
     });
-    const mx = Math.max(...Object.values(lls)); 
-    let sm = 0;
-    [1,2,5,6].forEach(s => sm += Math.exp(lls[s] - mx));
-    [1,2,5,6].forEach(s => {
-        const pr = (sm === 0) ? 0 : (Math.exp(lls[s] - mx) / sm) * 100;
-        document.getElementById(`p${s}`).innerText = pr.toFixed(1) + "%";
-        document.getElementById(`b${s}`).style.width = pr + "%";
+
+    const maxLL = Math.max(...Object.values(lls));
+    let sumExp = 0;
+    [1, 2, 5, 6].forEach(s => sumExp += Math.exp(lls[s] - maxLL));
+    
+    [1, 2, 5, 6].forEach(s => {
+        const share = (Math.exp(lls[s] - maxLL) / sumExp) * 100;
+        document.getElementById(`p${s}`).innerText = share.toFixed(1) + "%";
+        document.getElementById(`b${s}`).style.width = share + "%";
     });
 }
 
-// 履歴同期
-async function syncHistory(mName) {
-    const k = document.getElementById('api-key').value;
-    const n = document.getElementById('user-name').value;
-    if (!k || !n) return;
-    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
-    const res = await gh("GET", `data/${h}/${mName}`);
-    if (res && Array.isArray(res)) {
-        const last = res.sort((a, b) => a.name.localeCompare(b.name)).pop();
-        const d = await gh("GET", last.path);
-        if (d && d.content) {
-            const s = safeParse(d.content);
-            if(s) {
-                lastAnalysisResult = s;
-                document.getElementById('date-display').innerText = s.date || "NO DATE";
-                drawAnalysisLogs(getMachineDef(s.machineName), s.gameCounts, s.extractedData);
-            }
-        }
-    }
-}
-
-// 画像解析実行
-document.getElementById('f-in').addEventListener('change', async (e) => {
-    const file = e.target.files[0]; if (!file) return;
+// --- 画像解析 ---
+document.getElementById('f-in').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
     const apiKey = document.getElementById('api-key').value;
-    if (!apiKey) { alert("API KEY!"); return; }
+    if (!apiKey) { alert("Vision API Keyを入力してください"); return; }
 
+    logDisplay.innerHTML = "解析中...";
     const reader = new FileReader();
-    reader.onload = async (re) => {
-        const base64 = re.target.result.split(',')[1];
-        logDisplay.innerHTML = "ANALYZING...";
+    reader.onload = async (event) => {
+        const base64 = event.target.result.split(',')[1];
         try {
             const res = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
                 method: 'POST',
-                body: JSON.stringify({ requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION' }] }] })
+                body: JSON.stringify({
+                    requests: [{ image: { content: base64 }, features: [{ type: 'TEXT_DETECTION' }] }]
+                })
             });
             const json = await res.json();
-            const text = json.responses[0]?.fullTextAnnotation?.text || "";
+            const text = json.responses[0].fullTextAnnotation.text;
             
-            const m = getMachineDef(MACHINE_LIST[currentMachineIdx]);
+            const machine = getMachineDef(MACHINE_LIST[currentMachineIdx]);
+            // ゲーム数抽出
             const gMatch = text.match(/(\d+)G/);
-            const gCounts = [gMatch ? parseInt(gMatch[1]) : 0];
-            const extracted = m.def.map(df => {
+            const gameCounts = [gMatch ? parseInt(gMatch[1]) : 0];
+            
+            // 各項目の数値を定義表の名前に基づいて抽出
+            const extracted = machine.def.map(df => {
                 const reg = new RegExp(`${df.name}[^\\d]*(\\d+)`, 'i');
                 const match = text.match(reg);
                 return { c: match ? parseInt(match[1]) : 0, p: 0 };
             });
 
-            lastAnalysisResult = { machineName: m.name, date: new Date().toLocaleString(), gameCounts: gCounts, extractedData: extracted };
-            drawAnalysisLogs(m, gCounts, extracted);
-        } catch(err) { logDisplay.innerHTML = "ERROR: " + err.message; }
+            lastAnalysisResult = {
+                machineName: machine.name,
+                date: new Date().toLocaleString('ja-JP'),
+                gameCounts: gameCounts,
+                extractedData: extracted,
+                userName: document.getElementById('user-name').value
+            };
+            
+            drawAnalysisLogs(machine, gameCounts, extracted);
+        } catch (err) {
+            logDisplay.innerHTML = "解析失敗: " + err.message;
+        }
     };
     reader.readAsDataURL(file);
-});
+};
 
-function updateMachineDisplay() {
-    const n = MACHINE_LIST[currentMachineIdx];
-    document.getElementById('machine-name-display').innerText = n;
-    logDisplay.innerHTML = "READY";
-    syncHistory(n);
-}
-
-// 保存ボタン
+// --- 保存・同期 ---
 document.getElementById('sv-all').onclick = async () => {
     const vk = document.getElementById('api-key').value;
     const un = document.getElementById('user-name').value;
     const gt = document.getElementById('gh-token').value;
-    localStorage.setItem('v_k', vk); localStorage.setItem('u_n', un); localStorage.setItem('g_t', gt);
+    localStorage.setItem('v_k', vk);
+    localStorage.setItem('u_n', un);
+    localStorage.setItem('g_t', gt);
 
     if (lastAnalysisResult && gt) {
-        const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(vk + un)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+        const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(vk + un))
+            .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+        
         const dateId = lastAnalysisResult.date.replace(/[/:\s]/g, '');
-        const p = `data/${h}/${MACHINE_LIST[currentMachineIdx]}/${dateId}.json`;
-        const ex = await gh("GET", p);
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(lastAnalysisResult))));
-        await gh("PUT", p, { message: "save", content: content, sha: ex ? ex.sha : null });
-        alert("CLOUD & LOCAL SAVED");
-    } else {
-        alert("LOCAL SAVED");
+        const path = `data/${hash}/${MACHINE_LIST[currentMachineIdx]}/${dateId}.json`;
+        
+        const existing = await gh("GET", path);
+        const res = await gh("PUT", path, {
+            message: "Rev 3.9.4 Save",
+            content: safeBase64(JSON.stringify(lastAnalysisResult)),
+            sha: existing ? existing.sha : null
+        });
+        if (res) alert("クラウド保存完了");
     }
+    alert("設定を保存しました");
 };
 
-// 初期化
+async function syncHistory(mName) {
+    const vk = document.getElementById('api-key').value;
+    const un = document.getElementById('user-name').value;
+    if (!vk || !un) return;
+    
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(vk + un))
+        .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+    
+    const res = await gh("GET", `data/${hash}/${mName}`);
+    if (res && Array.isArray(res)) {
+        const last = res.sort((a, b) => a.name.localeCompare(b.name)).pop();
+        const detail = await gh("GET", last.path);
+        if (detail && detail.content) {
+            const data = JSON.parse(decodeBase64(detail.content));
+            lastAnalysisResult = data;
+            document.getElementById('date-display').innerText = data.date;
+            drawAnalysisLogs(getMachineDef(data.machineName), data.gameCounts, data.extractedData);
+        }
+    }
+}
+
+function updateMachineDisplay() {
+    const name = MACHINE_LIST[currentMachineIdx];
+    document.getElementById('machine-name-display').innerText = name;
+    logDisplay.innerHTML = "READY";
+    syncHistory(name);
+}
+
 window.onload = () => {
     document.getElementById('api-key').value = localStorage.getItem('v_k') || '';
     document.getElementById('user-name').value = localStorage.getItem('u_n') || '';
     document.getElementById('gh-token').value = localStorage.getItem('g_t') || '';
-    // config.jsの読み込みを待つため少し遅延
-    setTimeout(updateMachineDisplay, 500);
+    setTimeout(updateMachineDisplay, 300);
 };
 
 document.getElementById('m-prev').onclick = () => { currentMachineIdx = (currentMachineIdx - 1 + 3) % 3; updateMachineDisplay(); };
