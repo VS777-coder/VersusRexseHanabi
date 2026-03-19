@@ -5,20 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HANABI ANALYZER Rev 3.9.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    </head>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .rev-tag-top { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #64748b; position: absolute; top: 4px; right: 12px; font-weight: bold; }
+        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
+        .main-btn span { font-weight: 900; font-size: 1.2rem; color: #ffffff; letter-spacing: 1px; }
+        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 10px 14px; position: relative; }
+        .bar-bg { background-color: #020617; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
+        .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
+        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
+        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
+        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 3px 1px; text-align: center; }
+        .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
+        .val-red { color: #ef4444 !important; font-weight: 900; }
+        .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
+        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
+        .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
+        .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
+    </style>
+</head>
 <body>
     <div class="rev-tag-top">Rev 3.9.4</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
+    <div class="result-card panel-frame flex flex-col items-center">
+        <div class="w-full mb-3 flex justify-between items-center font-bold">
+            <div class="flex items-center gap-1 text-white text-[10px]"><button id="m-prev" class="nav-btn">◁</button><span id="machine-name-display" class="min-w-[70px]">バーサスリヴァイズ</span><button id="m-next" class="nav-btn">▷</button></div>
+            <div class="flex items-center gap-1 text-white text-[9px]"><button id="d-prev" class="nav-btn">◁</button><span id="date-display" class="font-mono">NO DATA</span><button id="d-next" class="nav-btn">▷</button></div>
+        </div>
+        <div class="w-full flex flex-col gap-2">
+            <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-[10px]">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-[10px]">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-[10px]">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
+            <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-[10px]">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+        </div>
+    </div>
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
-    <script src="config.js"></script>
+    <div class="api-footer flex flex-col gap-1">
+        <div class="flex gap-1 items-center"><input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key"><input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name"></div>
+        <div class="flex gap-1 items-center"><input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token"><button id="sv-all" class="save-btn">SAVE</button></div>
+    </div>
+
+<script src="config.js"></script>
 <script>
+// --- グローバル設定 ---
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 2; 
+let currentMachineIdx = 2; // VS
 let lastAnalysisResult = null;
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 
-// --- 完動ソース直系のヘルパー ---
+// --- ユーティリティ (完動版準拠) ---
 const safeBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
 const decodeBase64 = (str) => decodeURIComponent(escape(atob(str)));
 
@@ -28,21 +69,22 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-// --- GitHub API (SHA対応) ---
-async function gh(m,p,b=null){ 
-    const t=document.getElementById('gh-token').value; if(!t)return null;
+// --- GitHub API ---
+async function gh(m, p, b = null) {
+    const t = document.getElementById('gh-token').value;
+    if (!t) return null;
     try {
-        const res=await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`,{
-            method:m,
-            headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},
-            body:b?JSON.stringify(b):null
+        const res = await fetch(`https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`, {
+            method: m,
+            headers: { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" },
+            body: b ? JSON.stringify(b) : null
         });
-        return res.ok?await res.json():null;
+        return res.ok ? await res.json() : null;
     } catch(e) { return null; }
 }
 
-// --- 【聖域】完動ソースの描画・尤度計算ロジックを完全維持 ---
-function drawAnalysisLogs(machine, gCounts, extracted, uName = "", date = "", merged = []) {
+// --- 【聖域】描画・尤度計算ロジック (完動ソース完全維持) ---
+function drawAnalysisLogs(machine, gCounts, extracted) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
         const da = extracted[i]; 
@@ -85,11 +127,11 @@ function drawAnalysisLogs(machine, gCounts, extracted, uName = "", date = "", me
     });
 }
 
-// --- 【新規】画像解析ロジックの復旧 ---
+// --- 画像解析ロジック ---
 document.getElementById('f-in').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const apiKey = document.getElementById('api-key').value;
-    if (!apiKey) { alert("API KEY!"); return; }
+    if (!apiKey) { alert("Vision API Keyが必要です"); return; }
 
     logDisplay.innerHTML = "ANALYZING...";
     const reader = new FileReader();
@@ -125,7 +167,7 @@ document.getElementById('f-in').onchange = async (e) => {
     reader.readAsDataURL(file);
 };
 
-// --- 履歴同期（フリーズ回避版） ---
+// --- 履歴同期 ---
 async function syncHistory(mName){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value;
     if(!k||!n) { logDisplay.innerHTML = "READY"; return; }
@@ -146,7 +188,7 @@ async function syncHistory(mName){
     logDisplay.innerHTML = "NO HISTORY";
 }
 
-// --- 保存処理 (SHA取得付き) ---
+// --- 保存 ---
 document.getElementById('sv-all').onclick = async () => {
     const vk = document.getElementById('api-key').value;
     const un = document.getElementById('user-name').value;
@@ -160,7 +202,7 @@ document.getElementById('sv-all').onclick = async () => {
         
         const existing = await gh("GET", path);
         const res = await gh("PUT", path, {
-            message: "save",
+            message: "Rev 3.9.4 Save",
             content: safeBase64(JSON.stringify(lastAnalysisResult)),
             sha: existing ? existing.sha : null
         });
@@ -175,11 +217,20 @@ function updateMachineDisplay(){
     syncHistory(mName); 
 }
 
-window.onload=()=>{ 
+// --- 初期起動ガード ---
+window.onload = () => {
     document.getElementById('api-key').value=localStorage.getItem('v_k')||''; 
     document.getElementById('user-name').value=localStorage.getItem('u_n')||''; 
     document.getElementById('gh-token').value=localStorage.getItem('g_t')||''; 
-    setTimeout(updateMachineDisplay, 300); // config.js展開待ち
+    
+    const checkConfig = () => {
+        if (typeof VERSUS_CONFIG !== 'undefined') {
+            updateMachineDisplay();
+        } else {
+            setTimeout(checkConfig, 100);
+        }
+    };
+    checkConfig();
 };
 
 document.getElementById('m-prev').onclick=()=>{ currentMachineIdx=(currentMachineIdx-1+3)%3; updateMachineDisplay(); };
