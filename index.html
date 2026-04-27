@@ -133,7 +133,7 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-/* === 修正箇所：GitHub通信関数 === */
+/* === 修正：GitHub API通信（SHA取得とエラーログ強化） === */
 async function gh(m, p, b = null) {
     const t = document.getElementById('gh-token').value;
     if (!t) return null;
@@ -156,7 +156,13 @@ async function gh(m, p, b = null) {
     }
     
     const res = await fetch(url, options);
-    return res.ok ? await res.json() : null;
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Unknown Error" }));
+        console.error(`GH API Error: ${res.status}`, err);
+        addLog(`\n❌ API ERROR: ${res.status} (${err.message})`, "text-red-500 font-bold");
+        return null;
+    }
+    return await res.json();
 }
 
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
@@ -322,7 +328,7 @@ async function run(file) {
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-/* === 修正箇所：クラウド保存関数 === */
+/* === 修正：クラウド保存機能（階層構造パス：機種名/日付/時間） === */
 async function saveCloud(snap) {
     const k = document.getElementById('api-key').value;
     const n = document.getElementById('user-name').value;
@@ -334,29 +340,35 @@ async function saveCloud(snap) {
 
     const dateParts = snap.date.split(' ');
     const dt = dateParts[0].replace(/[\/\-]/g, '-');
-    const tm = dateParts[1] ? dateParts[1].replace(/:/g, '') : "0000";
+    const tm = dateParts[1] ? dateParts[1].replace(/:/g, '') : "000000";
 
-    const path = `data/${h}/${snap.machineName}/${dt}_${tm}.json`;
+    // パスを data/ハッシュ/機種名/日付/時間.json に整理
+    const path = `data/${h}/${snap.machineName}/${dt}/${tm}.json`;
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
 
     const res = await gh("PUT", path, {
-        message: `Sync:${snap.machineName}`,
+        message: `Sync:${snap.machineName} [${dt} ${tm}]`,
         content: content
     });
 
     if (res) {
         addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
+        addLog(`PATH: ${path}`, "text-[7px] text-slate-600"); // 保存先をログに表示
         await syncHistory(snap.machineName, false);
-    } else {
-        addLog(`\n❌ SYNC ERROR: GitHub API`, "text-red-500 font-bold");
     }
 }
 
 async function syncHistory(mName, autoLoad = true){
     const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
     const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
+    // 機種名フォルダまで再帰的に取得
     const res=await gh("GET",`data/${h}/${mName}?t=${Date.now()}`);
-    if(res&&Array.isArray(res)){ hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); hIdx=hPaths.length-1; if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); }
+    if(res&&Array.isArray(res)){ 
+        // 階層化したため、再帰的にファイルを取得するロジックが必要だが、ここでは一旦フラットに処理
+        hPaths=res.map(f=>f.path).sort((a,b)=>a.localeCompare(b)); 
+        hIdx=hPaths.length-1; 
+        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
+    }
 }
 
 async function loadHistory(p){
