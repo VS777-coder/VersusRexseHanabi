@@ -12,12 +12,17 @@
         .rev-tag-top { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #64748b; position: absolute; top: 4px; right: 12px; font-weight: bold; }
         .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
         .main-btn span { font-weight: 900; font-size: 1.2rem; color: #ffffff; letter-spacing: 1px; }
-        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 10px 14px; position: relative; }
-        .bar-bg { background-color: #020617; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #1e293b; margin-top: 4px; }
+        
+        /* グラフ部分のサイズ調整：パディングとマージンを最小化 */
+        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 6px 14px; position: relative; }
+        .bar-bg { background-color: #020617; height: 6px; border-radius: 3px; overflow: hidden; border: 1px solid #1e293b; margin-top: 1px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        /* ログ領域を最大化 */
         .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
         .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
         .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
+        
         .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
         .log-table th, .log-table td { border: 1px solid #1e293b; padding: 3px 1px; text-align: center; }
         .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
@@ -36,26 +41,45 @@
 <body>
     <div class="rev-tag-top">Rev 3.9.2</div>
     <div class="shrink-0 mb-2 mt-4"><label for="f-in" class="main-btn"><span>ユニメモ解析実行</span></label><input type="file" id="f-in" class="hidden" accept="image/*"></div>
-    <div class="result-card panel-frame flex flex-col items-center">
-        <div class="w-full mb-3 flex justify-between items-center font-bold">
+    
+    <div class="result-card panel-frame flex flex-col items-center shrink-0">
+        <div class="w-full mb-1 flex justify-between items-center font-bold">
             <div class="flex items-center gap-1 text-white text-[10px]"><button id="m-prev" class="nav-btn">◁</button><span id="machine-name-display" class="min-w-[70px]">新ハナビ</span><button id="m-next" class="nav-btn">▷</button></div>
             <div class="flex items-center gap-1 text-white text-[9px]"><button id="d-prev" class="nav-btn">◁</button><span id="date-display" class="font-mono">NO DATA</span><button id="d-next" class="nav-btn">▷</button></div>
         </div>
-        <div class="w-full flex flex-col gap-2">
-            <div><div class="flex justify-between items-end"><span class="c-s1 font-black text-[10px]">設定1</span><span id="p1" class="c-s1 font-black text-sm">---</span></div><div class="bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s2 font-black text-[10px]">設定2</span><span id="p2" class="c-s2 font-black text-sm">---</span></div><div class="bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s5 font-black text-[10px]">設定5</span><span id="p5" class="c-s5 font-black text-sm">---</span></div><div class="bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div></div>
-            <div><div class="flex justify-between items-end"><span class="c-s6 font-black text-[10px]">設定6</span><span id="p6" class="c-s6 font-black text-sm">---</span></div><div class="bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div></div>
+        <div class="w-full flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+                <span class="c-s1 font-black text-[9px] w-8">設定1</span>
+                <div class="flex-grow bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div>
+                <span id="p1" class="c-s1 font-black text-[10px] w-10 text-right">---</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="c-s2 font-black text-[9px] w-8">設定2</span>
+                <div class="flex-grow bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div>
+                <span id="p2" class="c-s2 font-black text-[10px] w-10 text-right">---</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="c-s5 font-black text-[9px] w-8">設定5</span>
+                <div class="flex-grow bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div>
+                <span id="p5" class="c-s5 font-black text-[10px] w-10 text-right">---</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="c-s6 font-black text-[9px] w-8">設定6</span>
+                <div class="flex-grow bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div>
+                <span id="p6" class="c-s6 font-black text-[10px] w-10 text-right">---</span>
+            </div>
         </div>
     </div>
+
     <div class="log-container"><button id="copy-log" class="copy-btn">COPY</button><div id="log-display" class="log-body">READY...</div></div>
-    <div class="api-footer flex flex-col gap-1">
+    
+    <div class="api-footer flex flex-col gap-1 shrink-0">
         <div class="flex gap-1 items-center"><input type="password" id="api-key" class="api-input-tiny flex-grow" placeholder="Vision API Key"><input type="text" id="user-name" class="api-input-name w-1/3" placeholder="Name"></div>
         <div class="flex gap-1 items-center"><input type="password" id="gh-token" class="api-input-tiny flex-grow" placeholder="GitHub Token"><button id="sv-all" class="save-btn">SAVE</button></div>
     </div>
 
 <script>
-/* === 聖域：CONFIGURATIONS === */
+/* === 聖域：CONFIGURATIONS (省略なし) === */
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -133,113 +157,69 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-/* === GitHub 通信基本関数 === */
 async function gh(m, p, b = null) {
     const t = document.getElementById('gh-token').value;
     if (!t) return null;
     const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
-    
-    let options = {
-        method: m,
-        headers: {
-            Authorization: `token ${t}`,
-            Accept: "application/vnd.github.v3+json"
-        }
-    };
-
+    let options = { method: m, headers: { Authorization: `token ${t}`, Accept: "application/vnd.github.v3+json" } };
     if (m === "PUT") {
-        const ex = await fetch(url, { headers: { Authorization: `token ${t}` } })
-            .then(r => r.ok ? r.json() : null)
-            .catch(() => null);
+        const ex = await fetch(url, { headers: { Authorization: `token ${t}` } }).then(r => r.ok ? r.json() : null).catch(() => null);
         if (ex) b.sha = ex.sha;
         options.body = JSON.stringify(b);
     }
-    
     const res = await fetch(url, options);
-    // 404(未保存)はエラーログを出さずにnullを返す
     if (res.status === 404 && m === "GET") return null;
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Unknown Error" }));
-        addLog(`\n❌ API ERROR: ${res.status}`, "text-red-500 font-bold");
-        return null;
-    }
+    if (!res.ok) { addLog(`\n❌ API ERROR: ${res.status}`, "text-red-500 font-bold"); return null; }
     return await res.json();
 }
 
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
     let bbCount = 0;
     const fStorage = machine.def.map((df, i) => {
-        const da = extracted[i]; 
-        let n = gCounts[0];
-        let k = (da && da.c !== null) ? da.c : 0;
-        if(df.type === "vc" || df.type === "vg" || df.type === "big") {
-            n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG);
-        }
-        if(df.id === "bb") bbCount = k;
-        return { ...df, k, n };
+        const da = extracted[i]; let n = gCounts[0]; let k = (da && da.c !== null) ? da.c : 0;
+        if(df.type === "vc" || df.type === "vg" || df.type === "big") { n = (da && da.p > 0) ? Math.round(k * da.p) : (bbCount * machine.bG); }
+        if(df.id === "bb") bbCount = k; return { ...df, k, n };
     });
-
     addLog(`\n（４）定義表への当て込み`, "text-blue-400 font-bold");
     const t4 = document.createElement('table'); t4.className='log-table';
     t4.innerHTML=`<thead><tr><th style="width:28%">項目</th><th style="width:12%">回数</th><th style="width:16%">結果</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
     const tb4 = t4.querySelector('tbody');
     fStorage.forEach(res => {
-        const r = document.createElement('tr'); 
-        const rP_num = res.k > 0 ? (res.n / res.k) : 0;
-        const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/---";
+        const r = document.createElement('tr'); const rP_num = res.k > 0 ? (res.n / res.k) : 0; const rP_str = res.k > 0 ? `1/${rP_num.toFixed(1)}` : "1/---";
         let rowHtml = `<td style="text-align:left; padding-left:2px;">${res.name}</td><td>${res.k}</td><td class="${res.active && res.k > 0 ? 'val-red' : ''}">${rP_str}</td>`;
         if (res.active) {
-            const diffs = [1, 2, 5, 6].map(s => {
-                if (res.k === 0) return 1 / res.probs[s]; 
-                return Math.abs(rP_num - res.probs[s]);
-            });
+            const diffs = [1, 2, 5, 6].map(s => res.k === 0 ? 1 / res.probs[s] : Math.abs(rP_num - res.probs[s]));
             const minDiff = Math.min(...diffs);
             [1, 2, 5, 6].forEach((s, idx) => { rowHtml += `<td class="${diffs[idx] === minDiff ? 'val-yellow' : ''}">1/${res.probs[s].toFixed(1)}</td>`; });
         } else { [1, 2, 5, 6].forEach(s => { rowHtml += `<td>1/${res.probs[s].toFixed(1)}</td>`; }); }
         r.innerHTML = rowHtml; tb4.appendChild(r);
     });
     logDisplay.appendChild(t4);
-
     const intensityData = fStorage.filter(res => res.active && res.n > 0).map(res => {
-        let iLLs = {}; 
-        [1,2,5,6].forEach(s => { 
-            const tp = 1/res.probs[s]; 
-            iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); 
-        });
-        const vs = Object.values(iLLs); 
-        const maxV = Math.max(...vs); const minV = Math.min(...vs);
-        const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
-        const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
-        const power = res.n * (maxP - minP); 
-        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
+        let iLLs = {}; [1,2,5,6].forEach(s => { const tp = 1/res.probs[s]; iLLs[s] = (res.k * Math.log(tp) + (res.n - res.k) * Math.log(1 - tp)); });
+        const vs = Object.values(iLLs); const maxV = Math.max(...vs); const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
+        const maxP = Math.max(...pArr); const minP = Math.min(...pArr); const power = res.n * (maxP - minP); 
+        return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - Math.min(...vs), power };
     });
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
-
     addLog(`\n（５）尤度計算・判別強度ギャップ`, "text-blue-400 font-bold");
     const t5 = document.createElement('table'); t5.className='log-table';
     t5.innerHTML=`<thead><tr><th style="width:40%">項目</th><th style="width:10%">強度</th><th>1</th><th>2</th><th>5</th><th>6</th></tr></thead><tbody></tbody>`;
-    const tb5 = t5.querySelector('tbody');
-    let totalLLs = {1:0, 2:0, 5:0, 6:0};
+    const tb5 = t5.querySelector('tbody'); let totalLLs = {1:0, 2:0, 5:0, 6:0};
     intensityData.forEach(c => {
-        const r = document.createElement('tr');
-        let aura = ""; const rk = top3Ids.indexOf(c.id);
+        const r = document.createElement('tr'); let aura = ""; const rk = top3Ids.indexOf(c.id);
         if(rk === 0) aura = "aura-red"; else if(rk === 1) aura = "aura-green"; else if(rk === 2) aura = "aura-yellow";
-        
         const gB = c.int > 4 ? "■■■" : c.int > 1 ? "■■" : c.int > 0.3 ? "■" : "";
         let cls = `<td class="${aura}" style="text-align:left; font-weight:bold; padding-left:2px;">${c.name}</td><td class="${aura}">${gB}</td>`;
         [1,2,5,6].forEach(s => {
-            totalLLs[s] += c.iLLs[s];
-            const gM = c.maxL - c.iLLs[s];
-            const maxStars = Math.min(5, Math.ceil(c.power * 25)); 
+            totalLLs[s] += c.iLLs[s]; const gM = c.maxL - c.iLLs[s]; const maxStars = Math.min(5, Math.ceil(c.power * 25)); 
             const st = (c.int < 0.01) ? 0 : gM < 0.2 ? maxStars : gM < 0.8 ? Math.max(0, maxStars-1) : gM < 1.6 ? Math.max(0, maxStars-2) : gM < 3.2 ? Math.max(0, maxStars-3) : 1;
             cls += `<td style="color:${gM < 0.001 && c.int > 0.01 && maxStars > 0 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
         r.innerHTML = cls; tb5.appendChild(r);
     });
     logDisplay.appendChild(t5);
-
-    const mx = Math.max(...Object.values(totalLLs));
-    let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
+    const mx = Math.max(...Object.values(totalLLs)); let sm = 0; [1,2,5,6].forEach(s => { sm += Math.exp(totalLLs[s] - mx); });
     addLog(`\n（６）設定判別処理`, "text-blue-400 font-bold");
     [1,2,5,6].forEach(s => {
         let pr = (sm === 0) ? 0 : (Math.exp(totalLLs[s] - mx) / sm) * 100;
@@ -254,9 +234,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
 
 async function run(file) {
     const k = document.getElementById('api-key').value.trim(); if(!k) return alert("Key!");
-    logDisplay.innerHTML = "";
-    addLog(`（１）画像情報`, "text-blue-400 font-bold");
-    addLog(`  > ファイル: ${file.name}`);
+    logDisplay.innerHTML = ""; addLog(`（１）画像情報`, "text-blue-400 font-bold");
     try {
         const base64 = await new Promise(res => { const r=new FileReader(); r.onload=e=>res(e.target.result.split(',')[1]); r.readAsDataURL(file); });
         const resp = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${k}`,{method:'POST',body:JSON.stringify({requests:[{image:{content:base64},features:[{type:'DOCUMENT_TEXT_DETECTION'}]}]})});
@@ -264,24 +242,14 @@ async function run(file) {
         const sorted = ann.slice(1).map(a => ({text:a.description, y:a.boundingPoly.vertices[0].y})).sort((a,b) => a.y - b.y);
         let merged = []; let cur = {y:-100, t:""};
         sorted.forEach(b => { if(Math.abs(b.y - cur.y) < 8) cur.t += " " + b.text; else { if(cur.t) merged.push(cur.t); cur = {y:b.y, t:b.text}; } });
-        merged.push(cur.t);
-
-        addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold");
-        merged.forEach(line => addLog(line));
-
-        const fullText = merged.join(" ");
-        let machine = getMachineDef(fullText);
-
+        merged.push(cur.t); addLog(`\n（２）画像の生データ`, "text-blue-400 font-bold"); merged.forEach(line => addLog(line));
+        const fullText = merged.join(" "); let machine = getMachineDef(fullText);
         document.getElementById('machine-name-display').innerText = machine.name;
-        const mIdx = MACHINE_LIST.indexOf(machine.name);
-        if (mIdx !== -1) currentMachineIdx = mIdx;
-
+        const mIdx = MACHINE_LIST.indexOf(machine.name); if (mIdx !== -1) currentMachineIdx = mIdx;
         const dStrRaw = (fullText.match(/(\d{4}[\/\-]\d{2}[\/\-]\d{2})/) || [0, ""])[1];
         const tStrRaw = (fullText.match(/(\d{1,2}:\d{2})/) || [0, ""])[1];
-
         const dateIdx = merged.findIndex(line => /\d{4}[\/\-]\d{2}[\/\-]\d{2}/.test(line));
-        let anchorIdx = -1, gCounts = [];
-        const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
+        let anchorIdx = -1, gCounts = []; const searchScope = dateIdx !== -1 ? merged.slice(dateIdx + 1) : merged;
         const offset = dateIdx !== -1 ? dateIdx + 1 : 0;
         for(let i=0; i < searchScope.length; i++) {
             const t = searchScope[i].replace(/[\s,]/g,''); if(t.includes('G')) {
@@ -289,35 +257,23 @@ async function run(file) {
             }
         }
         if(anchorIdx === -1) throw new Error("G NotFound");
-
         addLog(`\n（３）仮想配列作成・項目紐付け`, "text-blue-400 font-bold");
-        let lastType = "";
-        const extracted = []; let ptr = anchorIdx + 1; let bb_for_rt = 0;
+        let lastType = "", extracted = [], ptr = anchorIdx + 1, bb_for_rt = 0;
         while(extracted.length < machine.def.length && ptr < merged.length) {
             const l = merged[ptr];
             if(l.includes('/')) {
-                const cDef = machine.def[extracted.length]; 
-                let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (bb_for_rt * machine.bG);
-                
-                if(cDef.type !== lastType) {
-                    const typeLabel = cDef.type === "normal" ? "通常" : cDef.type === "big" ? "BIG中" : cDef.type.toUpperCase();
-                    addLog(`--- ${typeLabel}(${nC}G) ---`, "text-slate-500");
-                    lastType = cDef.type;
-                }
-
+                const cDef = machine.def[extracted.length]; let nC = gCounts[0]; if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (bb_for_rt * machine.bG);
+                if(cDef.type !== lastType) { addLog(`--- ${cDef.type === "normal" ? "通常" : cDef.type === "big" ? "BIG中" : cDef.type.toUpperCase()}(${nC}G) ---`, "text-slate-500"); lastType = cDef.type; }
                 let p = 0, c = null; const clL = l.replace(/[\s,]/g,''); 
                 if (clL.includes('/') && clL.includes('-')) c = 0;
                 else {
                     const dm = clL.match(/(\d+\.\d+)/); if(dm) p = parseFloat(dm[1]);
                     for (let j of [1,2,3]) { const tl = (merged[ptr-j]||"").replace(/[\s,]/g,''); const nm = tl.match(/(\d+)/); if(nm){ c = parseInt(nm[1]); break; } }
                     if(cDef.type === "vc" || cDef.type === "vg" || cDef.type === "big") nC = (c !== null && p > 0) ? Math.round(c * p) : (bb_for_rt * machine.bG);
-                    const expC = (p > 0) ? Math.round(nC / p) : 0;
-                    if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
+                    const expC = (p > 0) ? Math.round(nC / p) : 0; if (c === null || (p > 1.5 && Math.abs(c - expC) > 2.5 * Math.sqrt(nC * (1/p) * (1 - 1/p)))) c = expC;
                 }
-                if(cDef.id === "bb") bb_for_rt = c;
-                extracted.push({c, p});
-                const probStr = p > 0 ? `1/${p.toFixed(1)}` : "1/---";
-                addLog(`  [${cDef.name}] ${c}回 (${probStr})`);
+                if(cDef.id === "bb") bb_for_rt = c; extracted.push({c, p});
+                addLog(`  [${cDef.name}] ${c}回 (1/${p.toFixed(1)})`);
             }
             ptr++;
         }
@@ -329,70 +285,33 @@ async function run(file) {
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-/* === 保存・読み込み機能（安定版：data直下平坦保存） === */
 async function saveCloud(snap) {
-    const k = document.getElementById('api-key').value;
-    const n = document.getElementById('user-name').value;
-    const t = document.getElementById('gh-token').value;
+    const k = document.getElementById('api-key').value, n = document.getElementById('user-name').value, t = document.getElementById('gh-token').value;
     if (!k || !n || !t) return;
-
-    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n))
-        .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
-
-    const dateParts = snap.date.split(' ');
-    const dt = dateParts[0].replace(/[\/\-]/g, '-');
-    const tm = dateParts[1] ? dateParts[1].replace(/:/g, '') : "000000";
-
-    // dataフォルダ直下に一意のファイル名で保存
-    const path = `data/${h}_${snap.machineName}_${dt}_${tm}.json`;
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
-
-    const res = await gh("PUT", path, {
-        message: `Sync:${snap.machineName}`,
-        content: content
-    });
-
-    if (res) {
-        addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
-        await syncHistory(snap.machineName, false);
-    }
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+    const dp = snap.date.split(' '), dt = dp[0].replace(/[\/\-]/g, '-'), tm = dp[1] ? dp[1].replace(/:/g, '') : "000000";
+    const res = await gh("PUT", `data/${h}_${snap.machineName}_${dt}_${tm}.json`, { message: `Sync:${snap.machineName}`, content: btoa(unescape(encodeURIComponent(JSON.stringify(snap)))) });
+    if (res) { addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2"); await syncHistory(snap.machineName, false); }
 }
 
 async function syncHistory(mName, autoLoad = true){
-    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; 
-    if(!k||!n) return;
-    
-    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k+n))
-        .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('').substring(0,12));
-
-    // dataフォルダ直下のファイルをリストアップ
+    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n) return;
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k+n)).then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2,'0')).join('').substring(0,12));
     const res = await gh("GET", `data?t=${Date.now()}`);
     if(res && Array.isArray(res)){ 
-        // 自分のハッシュと機種名が含まれるファイルのみを抽出
-        hPaths = res.filter(f => f.name.includes(h) && f.name.includes(mName))
-                    .map(f => f.path)
-                    .sort((a,b) => a.localeCompare(b));
-                    
-        hIdx = hPaths.length - 1; 
-        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
-    } else {
-        hPaths = []; hIdx = -1;
-    }
+        hPaths = res.filter(f => f.name.includes(h) && f.name.includes(mName)).map(f => f.path).sort((a,b) => a.localeCompare(b));
+        hIdx = hPaths.length - 1; if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
+    } else { hPaths = []; hIdx = -1; }
 }
 
 async function loadHistory(p){
     if(lastAnalysisResult && p === "current"){ 
         logDisplay.innerHTML = lastAnalysisResult.logHtml; 
-        drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date); 
-        return; 
+        drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date); return; 
     }
-    const res=await gh("GET",p); 
-    if(res && res.content){ 
-        logDisplay.innerHTML = ""; 
-        const s = JSON.parse(decodeURIComponent(escape(atob(res.content)))); 
-        const m = getMachineDef(s.machineName); 
-        document.getElementById('date-display').innerText = s.date; 
-        drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); 
+    const res=await gh("GET",p); if(res && res.content){ 
+        logDisplay.innerHTML = ""; const s = JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); 
+        document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); 
     }
 }
 
