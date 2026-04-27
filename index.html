@@ -121,7 +121,7 @@ const VERSUS_CONFIG = [
 ];
 
 const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
-let currentMachineIdx = 2; let lastAnalysisResult = null; // 【修正箇所1】初期値を2（バーサスリヴァイズ）に変更
+let currentMachineIdx = 2; let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
 const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'); e.className=c; e.innerHTML=m; logDisplay.appendChild(e); logDisplay.scrollTop=logDisplay.scrollHeight; };
@@ -133,15 +133,30 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
-async function gh(m,p,b=null){ 
-    const t=document.getElementById('gh-token').value; if(!t)return null;
+/* === 修正箇所：GitHub通信関数 === */
+async function gh(m, p, b = null) {
+    const t = document.getElementById('gh-token').value;
+    if (!t) return null;
     const url = `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${p}`;
-    if(m==="PUT"){
-        const ex = await fetch(url,{headers:{Authorization:`token ${t}`}}).then(r=>r.ok?r.json():null).catch(()=>null);
-        if(ex) b.sha = ex.sha;
+    
+    let options = {
+        method: m,
+        headers: {
+            Authorization: `token ${t}`,
+            Accept: "application/vnd.github.v3+json"
+        }
+    };
+
+    if (m === "PUT") {
+        const ex = await fetch(url, { headers: { Authorization: `token ${t}` } })
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null);
+        if (ex) b.sha = ex.sha;
+        options.body = JSON.stringify(b);
     }
-    const res=await fetch(url,{method:m,headers:{Authorization:`token ${t}`,Accept:"application/vnd.github.v3+json"},body:b?JSON.stringify(b):null});
-    return res.ok?await res.json():null;
+    
+    const res = await fetch(url, options);
+    return res.ok ? await res.json() : null;
 }
 
 function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dateOverride = null) {
@@ -186,10 +201,9 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         });
         const vs = Object.values(iLLs); 
         const maxV = Math.max(...vs); const minV = Math.min(...vs);
-        // 設定差の「絶対量」を評価（貢献度）
         const pArr = [1,2,5,6].map(s => 1/res.probs[s]);
         const maxP = Math.max(...pArr); const minP = Math.min(...pArr);
-        const power = res.n * (maxP - minP); // ゲーム数と設定差の掛け合わせ
+        const power = res.n * (maxP - minP); 
         return { id: res.id, name: res.name, iLLs, maxL: maxV, int: maxV - minV, power };
     });
     const top3Ids = [...intensityData].filter(x => x.int > 0.0001).sort((a,b) => b.int - a.int).slice(0,3).map(x => x.id);
@@ -209,8 +223,7 @@ function drawAnalysisLogs(machine, gCounts, extracted, uNameOverride = null, dat
         [1,2,5,6].forEach(s => {
             totalLLs[s] += c.iLLs[s];
             const gM = c.maxL - c.iLLs[s];
-            // 星の上限を「パワー（貢献度）」で制限する
-            const maxStars = Math.min(5, Math.ceil(c.power * 25)); // 係数25は感度調整
+            const maxStars = Math.min(5, Math.ceil(c.power * 25)); 
             const st = (c.int < 0.01) ? 0 : gM < 0.2 ? maxStars : gM < 0.8 ? Math.max(0, maxStars-1) : gM < 1.6 ? Math.max(0, maxStars-2) : gM < 3.2 ? Math.max(0, maxStars-3) : 1;
             cls += `<td style="color:${gM < 0.001 && c.int > 0.01 && maxStars > 0 ? '#ef4444' : '#94a3b8'}">${"★".repeat(st)}</td>`;
         });
@@ -252,7 +265,6 @@ async function run(file) {
         const fullText = merged.join(" ");
         let machine = getMachineDef(fullText);
 
-        // 【修正箇所2】読み込んだ機種名を画面表示と内部インデックスに同期させる
         document.getElementById('machine-name-display').innerText = machine.name;
         const mIdx = MACHINE_LIST.indexOf(machine.name);
         if (mIdx !== -1) currentMachineIdx = mIdx;
@@ -310,13 +322,34 @@ async function run(file) {
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
-async function saveCloud(snap){
-    const k=document.getElementById('api-key').value, n=snap.name; if(!k||!n||!document.getElementById('gh-token').value)return;
-    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
-    const dt = snap.date.split(' ')[0].replace(/\//g,'-'), tm = snap.date.split(' ')[1].replace(/:/g,'');
-    const res = await gh("PUT",`data/${h}/${snap.machineName}/${dt}_${tm}.json`,{message:`Sync:${snap.machineName}`,content:btoa(unescape(encodeURIComponent(JSON.stringify(snap))))});
-    if(res) addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
-    await syncHistory(snap.machineName, false);
+/* === 修正箇所：クラウド保存関数 === */
+async function saveCloud(snap) {
+    const k = document.getElementById('api-key').value;
+    const n = document.getElementById('user-name').value;
+    const t = document.getElementById('gh-token').value;
+    if (!k || !n || !t) return;
+
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n))
+        .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+
+    const dateParts = snap.date.split(' ');
+    const dt = dateParts[0].replace(/[\/\-]/g, '-');
+    const tm = dateParts[1] ? dateParts[1].replace(/:/g, '') : "0000";
+
+    const path = `data/${h}/${snap.machineName}/${dt}_${tm}.json`;
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
+
+    const res = await gh("PUT", path, {
+        message: `Sync:${snap.machineName}`,
+        content: content
+    });
+
+    if (res) {
+        addLog(`\n✅ CLOUD SYNC COMPLETE`, "text-green-500 font-bold text-center mt-2");
+        await syncHistory(snap.machineName, false);
+    } else {
+        addLog(`\n❌ SYNC ERROR: GitHub API`, "text-red-500 font-bold");
+    }
 }
 
 async function syncHistory(mName, autoLoad = true){
