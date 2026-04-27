@@ -133,6 +133,7 @@ function getMachineDef(name) {
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
 }
 
+/* === GitHub API通信（404許容ロジック） === */
 async function gh(m, p, b = null) {
     const t = document.getElementById('gh-token').value;
     if (!t) return null;
@@ -155,10 +156,11 @@ async function gh(m, p, b = null) {
     }
     
     const res = await fetch(url, options);
+    if (res.status === 404 && m === "GET") return null; // データなしを許容
+
     if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Unknown Error" }));
-        console.error(`GH API Error: ${res.status}`, err);
-        addLog(`\n❌ API ERROR: ${res.status} (${err.message})`, "text-red-500 font-bold");
+        const err = await res.json().catch(() => ({ message: "Unknown" }));
+        addLog(`\n❌ API ERROR: ${res.status}`, "text-red-500 font-bold");
         return null;
     }
     return await res.json();
@@ -327,6 +329,7 @@ async function run(file) {
     } catch(e) { addLog(`\n❌ ERROR: ${e.message}`, "text-red-500 font-bold"); }
 }
 
+/* === クラウド保存機能（404回避：平坦保存） === */
 async function saveCloud(snap) {
     const k = document.getElementById('api-key').value;
     const n = document.getElementById('user-name').value;
@@ -340,11 +343,12 @@ async function saveCloud(snap) {
     const dt = dateParts[0].replace(/[\/\-]/g, '-');
     const tm = dateParts[1] ? dateParts[1].replace(/:/g, '') : "000000";
 
-    const path = `data/${h}/${snap.machineName}/${dt}/${tm}.json`;
+    // ファイル名にすべてを詰め込んで data/ 直下に保存
+    const path = `data/${h}_${snap.machineName}_${dt}_${tm}.json`;
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(snap))));
 
     const res = await gh("PUT", path, {
-        message: `Sync:${snap.machineName} [${snap.date}]`,
+        message: `Sync:${snap.machineName}`,
         content: content
     });
 
@@ -355,33 +359,27 @@ async function saveCloud(snap) {
 }
 
 async function syncHistory(mName, autoLoad = true){
-    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; if(!k||!n)return;
-    const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(k+n)).then(b=>Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('').substring(0,12));
+    const k=document.getElementById('api-key').value, n=document.getElementById('user-name').value; 
+    if(!k||!n)return;
     
-    // recursive=1を指定して全階層のjsonを取得
-    const res = await gh("GET", `data/${h}/${mName}?recursive=1&t=${Date.now()}`);
-    if(res && Array.isArray(res)) {
-        hPaths = res
-            .filter(f => f.type === "file" && f.name.endsWith(".json"))
-            .map(f => f.path)
-            .sort();
-        hIdx = hPaths.length - 1;
-        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]);
-    } else {
-        hPaths = []; hIdx = -1;
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k + n))
+        .then(b => Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('').substring(0, 12));
+
+    const res = await gh("GET", `data`); 
+    if(res && Array.isArray(res)){ 
+        // 自分のハッシュと機種名が含まれるファイルのみを抽出
+        hPaths = res.filter(f => f.name.includes(h) && f.name.includes(mName))
+                    .map(f => f.path)
+                    .sort((a,b) => a.localeCompare(b));
+                    
+        hIdx = hPaths.length - 1; 
+        if(autoLoad && hIdx >= 0) await loadHistory(hPaths[hIdx]); 
     }
 }
 
 async function loadHistory(p){
     if(lastAnalysisResult && p === "current"){ logDisplay.innerHTML = lastAnalysisResult.logHtml; drawAnalysisLogs(lastAnalysisResult.machine, lastAnalysisResult.gCounts, lastAnalysisResult.extracted, lastAnalysisResult.uName, lastAnalysisResult.date); return; }
-    const res = await gh("GET", p); 
-    if(res && res.content) { 
-        logDisplay.innerHTML = ""; 
-        const s = JSON.parse(decodeURIComponent(escape(atob(res.content)))); 
-        const m = getMachineDef(s.machineName); 
-        document.getElementById('date-display').innerText = s.date; 
-        drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); 
-    }
+    const res=await gh("GET",p); if(res&&res.content){ logDisplay.innerHTML = ""; const s=JSON.parse(decodeURIComponent(escape(atob(res.content)))); const m = getMachineDef(s.machineName); document.getElementById('date-display').innerText = s.date; drawAnalysisLogs(m, s.gameCounts, s.extractedData, s.name, s.date); }
 }
 
 function updateMachineDisplay(){ const mName = MACHINE_LIST[currentMachineIdx]; document.getElementById('machine-name-display').innerText = mName; [1,2,5,6].forEach(s=>{document.getElementById(`p${s}`).innerText="---";document.getElementById(`b${s}`).style.width="0%"}); document.getElementById('date-display').innerText="NO DATA"; logDisplay.innerHTML="READY..."; lastAnalysisResult=null; syncHistory(mName, true); }
