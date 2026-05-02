@@ -80,6 +80,28 @@
 
 <script>
 /* === 聖域：CONFIGURATIONS (省略なし) === */
+
+const ALEX_CONFIG = [
+    { id: "total_u", name: "ボーナス合算", active: true, type: "normal", probs: {1: 179.6, 2: 174.3, 5: 163.4, 6: 149.6} },
+    { id: "h_tot", name: "羽合算", active: true, type: "normal", probs: {1: 13.4, 2: 13.0, 5: 12.6, 6: 12.2} },
+    { id: "ha", name: "羽Ａ", active: false, type: "normal", probs: {1: 25.0, 2: 25.0, 5: 25.0, 6: 25.0} },
+    { id: "hb", name: "羽Ｂ", active: false, type: "normal", probs: {1: 30.0, 2: 30.0, 5: 30.0, 6: 30.0} },
+    { id: "ht", name: "３枚役", active: true, type: "normal", probs: {1: 40.5, 2: 38.1, 5: 39.2, 6: 38.3} },
+    { id: "bu", name: "ブドウ", active: false, type: "normal", probs: {1: 256.0, 2: 256.0, 5: 256.0, 6: 256.0} },
+    { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 21.1, 2: 21.1, 5: 19.9, 6: 19.7} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.8, 2: 99.8, 5: 82.1, 6: 78.8} },
+    { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 39.5, 2: 39.7, 5: 36.3, 6: 36.0} },
+    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 82.6, 2: 82.6, 5: 78.8, 6: 76.7} },
+    { id: "total_l", name: "ボーナス合算", active: false, type: "normal", probs: {1: 179.6, 2: 174.3, 5: 163.4, 6: 149.6} },
+    { id: "bb_tot", name: "ビッグボーナス合算", active: true, type: "normal", probs: {1: 309.1, 2: 303.4, 5: 295.2, 6: 287.4} },
+    { id: "bb_r7", name: "赤７", active: false, type: "normal", probs: {1: 1000.0, 2: 1000.0, 5: 1000.0, 6: 1000.0} },
+    { id: "bb_7", name: "鳥７", active: false, type: "normal", probs: {1: 300.0, 2: 300.0, 5: 300.0, 6: 300.0} },
+    { id: "rb_tot", name: "レギュラーボーナス", active: true, type: "normal", probs: {1: 428.3, 2: 409.6, 5: 366.1, 6: 312.1} },
+    { id: "b_ha", name: "ビッグ中 羽鳥Ａ", active: true, type: "big", probs: {1: 4.0, 2: 3.3, 5: 2.3, 6: 2.6} },
+    { id: "b_hb", name: "ビッグ中 羽鳥Ｂ", active: true, type: "big", probs: {1: 16.7, 2: 20.0, 5: 14.3, 6: 16.7} },
+    { id: "b_hc", name: "ビッグ中 羽鳥Ｃ", active: true, type: "big", probs: {1: 10922.7, 2: 372.4, 5: 744.7, 6: 372.4} }
+];
+
 const L_HANABI_CONFIG = [
     { id: "total", name: "ボーナス合算", active: false, type: "normal", probs: {1: 169.8, 2: 161.0, 5: 149.3, 6: 138.8} },
     { id: "bb", name: "ビックボーナス", active: true, type: "normal", probs: {1: 297.9, 2: 292.6, 5: 284.9, 6: 273.1} },
@@ -144,7 +166,7 @@ const VERSUS_CONFIG = [
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ"];
+const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ", "アレックスブライド"];
 let currentMachineIdx = 2; let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
@@ -152,6 +174,7 @@ const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'
 let hPaths = []; let hIdx = -1;
 
 function getMachineDef(name) {
+    if (name.includes("アレックス")) return {def:ALEX_CONFIG, bG:0, name:"アレックスブライド"};
     if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
