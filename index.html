@@ -8,29 +8,29 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Squada+One&family=Noto+Sans+JP:wght@700;900&display=swap');
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-        body { background-color: #0c0a09; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
-        .rev-tag-top { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #64748b; position: absolute; top: 4px; right: 12px; font-weight: bold; }
-        .main-btn { background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%); border: 2px solid #3b82f6; border-radius: 12px; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
+        body { background-color: #1a0f0a; color: #fbbf24; font-family: 'Noto Sans JP', sans-serif; height: 100dvh; width: 100%; margin: 0; padding: 12px; overflow: hidden; display: flex; flex-direction: column; }
+        .rev-tag-top { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #b08968; position: absolute; top: 4px; right: 12px; font-weight: bold; }
+        .main-btn { background: linear-gradient(180deg, #f97316 0%, #c2410c 100%); border: 2px solid #fb923c; border-radius: 12px; height: 44px; display: flex; align-items: center; justify-content: center; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); cursor: pointer; }
         .main-btn span { font-weight: 900; font-size: 1.2rem; color: #ffffff; letter-spacing: 1px; }
-        .panel-frame { border: 2px solid #1e293b; background: #0f172a; border-radius: 12px; padding: 10px 14px; position: relative; }
-        .bar-bg { background-color: #020617; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #1e293b; margin-top: 1px; }
+        .panel-frame { border: 2px solid #4a2a16; background: #241108; border-radius: 12px; padding: 10px 14px; position: relative; }
+        .bar-bg { background-color: #140a05; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #4a2a16; margin-top: 1px; }
         .bar-fill { height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
-        .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #1e293b; background-color: #000000; border-radius: 8px; overflow: hidden; position: relative; }
-        .copy-btn { position: absolute; top: 6px; right: 6px; background: #2563eb; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
-        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #94a3b8; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
-        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #e2e8f0; }
-        .log-table th, .log-table td { border: 1px solid #1e293b; padding: 3px 1px; text-align: center; }
-        .log-table th { background-color: #1e293b; color: #60a5fa; font-weight: 900; }
+        .log-container { flex-grow: 1; min-height: 0; margin: 8px 0; border: 2px solid #4a2a16; background-color: #0d0704; border-radius: 8px; overflow: hidden; position: relative; }
+        .copy-btn { position: absolute; top: 6px; right: 6px; background: #ea580c; color: #fff; font-size: 8px; padding: 3px 8px; border-radius: 4px; z-index: 20; font-weight: bold; }
+        .log-body { padding: 4px; font-size: 9px; width: 100%; height: 100%; overflow-y: auto; white-space: pre-wrap; color: #c9a88a; font-family: 'Share Tech Mono', monospace; padding-top: 30px; line-height: 1.3; }
+        .log-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 7px; table-layout: fixed; color: #f5e6d8; }
+        .log-table th, .log-table td { border: 1px solid #4a2a16; padding: 3px 1px; text-align: center; }
+        .log-table th { background-color: #4a2a16; color: #fb923c; font-weight: 900; }
         .val-red { color: #ef4444 !important; font-weight: 900; }
         .val-yellow { color: #fbbf24 !important; font-weight: 900; }
         .aura-red { background-color: #b91c1c !important; color: white !important; font-weight: bold; }
         .aura-green { background-color: #15803d !important; color: white !important; font-weight: bold; }
         .aura-yellow { background-color: #a16207 !important; color: white !important; font-weight: bold; }
-        .api-input-tiny { background: #0f172a; color: #4b5563; border: 1px solid #1e293b; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
-        .api-input-name { background: #0f172a; color: #f1f5f9; border: 1px solid #1e293b; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
-        .save-btn { background: #1e40af; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
-        .nav-btn { background: #1e293b; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
-        .c-s1 { color: #3b82f6; } .c-s2 { color: #eab308; } .c-s5 { color: #22c55e; } .c-s6 { color: #ef4444; }
+        .api-input-tiny { background: #241108; color: #8a6a52; border: 1px solid #4a2a16; padding: 2px 4px; font-size: 8px; border-radius: 4px; outline: none; }
+        .api-input-name { background: #241108; color: #f5e6d8; border: 1px solid #4a2a16; padding: 4px 8px; font-size: 12px; font-weight: bold; border-radius: 6px; outline: none; }
+        .save-btn { background: #c2410c; color: #ffffff; font-weight: bold; padding: 4px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; }
+        .nav-btn { background: #4a2a16; color: #fff; border-radius: 4px; padding: 2px 6px; font-size: 10px; font-weight: bold; }
+        .c-s1 { color: #fde68a; } .c-s2 { color: #f59e0b; } .c-s5 { color: #f97316; } .c-s6 { color: #dc2626; }
     </style>
 </head>
 <body>
@@ -43,10 +43,10 @@
             <div class="flex items-center gap-1 text-white text-[10px]"><button id="d-prev" class="nav-btn px-2">◁</button><span id="date-display" class="font-mono">NO DATA</span><button id="d-next" class="nav-btn px-2">▷</button></div>
         </div>
         <div class="w-full flex flex-col gap-2">
-            <div class="flex items-center gap-3"><span class="c-s1 font-black text-[10px] w-10">設定1</span><div class="flex-grow bar-bg"><div id="b1" class="bar-fill bg-blue-500"></div></div><span id="p1" class="c-s1 font-black text-[11px] w-12 text-right">---</span></div>
-            <div class="flex items-center gap-3"><span class="c-s2 font-black text-[10px] w-10">設定2</span><div class="flex-grow bar-bg"><div id="b2" class="bar-fill bg-yellow-500"></div></div><span id="p2" class="c-s2 font-black text-[11px] w-12 text-right">---</span></div>
-            <div class="flex items-center gap-3"><span class="c-s5 font-black text-[10px] w-10">設定5</span><div class="flex-grow bar-bg"><div id="b5" class="bar-fill bg-green-500"></div></div><span id="p5" class="c-s5 font-black text-[11px] w-12 text-right">---</span></div>
-            <div class="flex items-center gap-3"><span class="c-s6 font-black text-[10px] w-10">設定6</span><div class="flex-grow bar-bg"><div id="b6" class="bar-fill bg-red-500"></div></div><span id="p6" class="c-s6 font-black text-[11px] w-12 text-right">---</span></div>
+            <div class="flex items-center gap-3"><span class="c-s1 font-black text-[10px] w-10">設定1</span><div class="flex-grow bar-bg"><div id="b1" class="bar-fill bg-amber-200"></div></div><span id="p1" class="c-s1 font-black text-[11px] w-12 text-right">---</span></div>
+            <div class="flex items-center gap-3"><span class="c-s2 font-black text-[10px] w-10">設定2</span><div class="flex-grow bar-bg"><div id="b2" class="bar-fill bg-amber-500"></div></div><span id="p2" class="c-s2 font-black text-[11px] w-12 text-right">---</span></div>
+            <div class="flex items-center gap-3"><span class="c-s5 font-black text-[10px] w-10">設定5</span><div class="flex-grow bar-bg"><div id="b5" class="bar-fill bg-orange-500"></div></div><span id="p5" class="c-s5 font-black text-[11px] w-12 text-right">---</span></div>
+            <div class="flex items-center gap-3"><span class="c-s6 font-black text-[10px] w-10">設定6</span><div class="flex-grow bar-bg"><div id="b6" class="bar-fill bg-red-600"></div></div><span id="p6" class="c-s6 font-black text-[11px] w-12 text-right">---</span></div>
         </div>
     </div>
 
@@ -67,9 +67,9 @@ const ALEX_CONFIG = [
     { id: "ht", name: "３枚役", active: true, type: "normal", probs: {1: 40.5, 2: 38.1, 5: 39.2, 6: 38.3} },
     { id: "bu", name: "ブドウ", active: false, type: "normal", probs: {1: 256.0, 2: 256.0, 5: 256.0, 6: 256.0} },
     { id: "c_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 21.1, 2: 21.1, 5: 19.9, 6: 19.7} },
-    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.8, 2: 99.8, 5: 82.1, 6: 78.8} },
+    { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.8, 2: 99.8, 5: 99.8, 6: 99.8} },
     { id: "ca2", name: "チェリーＡ２", active: true, type: "normal", probs: {1: 39.5, 2: 39.7, 5: 36.3, 6: 36.0} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 82.6, 2: 82.6, 5: 78.8, 6: 76.7} },
+    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 82.6, 2: 82.1, 5: 78.8, 6: 76.7} },
     { id: "total_l", name: "ボーナス合算", active: false, type: "normal", probs: {1: 179.6, 2: 174.3, 5: 163.4, 6: 149.6} },
     { id: "bb_tot", name: "ビッグボーナス合算", active: true, type: "normal", probs: {1: 309.1, 2: 303.4, 5: 295.2, 6: 287.4} },
     { id: "bb_r7", name: "赤７", active: false, type: "normal", probs: {1: 618.2, 2: 606.8, 5: 590.4, 6: 574.8} },
@@ -89,7 +89,7 @@ const L_HANABI_CONFIG = [
     { id: "ba", name: "風鈴Ａ", active: true, type: "normal", probs: {1: 12.9, 2: 12.5, 5: 12.1, 6: 11.5} },
     { id: "bb_b", name: "風鈴Ｂ", active: true, type: "normal", probs: {1: 38.4, 2: 38.7, 5: 36.2, 6: 34.5} },
     { id: "f_tot", name: "風鈴合算", active: false, type: "normal", probs: {1: 9.68, 2: 9.45, 5: 9.06, 6: 8.64} },
-    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.4} },
+    { id: "ia", name: "氷Ａ", active: true, type: "normal", probs: {1: 46.3, 2: 47.3, 5: 46.2, 6: 47.2} },
     { id: "ib", name: "氷Ｂ", active: false, type: "normal", probs: {1: 1560.4, 2: 1560.4, 5: 1560.4, 6: 1560.4} },
     { id: "i_tot", name: "氷合算", active: false, type: "normal", probs: {1: 44.9, 2: 45.9, 5: 44.8, 6: 46.0} },
     { id: "ca1", name: "チェリーＡ１", active: false, type: "normal", probs: {1: 99.4, 2: 99.4, 5: 99.4, 6: 99.3} },
@@ -138,15 +138,27 @@ const VERSUS_CONFIG = [
     { id: "sb", name: "スイカＢ", active: false, type: "normal", probs: {1: 218.5, 2: 218.5, 5: 218.5, 6: 218.5} },
     { id: "che_tot", name: "チェリー合算", active: false, type: "normal", probs: {1: 38.2, 2: 38.9, 5: 36.7, 6: 37.3} },
     { id: "ca", name: "チェリーＡ", active: false, type: "normal", probs: {1: 119.2, 2: 119.2, 5: 119.2, 6: 118.9} },
-    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.4} },
+    { id: "cb", name: "チェリーＢ", active: true, type: "normal", probs: {1: 56.2, 2: 57.7, 5: 53.1, 6: 54.1} },
     { id: "vc", name: "バーサスチャンス中ハズレ", active: true, type: "vc", probs: {1: 5.0, 2: 4.9, 5: 4.6, 6: 4.5} },
     { id: "vg", name: "バーサスゲーム中ハズレ", active: true, type: "vg", probs: {1: 10.1, 2: 9.4, 5: 8.7, 6: 8.1} },
-    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.0, 2: 1.0, 5: 1.0, 6: 1.0} },
+    { id: "rb_bel", name: "ベル揃い", active: false, type: "big", probs: {1: 1.10, 2: 1.14, 5: 1.10, 6: 1.14} },
     { id: "cbs", name: "チェリー＋ベル揃い", active: true, type: "big", probs: {1: 11.1, 2: 8.9, 5: 11.1, 6: 8.9} },
     { id: "cbh", name: "チェリー＋ベルはずれ", active: true, type: "big", probs: {1: 256.0, 2: 128.0, 5: 256.0, 6: 128.0} }
 ];
 
-const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ", "アレックスブライド"];
+const MACHINE_LIST = ["新ハナビ", "スマスロハナビ", "バーサスリヴァイズ", "アレックスブライト"];
+
+/* === 定義表の固定化（指示：構成定数は完全固定／定義表は一切触るな） ===
+   外部サイト(パチセブン)のスペック表と突合し確認済み（2026-11-12）。
+   以後は実行時にも変更できないよう凍結する。 */
+function deepFreeze(obj) {
+    Object.getOwnPropertyNames(obj).forEach(k => {
+        const v = obj[k];
+        if (v && typeof v === "object" && !Object.isFrozen(v)) deepFreeze(v);
+    });
+    return Object.freeze(obj);
+}
+[ALEX_CONFIG, L_HANABI_CONFIG, HANABI_CONFIG, VERSUS_CONFIG, MACHINE_LIST].forEach(deepFreeze);
 let currentMachineIdx = 2; let lastAnalysisResult = null; 
 const GH_USER = "vs777-coder"; const GH_REPO = "VersusRexseHanabi";
 const logDisplay = document.getElementById('log-display');
@@ -154,7 +166,7 @@ const addLog = (m, c="text-slate-400") => { const e=document.createElement('div'
 let hPaths = []; let hIdx = -1;
 
 function getMachineDef(name) {
-    if (name.includes("アレックス")) return {def:ALEX_CONFIG, bG:0, name:"アレックスブライド"};
+    if (name.includes("アレックス")) return {def:ALEX_CONFIG, bG:0, name:"アレックスブライト"};
     if (name.includes("バーサス")) return {def:VERSUS_CONFIG, bG:28, name:"バーサスリヴァイズ"};
     if (name.includes("スマスロ")) return {def:L_HANABI_CONFIG, bG:20, name:"スマスロハナビ"};
     return {def:HANABI_CONFIG, bG:29, name:"新ハナビ"};
